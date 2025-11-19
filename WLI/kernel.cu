@@ -7,7 +7,7 @@
 #include <fstream>
 
 //#include "../PSI/sdef.h"
-#define MaxImages 2500
+#define MaxImages 3000
 #define BADDATA -999
 
 __device__ void SetI(int idx, int* i1, int* i2, int inc3, int numImgs) {
@@ -126,10 +126,7 @@ __global__ void CollectZCHKernel(
 	}
 
 	idx = iMax;
-	//flagRange = InRange(chGray, numImages, idx, inc);
-	/*if (idx<4 || idx>numImages-4){
-		d_OutImg[y * wd + x] = BADDATA; return;
-	}*/
+	
 	//SetI(idx,inc3,sz) function implementation;
 	int i1, i2, inc2, inc3, inc4;
 	inc2 = 2 * inc; inc3 = 3 * inc; inc4 = 4 * inc;
@@ -139,12 +136,9 @@ __global__ void CollectZCHKernel(
 	//PhasePV5 algorithm implementation to calcualte pPHS1 and pVIS1
 	int st, ed;
 	bool flagEns = EnsureValid(inc, &i1, &i2, numImages);
-	/*if (!flagEns){
-		d_OutImg[y * wd + x] = BADDATA; return;
-	}*/
+
 	st = i1, ed = i2;
 	//PhasePV5(d_pPHS1, d_pVIS1, chGray, st, ed, inc, inc2);// device function
-	// local implementation of PhasePV function
 	float N, D;
 	float sn = 1.9999831f;
 	for (int i = st; i < ed; i++) {
@@ -155,7 +149,6 @@ __global__ void CollectZCHKernel(
 	}
 
 	//PeakPhas algorith implementation to calcualte the rsl
-	// peakPhas function local implementation
 	float rsl;// = PeakPhas(d_pPHS1, d_HeightData, idx - 2, idx + 2);
 	float sumx = 0.0;
 	float sumx2 = 0.0;

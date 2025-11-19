@@ -640,6 +640,100 @@ void MeasurementDlg::DataAcquisition() {
 }
 
 //20250916
+void MeasurementDlg::DataAcquisitionCUDA() {
+	CWaitCursor wc;
+
+	MOT::CPiezo& Piezo = Dev.MC->Piezo;
+	const float wlen = ICC.SPar.Cwlen / 2.f; // wavelength unit: um [4/14/2022 yuenl]
+	const float range = pRcp->MERange / 2.f;
+	float iniPos = Piezo.GetPos_um();
+	float distanceDiff = 50 - iniPos;	// distance from home position 20251111
+	// z motor need to move
+	// piezo motor need to move to home position 50
+	Piezo.Goto(50.0, false); //20251111
+	Dev.MC->stage.MoveR(MOT::MAXIS::Z, distanceDiff * 0.001, 20000, TRUE); //20251111
+
+	float stPos = iniPos - range / 2.0;
+	float shift = wlen / float(pRcp->MEFrames);
+	int nTotal = int(range / shift + 0.5f);
+
+	int settleTime = 5;
+	int waitTime = 5;
+	Strip.DeallocAllCV();// 20250916
+	Strip.DeallocAll();
+	Strip.ResetTime();
+	Strip.AddTime(CHighTime::GetPresentTime());
+	Dev.MC->stage.devGetCurPos(MOT::MAXIS::X, &Strip.xPos);
+	Dev.MC->stage.devGetCurPos(MOT::MAXIS::Y, &Strip.yPos);
+	Dev.MC->stage.devGetCurPos(MOT::MAXIS::Z, &Strip.zPos);
+	if (!Piezo.Goto(0, false)) { return; }
+	if (!Piezo.WaitStop(waitTime + 5000)) {}
+	while (!Dev.Cam.Grab(Strip.ImBG, CAM::PRICAM, Dev.Cam.pCm[CAM::PRICAM]->subSampling));
+	if (Strip.ImBG) {
+		if (ICC.bShowProgress) {
+			//cPicWnd.SetImg2(Strip.ImBG); cPicWnd.Invalidate(FALSE); Piezo.Yld(5);
+		}
+		Strip.ImBG.Detach();
+	}
+
+	float now = stPos;
+	if (!Piezo.Goto(now, false)) { return; }
+	if (!Piezo.WaitStop(waitTime)) {}
+	Piezo.Yld(settleTime); // setteling time
+
+	TCHAR status[256];
+
+	DWORD tick = GetTickCount();
+	IMGL::CIM tmp;
+
+	Dev.Cam.SetTriggerMode(CAM::PRICAM, true);
+
+	for (int i = 0; i <= nTotal; i++) {
+		WLI::SIms* pImN = Strip.NewImgs(now);
+		/*while (!Dev.Cam.Grab(tmp, CAM::PRICAM, Dev.Cam.pCm[CAM::PRICAM]->subSampling));
+		pImN->Im = tmp;
+		tmp.Detach();*/
+		Dev.Cam.ExecuteTrigger(CAM::PRICAM);
+		Dev.Cam.GetBitmapImage(tmp, CAM::PRICAM);
+
+		// 20250916 CONVERTING CIM to cv::Mat.....
+		cv::Mat tmpMat;
+		int width, height, bpp;
+		tmp.GetDim(width, height, bpp);
+
+		BYTE* pBuffer = (BYTE*)tmp.GetBits();
+		int pitch = tmp.GetPitch();
+
+		int cvType = CV_8UC3;
+		tmpMat = cv::Mat(height, width, cvType, pBuffer, pitch);
+		tmpMat = tmpMat.clone();
+
+		Strip.CVImgs.push_back({ tmpMat,now });
+		//====================
+
+		//pImN->Im = tmp; // 20250916 COMMENTED
+		tmp.Detach();
+		now = stPos + (i + 1) * shift;
+		if (!Piezo.Goto(now, false)) { AfxMessageBox(L"Piezo Move Error!", MB_ICONERROR); return; }
+		float dur = (GetTickCount() - tick) / 1000.f;
+		swprintf(status, 256, L"Processing %d of %d  Duration: %.2f sec [Working FPS: %.2lf] XYZ:(%.4f, %.4f, %.4f) um  P:%.4f um",
+			i + 1, nTotal + 1, dur, (i + 1) / dur,
+			Strip.xPos, Strip.yPos, Strip.zPos,
+			now);
+		ShowMessage(status);
+	}
+
+	if (!Piezo.Goto(iniPos, false)) {}
+	Strip.AddTime(CHighTime::GetPresentTime());
+	LgS.Log(L"Success: Scan operation completed");
+	ICC.outfile = L"Acquired";
+
+	Dev.Cam.SetTriggerMode(CAM::PRICAM, false);
+	//Strip.ExportBMP(L"C:\\WLIN\\BMP\\DATA"); // 20250916 ARIF COMMENTED
+
+}
+
+
 void MeasurementDlg::getHeightDataCV(int idx) {
 	CString ResultPath = DosUtil.GetResultDir().c_str();
 	ResultPath.Format(L"%sHeightData\\%s\\", ResultPath, pRcp->RcpeName);
@@ -878,9 +972,10 @@ void MeasurementDlg::OnBnClickedCamPropMd() {
 void MeasurementDlg::OnBnClickedButtonGen2d3d()
 {
 	// TODO: Add your control notification handler code here
-	DataAcquisition();
+	//DataAcquisition();
 	//getHeightData(1);
-	DataAcquisitionSimuCV();
+	//DataAcquisitionSimuCV();
+	DataAcquisitionCUDA();
 	getHeightDataCV(1);
 	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, 0, 0);
 }

@@ -62,6 +62,7 @@ public:
 	bool Histo256(const cv::Mat& image);//20250916
 	void DataAcquisitionSimu();
 	void DataAcquisitionSimuCV();//20250916
+	void DataAcquisitionCUDA();//20250916
 	void DataAcquisition();
 	std::vector<float>HeightData;
 	std::vector<float>HeightDataCV;//20250916
