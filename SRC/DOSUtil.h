@@ -51,6 +51,23 @@ public:
 	void AddExtension(TCHAR* filename, TCHAR* ex);
 	BOOL MakeFileNameFromModule(TCHAR* filename, TCHAR* name, TCHAR* extn);
 
+	//08142024 - START
+	// int ReadINI(const wchar_t* section, const wchar_t* name, int defvalue, CString& inifile);
+	int ReadINI(LPCTSTR section, LPCTSTR name, int defvalue, LPCTSTR inifile);
+	ULONG ReadINI(const wchar_t* section, const wchar_t* name, ULONG defvalue, CString& inifile);
+	float ReadINI(const wchar_t* section, const wchar_t* name, float defvalue, CString& inifile);
+	double ReadINI(const wchar_t* section, const wchar_t* name, double defvalue, CString& inifile);
+	CString ReadINI(const wchar_t* section, const wchar_t* name, CString& str, CString& inifile);
+
+	void WriteINI(const wchar_t* section, const wchar_t* key, int val, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, ULONG val, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, UINT val, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, const wchar_t* str, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, CString& str, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, double val, CString& inifile);
+	void WriteINI(const wchar_t* section, const wchar_t* key, float val, CString& inifile);
+	//08142024 - END
+
 	CDosUtil();
 	virtual ~CDosUtil();
 };
