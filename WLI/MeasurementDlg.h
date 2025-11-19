@@ -9,7 +9,7 @@
 #include <MeasProgressDlg.h>
 #include "WaferMap.h"
 #include "wdefine.h"
-#include "Cfilters.h"
+#include "filters.h"
 #include <opencv2/core.hpp>
 //#include <opencv2/imgproc.hpp>
 

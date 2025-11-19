@@ -203,3 +203,91 @@ std::wstring CDosUtil::GetFilename(const TCHAR* name, const TCHAR* ex) {
 	_wmakepath(filename, drive, dir, name, ex);
 	return filename;
 }
+
+
+// 20251118 / Typecasted by Mohammad Fahim Hossain
+
+/*int CDosUtil::ReadINI(const wchar_t* section, const wchar_t* name, int defvalue, CString& inifile) {
+	wchar_t str[256];
+	swprintf(str, 256, L"%d", defvalue);
+	GetPrivateProfileString(section, name, str, str, sizeof(str) / sizeof(wchar_t), inifile);
+	return _wtoi(str);
+}*/
+int CDosUtil::ReadINI(LPCTSTR section, LPCTSTR name, int defvalue, LPCTSTR inifile)
+{
+	TCHAR buf[256] = { 0 }; // buffer for returned value	
+	TCHAR defbuf[32] = { 0 }; // create default string safely
+	_stprintf_s(defbuf, _countof(defbuf), _T("%d"), defvalue);
+	// GetPrivateProfileString will use ANSI or Unicode variant depending on build
+	::GetPrivateProfileString(section, name, defbuf, buf, _countof(buf), inifile);
+	// convert to int (works with TCHAR)
+	return _ttoi(buf);
+}
+
+ULONG CDosUtil::ReadINI(const wchar_t* section, const wchar_t* name, ULONG defvalue, CString& inifile) {
+	wchar_t str[256];
+	swprintf(str, 256, L"%lu", defvalue);
+	GetPrivateProfileString(section, name, str, str, sizeof(str) / sizeof(wchar_t), inifile);
+	return ULONG(_wtol(str));
+}
+
+float CDosUtil::ReadINI(const wchar_t* section, const wchar_t* name, float defvalue, CString& inifile) {
+	wchar_t str[256];
+	swprintf(str, 256, L"%f", defvalue);
+	GetPrivateProfileString(section, name, str, str, sizeof(str) / sizeof(wchar_t), inifile);
+	return float(_wtof(str));
+}
+
+double CDosUtil::ReadINI(const wchar_t* section, const wchar_t* name, double defvalue, CString& inifile) {
+	wchar_t str[256];
+	swprintf(str, 256, L"%f", defvalue);
+	GetPrivateProfileString(section, name, str, str, sizeof(str) / sizeof(wchar_t), inifile);
+	return _wtof(str);
+}
+
+CString CDosUtil::ReadINI(const wchar_t* section, const wchar_t* name, CString& str, CString& inifile) {
+	wchar_t cstr[256];
+	GetPrivateProfileString(section, name, str, cstr, sizeof(cstr) / sizeof(wchar_t), inifile);
+	return cstr;
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, int val, CString& inifile) {
+	CString str;
+	str.Format(L"%d", val);
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, ULONG val, CString& inifile) {
+	CString str;
+	str.Format(L"%lu", val);
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, UINT val, CString& inifile) {
+	CString str;
+	str.Format(L"%u", val);
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, const wchar_t* str, CString& inifile) {
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, CString& str, CString& inifile) {
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, double val, CString& inifile) {
+	CString str;
+	str.Format(L"%f", val);
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+void CDosUtil::WriteINI(const wchar_t* section, const wchar_t* key, float val, CString& inifile) {
+	CString str;
+	str.Format(L"%f", val);
+	WritePrivateProfileString(section, key, str, inifile);
+}
+
+//08142024 - END

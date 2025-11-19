@@ -78,7 +78,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.8.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -160,7 +160,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)CAM\;$(SolutionDir)MOTOR\;$(PYLON_DEV_DIR)lib\x64;C:\Program Files\Basler\pylon 7\Development\lib\x64;C:\opencv\build\x64\vc16\lib</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)$(ProjectName)_LT.exe</OutputFile>
-      <AdditionalDependencies>cuda.lib;cudart.lib;opencv_world490d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cuda.lib;cudart.lib;opencv_world4120d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -405,13 +405,10 @@
     <ClInclude Include="BaslerCameraDlg.h" />
     <ClInclude Include="BaslerColourCam.h" />
     <ClInclude Include="BaslerMonoCam.h" />
-    <ClInclude Include="C2DPlotDlg.h" />
-    <ClInclude Include="C3DPlotDlg.h" />
     <ClInclude Include="CameraDlg.h" />
     <ClInclude Include="CameraProp.h" />
     <ClInclude Include="CamSetDlg.h" />
     <ClInclude Include="CEOPiezo.h" />
-    <ClInclude Include="Cfilters.h" />
     <ClInclude Include="ChuckMask.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ColorDefine.h" />
@@ -420,7 +417,10 @@
     <ClInclude Include="DataList.h" />
     <ClInclude Include="Dev.h" />
     <ClInclude Include="eo-drive.h" />
+    <ClInclude Include="FFT.h" />
     <ClInclude Include="fft_lib.h" />
+    <ClInclude Include="FilterOption.h" />
+    <ClInclude Include="filters.h" />
     <ClInclude Include="FocusLevelDlg.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="FringeWnd.h" />
@@ -522,20 +522,20 @@
     <ClCompile Include="BaslerCameraDlg.cpp" />
     <ClCompile Include="BaslerColourCam.cpp" />
     <ClCompile Include="BaslerMonoCam.cpp" />
-    <ClCompile Include="C2DPlotDlg.cpp" />
-    <ClCompile Include="C3DPlotDlg.cpp" />
     <ClCompile Include="CameraDlg.cpp" />
     <ClCompile Include="CameraProp.cpp" />
     <ClCompile Include="CamSetDlg.cpp" />
     <ClCompile Include="CEOPiezo.cpp" />
-    <ClCompile Include="Cfilters.cpp" />
     <ClCompile Include="ChuckMask.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="Coor.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="DataList.cpp" />
     <ClCompile Include="Dev.cpp" />
+    <ClCompile Include="FFT.cpp" />
     <ClCompile Include="fft_lib.cpp" />
+    <ClCompile Include="FilterOption.cpp" />
+    <ClCompile Include="filters.cpp" />
     <ClCompile Include="FocusLevelDlg.cpp" />
     <ClCompile Include="FringeWnd.cpp" />
     <ClCompile Include="Glbs.cpp" />
@@ -613,6 +613,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.8.targets" />
   </ImportGroup>
 </Project>
