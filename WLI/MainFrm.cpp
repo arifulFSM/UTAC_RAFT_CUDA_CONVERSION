@@ -40,7 +40,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs) {
 	cs.style &= ~(FWS_ADDTOTITLE);
 
 	// Set the window title here!
-	this->SetTitle(L"FSM RAFT 2.1.2402.5");
+	this->SetTitle(L"FSM RAFT");
 
 	// Remove Menu
 	if (cs.hMenu != NULL) {
