@@ -975,6 +975,7 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 	//DataAcquisition();
 	//getHeightData(1);
 	//DataAcquisitionSimuCV();
+	pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
 	DataAcquisitionCUDA();
 	getHeightDataCV(1);
 	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, 0, 0);
