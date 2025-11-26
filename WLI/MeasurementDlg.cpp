@@ -692,7 +692,8 @@ void MeasurementDlg::DataAcquisitionCUDA() {
 	IMGL::CIM tmp;
 
 	Dev.Cam.SetTriggerMode(CAM::PRICAM, true);
-
+	
+	Sleep(100);
 	for (int i = 0; i <= nTotal; i++) {
 		WLI::SIms* pImN = Strip.NewImgs(now);
 		/*while (!Dev.Cam.Grab(tmp, CAM::PRICAM, Dev.Cam.pCm[CAM::PRICAM]->subSampling));
@@ -987,8 +988,12 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 	//DataAcquisition();
 	//getHeightData(1);
 	//DataAcquisitionSimuCV();
-	pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
-	DataAcquisitionCUDA();
-	getHeightDataCV(1);
+	for (int i = 0; i < 10; i++)
+	{
+		pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
+		DataAcquisitionCUDA();
+		getHeightDataCV(1);
+	}
+	
 	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, 0, 0);
 }
