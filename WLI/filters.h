@@ -1,5 +1,5 @@
 #pragma once
-//#include<opencv2/opencv.hpp>
+#include<opencv2/opencv.hpp>
 //10222024 / ARIFUL ISLAM
 // 20251118 / added in WLI from UTAC by Mohammad Fahim Hossain
 
@@ -38,4 +38,5 @@ public:
 	void ApplyLSF(std::vector<std::vector<float>>& img);
 	void ApplyDespike(std::vector<std::vector<float>>& img);
 	void ApplyFFT(std::vector<std::vector<float>>& img);
+	void ApplyDespikeRowColWise(cv::Mat& ImCV);
 };

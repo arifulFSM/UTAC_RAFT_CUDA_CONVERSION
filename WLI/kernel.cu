@@ -7,7 +7,7 @@
 #include <fstream>
 
 //#include "../PSI/sdef.h"
-#define MaxImages 3000
+#define MaxImages 5000
 #define BADDATA -999
 
 __device__ void SetI(int idx, int* i1, int* i2, int inc3, int numImgs) {
@@ -159,8 +159,8 @@ __global__ void CollectZCHKernel(
 	float M, C, R;
 	st = idx - 2, ed = idx + 2;
 	for (int i = st; i <= ed; ++i) {
-		float x =d_HeightData[i];
-		float y =d_pPHS1[i];
+		float x = d_pPHS1[i]; 
+		float y = d_HeightData[i];
 
 		sumx += x;
 		sumx2 += (x * x);
@@ -187,7 +187,8 @@ __global__ void CollectZCHKernel(
 
 	
 
-	if (M)rsl= -float( - C / M);
+	//if (M)rsl= -float( - C / M);
+	if (M)rsl= -float(C);
 	else
 		rsl=0.0f;
 	if (rsl > 200.f) rsl = BADDATA;

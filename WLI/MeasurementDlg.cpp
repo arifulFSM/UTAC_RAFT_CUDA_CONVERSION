@@ -219,6 +219,10 @@ void MeasurementDlg::LevelCV(cv::Mat& ImCV) {
 			for (int x = 0; x < wd; x++) {
 				if (row[x] != BADDATA) {
 					float dfNorDist = row[x] - dfC - dfA * x - dfB * y;
+					if (row[x] < -100.0 || row[x]>100.0) {
+						float val = row[x];
+						TRACE("1");
+					}
 					if (dfNorDist > fMax) fMax = dfNorDist;
 					if (dfNorDist < fMin) fMin = dfNorDist;
 					row[x] = dfNorDist;
@@ -226,16 +230,17 @@ void MeasurementDlg::LevelCV(cv::Mat& ImCV) {
 			}
 		}
 		// Add offset to make all values positive
-		float off = float(std::abs(fMin));
+		//float off = float(std::abs(fMin));
+		/*float off = float(std::abs(ImCV.at<float>(wd/2,ht/2)));
 		for (int y = 0; y < ht; y++) {
 			float* row = ImCV.ptr<float>(y);
 			for (int x = 0; x < wd; x++) {
-				if (row[x]!=BADDATA) {
+				if (row[x] != BADDATA) {
 					row[x] += off;
 				}
 			}
 		}
-		fMax += off; fMin += off;
+		fMax += off; fMin += off;	*/
 	}
 
 
@@ -647,7 +652,7 @@ void MeasurementDlg::DataAcquisitionCUDA() {
 	const float wlen = ICC.SPar.Cwlen / 2.f; // wavelength unit: um [4/14/2022 yuenl]
 	const float range = pRcp->MERange / 2.f;
 	float iniPos = Piezo.GetPos_um();
-	float distanceDiff = 50 - iniPos;	// distance from home position 20251111
+	float distanceDiff = 50.0 - iniPos;	// distance from home position 20251111
 	// z motor need to move
 	// piezo motor need to move to home position 50
 	Piezo.Goto(50.0, false); //20251111
@@ -711,7 +716,7 @@ void MeasurementDlg::DataAcquisitionCUDA() {
 		Strip.CVImgs.push_back({ tmpMat,now });
 		//====================
 
-		//pImN->Im = tmp; // 20250916 COMMENTED
+		pImN->Im = tmp; // 20250916 COMMENTED
 		tmp.Detach();
 		now = stPos + (i + 1) * shift;
 		if (!Piezo.Goto(now, false)) { AfxMessageBox(L"Piezo Move Error!", MB_ICONERROR); return; }
@@ -758,17 +763,24 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 	wd = ImCV.cols;
 	ht = ImCV.rows;
 
+	
+	//Apply Despike row and col wise...
+	filter.ApplyDespikeRowColWise(ImCV);//20250916
 
 	//HeightData.clear();
+	float piezoRange = (pRcp->MERange / 4.0);
 	HeightDataCV.clear();
 	for (int y = 0; y < ht - 1; y++) {
-		const float* row = ImCV.ptr<float>(y);
+		float* row = ImCV.ptr<float>(y);
 		for (int x = 0; x < wd - 1; x++) {
+			if (row[x]<-(piezoRange - 10) || row[x]>(piezoRange - 10)) {
+				row[x] = NAN;
+			}
 			HeightDataCV.push_back(row[x]);
 		}
 	}
 
-	filter.removeOutliers(HeightDataCV, wd, ht);
+	//filter.removeOutliers(HeightDataCV, wd, ht);
 
 	for (int y = 0; y < ht - 1; y++) {
 		for (int x = 0; x < wd - 1; x++) {

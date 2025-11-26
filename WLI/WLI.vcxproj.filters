@@ -53,8 +53,6 @@
     <ClCompile Include="BaslerCameraDlg.cpp" />
     <ClCompile Include="BaslerColourCam.cpp" />
     <ClCompile Include="BaslerMonoCam.cpp" />
-    <ClCompile Include="C2DPlotDlg.cpp" />
-    <ClCompile Include="C3DPlotDlg.cpp" />
     <ClCompile Include="CameraDlg.cpp" />
     <ClCompile Include="CameraProp.cpp" />
     <ClCompile Include="CamSetDlg.cpp" />
@@ -105,7 +103,9 @@
     <ClCompile Include="WLIDoc.cpp" />
     <ClCompile Include="WLIView.cpp" />
     <ClCompile Include="XYStageDlg.cpp" />
-    <ClCompile Include="Cfilters.cpp" />
+    <ClCompile Include="FFT.cpp" />
+    <ClCompile Include="FilterOption.cpp" />
+    <ClCompile Include="filters.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CAM\CamDev.h" />
@@ -169,13 +169,10 @@
     <ClInclude Include="BaslerCameraDlg.h" />
     <ClInclude Include="BaslerColourCam.h" />
     <ClInclude Include="BaslerMonoCam.h" />
-    <ClInclude Include="C2DPlotDlg.h" />
-    <ClInclude Include="C3DPlotDlg.h" />
     <ClInclude Include="CameraDlg.h" />
     <ClInclude Include="CameraProp.h" />
     <ClInclude Include="CamSetDlg.h" />
     <ClInclude Include="CEOPiezo.h" />
-    <ClInclude Include="Cfilters.h" />
     <ClInclude Include="ChuckMask.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ColorDefine.h" />
@@ -230,6 +227,9 @@
     <ClInclude Include="WLIView.h" />
     <ClInclude Include="XYStageDlg.h" />
     <ClInclude Include="kernel.h" />
+    <ClInclude Include="FFT.h" />
+    <ClInclude Include="FilterOption.h" />
+    <ClInclude Include="filters.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WLI.cpp">

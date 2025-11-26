@@ -132,4 +132,6 @@ public:
 	afx_msg void OnBnClickedRadioMinmax();
 	afx_msg void OnBnClickedRadio2points();
 	void drawLineOn2D(float x1, float y1, float x2, float y2, DWORD color, int annotationCnt/*, LPARAM lParam*/);
+	void applyDespike(float* pProfileYData, int sz);//20250916
+	void applyDespikeVec(std::vector<std::vector<float>>& data);
 };

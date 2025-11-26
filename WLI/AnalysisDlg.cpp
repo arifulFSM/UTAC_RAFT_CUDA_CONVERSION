@@ -15,6 +15,7 @@
 #include "Pegrpapi.h"
 #include "filters.h"
 #include <iomanip>
+#include <algorithm>
 #include <cmath>
 #include "SRC\DosUtil.h"
 using namespace std;
@@ -682,6 +683,50 @@ void AnalysisDlg::lineProfile(std::vector<float>profile) {
 
 }
 
+//20250916
+void AnalysisDlg::applyDespike(float* pProfileYData, int sz) {
+	int windowSize = 10;
+	int half = windowSize / 2;
+
+	for (int i = half; i < sz - half; ++i) {
+		std::vector<float> win;
+		win.reserve(windowSize);
+		for (int j = -half; j <= half; ++j) {
+			win.push_back(pProfileYData[i + j]);
+		}
+
+		std::vector<float>tmp = win;
+		std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
+		float median = tmp[half];
+
+		pProfileYData[i] = median;
+	}
+}
+
+void AnalysisDlg::applyDespikeVec(std::vector<std::vector<float>>& data) {
+	int windowSize = 10;
+	int half = windowSize / 2;
+	int rows = data[0].size();
+	int cols = data.size();
+
+	for (int y = 1; y < rows-1; ++y) {
+		for (int x = 1; x < cols-1; ++x) {
+			float val = data[x][y];
+			float kernel[9];
+			int k = 0;
+			for (int j = -1; j <= 1; j++) {
+				for (int i = -1; i <= 1; i++) {
+					kernel[k++] = data[x + i][y + j];
+				}
+			}
+			std::nth_element(kernel, kernel + 4, kernel + 9);
+			float median = kernel[4];
+
+			data[x][y] = median;
+		}
+	}
+}
+
 void AnalysisDlg::lineProfile()
 {
 	UpdateData(TRUE);
@@ -773,7 +818,7 @@ void AnalysisDlg::lineProfile()
 	double Di = sqrt(pow(nX2 - nX1, 2) + pow(nY2 - nY1, 2));
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
 	double scale = Dr / Di;
-
+	int cnt = 0;
 	for (i = 0; i < nTotalCnt; i++) {
 		pProfileYData[i] = 0;
 		k = 0;
@@ -786,7 +831,7 @@ void AnalysisDlg::lineProfile()
 			if ((Row >= 0) && (Row < rowNumber) && (Col >= 0) && (Col < colNumber))
 			{
 				pProfileYData[i] += profile[Row][Col];
-				k++;
+				k++; cnt++;
 			}
 		}
 		if (k > 1)
@@ -810,6 +855,7 @@ void AnalysisDlg::lineProfile()
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
+	applyDespike(pProfileYData,cnt);// 20250916
 	//file.close();
 	//PEvset(m_hPEl, PEP_faXDATA, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
@@ -2515,9 +2561,11 @@ void AnalysisDlg::readData() {
 				//	if (col >= 120 && col <= 150)value = "-17.47";//ARIF ADD for Uwe's plot. 
 				//	else value = "-54.00";
 				//}
-				if (value == "")value = "-4.82404";// ARIF ADD FOR MAHEDI
 				float val;
 				val = static_cast<float>(stof(value));
+				/*if (val < -(42-10) || val > (42-10)) {
+					val = NAN;
+				}*/
 				vec.push_back(val);
 				mxVal = max(mxVal, val);
 				if (val < mnVal) {
@@ -2546,6 +2594,7 @@ void AnalysisDlg::readData() {
 		//		freqCnt[val]++;
 		//	}
 		//}
+		//applyDespikeVec(data);
 		filterData = data;
 		avgVal = (mxVal + mnVal) / 2.0;
 	}
@@ -2623,3 +2672,4 @@ void AnalysisDlg::OnBnClickedRadio2points()
 {
 	twoPointHeight = TRUE;
 }
+

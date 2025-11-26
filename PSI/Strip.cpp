@@ -313,7 +313,106 @@ bool WLI::CStrip::VProfile(SFrng& F, WLI::FRP Ch, int x, SROI& R) {
 
 	return true;
 }
+///***
+#include "..\WLI\FFT.h"
 
+void FilterFFT(int NFFT, float* pfPosition, float* fY, int N, int nFFTMin)
+{
+	CFFT FFT;
+	double* pfSignal = new double[NFFT];
+	double* pfSignalIm = new double[NFFT];
+	double* pfResult = new double[NFFT];
+	double* pfResultIm = new double[NFFT];
+	int i;
+
+	double fXMin = pfPosition[0];
+	double fXMax = pfPosition[N-1];
+
+	double fXStep = (fXMax - fXMin) / (NFFT - 1);
+	pfSignal[0] = fY[0];
+	pfSignal[NFFT - 1] = fY[N-1];
+
+	double fXTemp = fXMin;
+	int j = 0;
+	for (i = 1; i < NFFT; i++)
+	{
+		fXTemp += fXStep;
+		while (!(fXTemp >= pfPosition[j] && fXTemp < pfPosition[j+1]))
+		{
+			j++;
+			if (j >= N - 1)
+				break;
+		}
+		pfSignal[i] = fY[j]	+ (fXTemp - pfPosition[j])
+				* (fY[j+1]-fY[j])	/ (pfPosition[j+1] - pfPosition[j]);
+		}
+		memset(pfSignalIm, 0, NFFT*sizeof(double));
+		memset(pfResult, 0, NFFT * sizeof(double));
+		memset(pfResultIm, 0, NFFT * sizeof(double));
+
+		//			CFFT FFT;
+		FFT.fft_double(NFFT, 0, pfSignal, NULL/*pfSignalIm*/, pfResult, pfResultIm);
+
+		for (i = 0; i < NFFT; i++)
+		{
+			if (i <= nFFTMin)
+			{
+				pfSignal[i] = 0;
+				pfSignalIm[i] = 0;
+			}
+			else
+			{
+				pfSignal[i] = pfResult[i];
+				pfSignalIm[i] = pfResultIm[i];
+			}
+		}
+		FFT.fft_double(NFFT, 1, pfSignal, pfSignalIm, pfResult, pfResultIm);
+
+		double fMax = -1e60;
+		double fMin = 1e60;
+
+		for (i = 0; i < NFFT; i++)
+		{
+			if (pfResult[i] > fMax)
+				fMax = pfResult[i];
+			if (pfResult[i] < fMin)
+				fMin = pfResult[i];
+		}
+
+		// update signal
+		fY[N-1] = (unsigned short)pfResult[NFFT - 1];
+		fY[0] = (unsigned short)pfResult[0];
+		j = 0;
+		for (i = 1; i < N - 1; i++)
+		{
+			float x = 1.0 * i * (NFFT - 1) / (N - 1);
+			while (!((x >= j) && (x < j + 1)))
+			{
+				j++;
+				if (j >= N - 1)
+					break;
+			}
+			fY[i] = (float)	(pfResult[j] + (pfResult[j + 1] - pfResult[j]) * (x - j));
+		}
+
+	/*	int nPositionData1 = pEchoProbData->m_pnPositionDataSpace[2 * N1];
+		int nPositionData2 = pEchoProbData->m_pnPositionDataSpace[2 * (N2 - 1)];
+		double fPositionDataStep = fabs(1. * nPositionData2 - nPositionData1) / (N2 - N1 - 1);
+		for (i = N1; i < N2; i++)
+		{
+			pEchoProbData->m_pnPositionDataSpace[2 * i] = (long)(max(nPositionData1, nPositionData2) - i * fPositionDataStep);
+		}*/
+		if (pfSignal)
+			delete[] pfSignal;
+		if (pfSignalIm)
+			delete[] pfSignalIm;
+		if (pfResult)
+			delete[] pfResult;
+		if (pfResultIm)
+			delete[] pfResultIm;
+
+}
+///***
 bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 	// no sanity check from this point on
 	int sz = Strip.size();
@@ -328,7 +427,10 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 	SStat* pSt;
 	SIms** pI = &Imgs[st];
 	float* pX, * pZ1, * pZ2, * pZ3, * pZ4;
-
+///***
+	float *fX2 = NULL, *fY2 = NULL;
+	int i;
+///***
 	// background Image need to modify this also ARIF
 	bool bBg = false;
 	if (!ImBG.IsNull()) {
@@ -337,7 +439,12 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 		aver = GetRValue(cr); aveg = GetGValue(cr); aveb = GetBValue(cr);
 		avew = (aver + 2 * aveg + aveb) / 4;
 	}
-
+///***
+	int nFFTMin = 10;
+	int NFFT = 4096;
+	nFFTMin = DosUtil.ReadCfgINI(_T("Hardware"), _T("FFTMin"), nFFTMin);
+	NFFT = DosUtil.ReadCfgINI(_T("Hardware"), _T("NFFT"), NFFT);
+///***
 	float v1, v2, v3, v4;
 	switch (Ch) {
 	case WLI::WHTA:
@@ -346,6 +453,10 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 		pZ2 = F.Z.Get(WLI::GRNA, st, nSteps);
 		pZ3 = F.Z.Get(WLI::BLUA, st, nSteps);
 		pZ4 = F.Z.Get(WLI::WHTA, st, nSteps);
+///***
+		fX2 = new float[ed-st];
+		fY2 = new float[ed-st];
+///***
 		for (int i = st; i < ed; i++, pI++, pX++, pZ1++, pZ2++, pZ3++, pZ4++) {
 			*pX = (*pI)->PzPos_um; 
 			COLORREF cr = (*pI)->GetPixRGB(x, y);
@@ -372,6 +483,19 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 			if (!bBg) aveg += v2;
 			if (!bBg) aveb += v3;
 		}
+///***
+		for (i = 0; i < ed - st; i++)
+			fY2[i] -= avew / (ed - st);
+		FilterFFT(NFFT, fX2, fY2, ed - st, nFFTMin);
+		for (i = 0; i < ed - st; i++)
+			fY2[i] += avew / (ed - st);
+		pZ4 = F.Z.Get(WLI::WHTA, st, nSteps);
+		memcpy(pZ4, fY2, (ed - st) * sizeof(float));
+		if (fX2)
+			delete[] fX2;
+		if (fY2)
+			delete[] fY2;
+///***
 		F.MaxMin(WLI::REDA, R, sz, true);
 		F.MaxMin(WLI::GRNA, R, sz, true);
 		F.MaxMin(WLI::BLUA, R, sz, true);
@@ -806,7 +930,12 @@ bool WLI::CStrip::GenHMapV5(RCP::SRecipe& Rcp) {
 	float PS1sin, PS2sin, wlen = Strip.wlen_um[Ch], wlf;
 	SROI R(sz), R1;
 	R.EnsureValid(inc, sz);
-
+///***
+	int maxXdiff = 1000;
+	int minYdiff = 0;
+	maxXdiff = DosUtil.ReadCfgINI(_T("Hardware"), _T("MaxXdiff"), maxXdiff);
+	minYdiff = DosUtil.ReadCfgINI(_T("Hardware"), _T("MinYdiff"), minYdiff);
+///***
 	//if (ICC.isRegionType == ICC.LINE) { // 07122023
 	//	if (ICC.isOriental == ICC.HORIZONTAL) ICC.y2 = ICC.y1;
 	//	else ICC.x2 = ICC.x1;
@@ -848,6 +977,10 @@ bool WLI::CStrip::GenHMapV5(RCP::SRecipe& Rcp) {
 					Rsl = F.PeakPhas(WLI::PHS1, idx - 2, idx + 2, bPChg, sz);
 				}
 				else Rsl = BADDATA;
+///***
+				if ((pSt->imx - pSt->imn >= maxXdiff) || (pSt->fmax - pSt->fmin <= minYdiff))
+					Rsl = BADDATA;
+///***
 				Im16um.SetPixel(x, y, Rsl);
 			}
 		}

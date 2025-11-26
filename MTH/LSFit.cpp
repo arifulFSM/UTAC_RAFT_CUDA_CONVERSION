@@ -12,7 +12,8 @@ void CLSFit::Calc() {
 	}
 
 	M = (N * sumxy - sumx * sumy) / denom;
-	C = (sumy * sumx2 - sumx * sumxy) / denom;
+	//C = (sumy * sumx2 - sumx * sumxy) / denom;
+	C = (sumy - M * sumx) / N;
 	R = (sumxy - sumx * sumy / N) /    /* compute correlation coeff */
 		sqrt((sumx2 - (sumx * sumx) / N) *
 			(sumy2 - (sumy * sumy) / N));
@@ -182,6 +183,7 @@ double CLSFit::GetX(float y) {
 }
 
 float CLSFit::Get(float x) {
+	Calc();
 	return float(M * x + C);
 }
 

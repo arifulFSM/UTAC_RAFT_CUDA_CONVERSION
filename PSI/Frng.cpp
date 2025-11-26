@@ -308,10 +308,20 @@ float WLI::SFrng::PeakPhas(WLI::FRP Ch, int st, int ed, bool bPChg, int sz) {
 		return rsl;
 	}
 	else {
+		/*std::vector<std::pair<float,float>>data;
+		std::ofstream myfile; */
 		for (int i = st; i <= ed; i++, v++, z++) {
-			Fit.Add(*z, *v);
+			Fit.Add(*v, *z);
+			//data.push_back({ *z,*v });
 		}
-		float rsl = -float(Fit.GetX(0));
+		float rsl = -float(Fit.Get(0));
+		/*if (rsl < -100.0 || rsl > 100.0) {
+			myfile.open("D:/lineData.csv");
+			for (int i = 0; i < data.size(); i++) {
+				myfile << data[i].first << "," << data[i].second<<std::endl;
+			}
+			myfile.close();
+		}*/
 		if (rsl > 200.f) { /*ASSERT(0);*/ return BADDATA; }
 		return rsl;
 	}

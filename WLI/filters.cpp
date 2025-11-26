@@ -302,6 +302,56 @@ void Cfilters::ApplyDespike(std::vector<std::vector<float>>& img) {
 	img = despikeData;
 }
 
+//20250916
+void Cfilters::ApplyDespikeRowColWise(cv::Mat& ImCV) {
+	int wd = ImCV.cols;
+	int ht = ImCV.rows;
+
+	cv::Mat localIM = ImCV.clone();
+
+	int windowSize = 14;
+	int half = windowSize / 2;
+
+	// row wise despike.. 
+	for (int y = 0; y < ht - 1; y++) {
+		float* row = localIM.ptr<float>(y);
+		float* rowGlobal = ImCV.ptr<float>(y);
+
+		for (int i = half; i < wd - 1 - half; ++i) {
+			std::vector<float> win;
+			win.reserve(windowSize);
+			for (int j = -half; j <= half; ++j) {
+				win.push_back(row[i + j]);
+			}
+
+			std::vector<float>tmp = win;
+			std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
+			float median = tmp[half];
+
+			rowGlobal[i] = median;
+		}
+	}
+
+	//col wise despike.. 
+	localIM = ImCV.clone();
+	for (int x = 0; x < wd - 1; ++x) {
+		for (int i = half; i < ht - 1 - half; ++i) {
+			std::vector<float> win;
+			win.reserve(windowSize);
+			for (int j = -half; j <= half; ++j) {
+				win.push_back(localIM.at<float>(i+j, x));
+			}
+
+			std::vector<float>tmp = win;
+			std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
+			float median = tmp[half];
+
+			//cols[i] = median;
+			ImCV.at<float>(i, x) = median;
+		}
+	}
+}
+
 void Cfilters::ApplyFFT(std::vector<std::vector<float>>& img) {
 	convertArray(img);
 	FilterArray(pfPos, pfSig, m_nMin, m_nMax);
