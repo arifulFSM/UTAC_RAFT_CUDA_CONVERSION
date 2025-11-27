@@ -98,7 +98,7 @@ void MeasurementDlg::OnBnClickedMeLoadrcp() {
 }
 #include <thread>
 
-void MeasurementDlg::DataAcquisitionSimu() {
+/*void MeasurementDlg::DataAcquisitionSimu() {
 	// 1. READ FILE AND PROVIDE Z POSITIONS
 	Strip.DeallocAll();
 	CString folder = L"C:/WLIN/BMP/DATA/";
@@ -142,8 +142,63 @@ void MeasurementDlg::DataAcquisitionSimu() {
 			tmpImg.Detach();
 		}
 	}
-}
+}*/
+///***------------------
+void MeasurementDlg::DataAcquisitionSimu() {
+	// 1. READ FILE AND PROVIDE Z POSITIONS
+	Strip.DeallocAll();
+	CString folder;// = L"C:/WLIN/BMP/DATA-003/";
+	std::wstring str2;
+	TCHAR str3[256];
+	wsprintf(str3, L"%s", L"DATA");
+	str2 = DosUtil.ReadCfgINI(_T("Hardware"), _T("Folder"), str3);
+	folder = str2.c_str();
+	CString zFilePath = folder + L"DATA.csv";
+	std::string line;
+	std::ifstream zFile(zFilePath.GetString());
+	if (!zFile.is_open()) {
+		AfxMessageBox(L"Failed to open Z positions file", MB_ICONERROR);
+		return;
+	}
 
+	std::vector<float> zPositions;
+	std::getline(zFile, line); // Skip header line if exists
+	while (std::getline(zFile, line)) {
+		// Read z position from each line
+		std::istringstream iss(line);
+		std::string col1, col2;
+		if (std::getline(iss, col1, ',') && std::getline(iss, col2, ',')) {
+			try {
+				float z = std::stof(col2);
+				zPositions.push_back(z);
+			}
+			catch (const std::exception&) {
+			}
+		}
+	}
+
+	CString filePath;
+	IMGL::CIM tmpImg;
+	int nImages = 500;
+	nImages = DosUtil.ReadCfgINI(_T("Hardware"), _T("Images"), nImages);
+
+	for (int i = 0; i < nImages; ++i) {
+		filePath.Format(L"DATA_%d.BMP", i + 1);
+		filePath = folder + filePath; // Full path to the image file
+		//if (!tmpImg.Load(filePath)) { // Assuming IMGL::CIM::Load returns bool
+		if (tmpImg.Load(filePath) == E_FAIL) { // Assuming IMGL::CIM::Load returns bool
+			TRACE("Failed to load image: %ws\n", filePath.GetString());
+			continue;
+		}
+		WLI::SIms* pImN = Strip.NewImgs(zPositions[i]); // Use 0.0f or appropriate Z position
+		if (pImN) {
+			pImN->Im = tmpImg;
+			tmpImg.Detach();
+		}
+	}
+}
+///***
+/// 
 //20250916
 void MeasurementDlg::DataAcquisitionSimuCV() {
 	Strip.DeallocAllCV();
@@ -313,6 +368,8 @@ void MeasurementDlg::OnBnClickedMeasure() {
 	//getHeightDataCV();
 
 	//return;
+	BOOL bSimu1 = FALSE;
+	bSimu1 = (int)DosUtil.ReadCfgINI(_T("Hardware"), _T("Simu"), (int)bSimu1);
 	pRcp->AFCalibZ;  // Uncomment by Morsalin
 
 	IMGL::CIM ImA;
@@ -401,11 +458,13 @@ void MeasurementDlg::OnBnClickedMeasure() {
 			progress->SetPosProBar(0, 0, str);  // Uncomment by Morsalin
 			ShowMessage(str);
 			//if (i != 0) pWLIView->pMSet->LiftZMot(); // 12345
-			Dev.MC.get()->stage.GotoXY(p->Co.x, p->Co.y, 10000, true);
+			if (!bSimu1)
+				Dev.MC.get()->stage.GotoXY(p->Co.x, p->Co.y, 10000, true);
 			str.Format(L"Adjusting Auto Focus Position-%d...", i + 1);
 			progress->SetPosProBar(0, 0, str);  // Uncomment by Morsalin
 			ShowMessage(str);
-			pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);  // Uncomment by Morsalin //12345 //20250916 ARIF UNCOMMENTED
+			if (!bSimu1)
+				pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);  // Uncomment by Morsalin //12345 //20250916 ARIF UNCOMMENTED
 			progressCount.Format(L"%d / %d", stepNum, measureStep);
 			m_ProgressCount.SetWindowText(progressCount);
 			m_MeasurementProgress.SetPos(stepNum++);
@@ -432,7 +491,8 @@ void MeasurementDlg::OnBnClickedMeasure() {
 				m_MeasurementProgress.SetPos(stepNum++);
 				str.Format(L"Adjusting Centering Position-%d...", i + 1);
 				ShowMessage(str);
-				pWLIView->pMSet->CenteringFringe(80, 0.1); //12345
+				if (!bSimu1)
+					pWLIView->pMSet->CenteringFringe(80, 0.1); //12345
 				progressCount.Format(L"%d / %d", stepNum, measureStep);
 				m_ProgressCount.SetWindowText(progressCount);
 				m_MeasurementProgress.SetPos(stepNum++);
@@ -465,7 +525,13 @@ void MeasurementDlg::OnBnClickedMeasure() {
 			str.Format(L"Data Acquisition Ongoing Position-%d...", i + 1);
 			ShowMessage(str);
 			//return; //12345
-			DataAcquisition();
+			if (bSimu1)
+			{
+				DataAcquisitionSimu();
+				progress->ShowWindow(SW_HIDE);
+			}
+			else
+				DataAcquisition();
 			//DataAcquisitionSimuCV();//20250916
 			progressCount.Format(L"%d / %d", stepNum, measureStep);
 			m_ProgressCount.SetWindowText(progressCount);
@@ -741,13 +807,13 @@ void MeasurementDlg::DataAcquisitionCUDA() {
 
 
 void MeasurementDlg::getHeightDataCV(int idx) {
-	CString ResultPath = DosUtil.GetResultDir().c_str();
+	ResultPath = DosUtil.GetResultDir().c_str();
 	ResultPath.Format(L"%sHeightData\\%s\\", ResultPath, pRcp->RcpeName);
 
 	SYSTEMTIME st;
 	GetSystemTime(&st);
 	CString time;
-	time.Format(L"CV_P%d_%02d_%02d_%02d_%02d_%02d_RAW_SINGLE_CUDA", idx, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	time.Format(L"CV_P%d_%02d_%02d_%02d_%02d_%02d_CUDA", idx, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 
 	if (GetFileAttributes(ResultPath) == -1) {
 		if (!CreateDirectory(ResultPath, NULL));
@@ -988,12 +1054,13 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 	//DataAcquisition();
 	//getHeightData(1);
 	//DataAcquisitionSimuCV();
-	for (int i = 0; i < 10; i++)
-	{
+	//for (int i = 0; i < 10; i++)
+	//{
 		pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
 		DataAcquisitionCUDA();
 		getHeightDataCV(1);
-	}
-	
-	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, 0, 0);
+	//}
+		CString* pResultPath = new CString(ResultPath);
+	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, (WPARAM)pResultPath, 0);
+	//delete pResultPath;
 }

@@ -7,6 +7,7 @@
 #include <utility> 
 #include <map>
 #include <vector>
+#include "MeasurementDlg.h"//20251127
 
 // CSetupProp17Dlg dialog added by Mahedi Kamal 10212024
 class CInfoPanelMain;
@@ -134,4 +135,8 @@ public:
 	void drawLineOn2D(float x1, float y1, float x2, float y2, DWORD color, int annotationCnt/*, LPARAM lParam*/);
 	void applyDespike(float* pProfileYData, int sz);//20250916
 	void applyDespikeVec(std::vector<std::vector<float>>& data);
+	afx_msg LRESULT onUmAnalysisDlg(WPARAM wParam, LPARAM lParam);//20251127
+	void showDirect2D3D(CString path);//20251127
+	void readDataFromFile(CString fileName);//20251127
+	MeasurementDlg measurementDlgPtr;
 };

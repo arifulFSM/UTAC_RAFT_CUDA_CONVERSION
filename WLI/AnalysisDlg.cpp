@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cmath>
 #include "SRC\DosUtil.h"
+#include "wdefine.h"
 using namespace std;
 
 // AnalysisDlg dialog
@@ -120,6 +121,7 @@ BEGIN_MESSAGE_MAP(AnalysisDlg, CResizableDialog)
 	ON_BN_CLICKED(IDC_ABSDIST, &AnalysisDlg::OnBnClickedAbsdist)
 	ON_BN_CLICKED(IDC_RADIO_MINMAX, &AnalysisDlg::OnBnClickedRadioMinmax)
 	ON_BN_CLICKED(IDC_RADIO_2POINTS, &AnalysisDlg::OnBnClickedRadio2points)
+	ON_MESSAGE(UM_ANALYSIS_DLG,&AnalysisDlg::onUmAnalysisDlg)
 END_MESSAGE_MAP()
 
 // AnalysisDlg message handlers
@@ -2557,15 +2559,8 @@ void AnalysisDlg::readData() {
 			std::vector<float>vec;
 			col = 0;
 			while (std::getline(lineStream, value, ',')) {
-				//if (value == "") {
-				//	if (col >= 120 && col <= 150)value = "-17.47";//ARIF ADD for Uwe's plot. 
-				//	else value = "-54.00";
-				//}
 				float val;
 				val = static_cast<float>(stof(value));
-				/*if (val < -(42-10) || val > (42-10)) {
-					val = NAN;
-				}*/
 				vec.push_back(val);
 				mxVal = max(mxVal, val);
 				if (val < mnVal) {
@@ -2584,28 +2579,14 @@ void AnalysisDlg::readData() {
 	}
 
 	if (data.size() > 0) {
-		//for (int row = 0; row < data.size(); ++row) {
-		//	for (int col = 0; col < data[row].size(); ++col) {
-		//		/*data[row][col] -= mxVal;
-		//		data[row][col] = abs(data[row][col]);
-		//		data[row][col] *= 1000;*/
-		//		////if (data[row][col] == -100.00)data[row][col] = PEP_bNULLDATAGAPS;
-		//		float val = data[row][col];
-		//		freqCnt[val]++;
-		//	}
-		//}
-		//applyDespikeVec(data);
 		filterData = data;
 		avgVal = (mxVal + mnVal) / 2.0;
 	}
 }
 
 
-
-
 void AnalysisDlg::OnBnClickedDrawChart()
 {
-	// TODO: Add your control notification handler code here
 	readData();
 	if (data.size() > 0) {
 		if (m_hPEl)PEdestroy(m_hPEl);
@@ -2671,5 +2652,78 @@ void AnalysisDlg::OnBnClickedRadioMinmax()
 void AnalysisDlg::OnBnClickedRadio2points()
 {
 	twoPointHeight = TRUE;
+}
+
+//20251127
+afx_msg LRESULT AnalysisDlg::onUmAnalysisDlg(WPARAM wParam, LPARAM lParam) {
+	if (!bTabSelected) {
+		bTabSelected = TRUE;
+		CString* pResultPath = (CString*)wParam;
+		CString path = *pResultPath;
+		showDirect2D3D(path);
+		delete pResultPath;
+	}
+	return TRUE;
+}
+
+void AnalysisDlg::readDataFromFile(CString fileName){
+	data.clear();
+	freqCnt.clear();
+	multiProfile.clear();
+	multiProfileDist.clear();
+	heightTwoPt.clear();
+	isThreshed = false;
+	isMM = false;
+	mnVal = 1000.0F;
+	mxVal = -10000.0F;
+	mouseClickCount = 0;
+	dataLength = 0;
+	int row = 0, col = 0, mnX = -1, mnY = -1;
+	std::ifstream file(fileName);
+	std::string line;
+	while (std::getline(file, line)) {
+		std::istringstream lineStream(line);
+		std::string value;
+		std::vector<float>vec;
+		col = 0;
+		while (std::getline(lineStream, value, ',')) {
+			float val;
+			val = static_cast<float>(stof(value));
+			vec.push_back(val);
+			mxVal = max(mxVal, val);
+			if (val < mnVal) {
+				mnVal = val;
+				mnX = row + 1, mnY = col + 1;
+			}
+			col++;
+		}
+		//dataLength += vec.size();
+		data.push_back(vec);
+		vec.clear();
+		row++;
+	}
+	if (data.size() > 0) {
+		filterData = data;
+		avgVal = (mxVal + mnVal) / 2.0;
+	}
+}
+
+
+void AnalysisDlg::showDirect2D3D(CString path) {
+	readDataFromFile(path);
+	if (data.size() > 0) {
+		if (m_hPEl)PEdestroy(m_hPEl);
+		if (m_hPE2)PEdestroy(m_hPE2);
+		if (m_hPE3)PEdestroy(m_hPE3);
+		if (data.size() > 1)
+		{
+			showCharts();
+		}
+		else
+		{
+			lineProfile(data[0]);
+		}
+
+	}
 }
 
