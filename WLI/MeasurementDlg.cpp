@@ -282,6 +282,9 @@ void MeasurementDlg::LevelCV(cv::Mat& ImCV) {
 					if (dfNorDist < fMin) fMin = dfNorDist;
 					row[x] = dfNorDist;
 				}
+				else {
+					row[x] = NAN;
+				}
 			}
 		}
 		// Add offset to make all values positive
@@ -758,8 +761,7 @@ void MeasurementDlg::DataAcquisitionCUDA() {
 	IMGL::CIM tmp;
 
 	Dev.Cam.SetTriggerMode(CAM::PRICAM, true);
-	
-	Sleep(100);
+
 	for (int i = 0; i <= nTotal; i++) {
 		WLI::SIms* pImN = Strip.NewImgs(now);
 		/*while (!Dev.Cam.Grab(tmp, CAM::PRICAM, Dev.Cam.pCm[CAM::PRICAM]->subSampling));
@@ -833,6 +835,7 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 	
 	//Apply Despike row and col wise...
 	filter.ApplyDespikeRowColWise(ImCV);//20250916
+	//filter.ApplyDespikeRowColWise(ImCV);//20250916
 
 	//HeightData.clear();
 	float piezoRange = (pRcp->MERange / 4.0);
@@ -840,16 +843,16 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 	for (int y = 0; y < ht - 1; y++) {
 		float* row = ImCV.ptr<float>(y);
 		for (int x = 0; x < wd - 1; x++) {
-			if (row[x]<-(piezoRange - 10) || row[x]>(piezoRange - 10)) {
+			/*if (row[x]<-(piezoRange - 10) || row[x]>(piezoRange - 10)) {
 				row[x] = NAN;
-			}
+			}*/
 			HeightDataCV.push_back(row[x]);
 		}
 	}
 
 	//filter.removeOutliers(HeightDataCV, wd, ht);
 
-	for (int y = 0; y < ht - 1; y++) {
+	for (int y = ht - 2; y >= 0; y--) {
 		for (int x = 0; x < wd - 1; x++) {
 			myfile << HeightDataCV[y * (wd - 1) + x] << ',';
 		}
@@ -1056,9 +1059,14 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 	//DataAcquisitionSimuCV();
 	//for (int i = 0; i < 10; i++)
 	//{
+		DWORD tick1=GetTickCount();
 		pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
 		DataAcquisitionCUDA();
+		DWORD tick2 = GetTickCount();
 		getHeightDataCV(1);
+		DWORD tick3 = GetTickCount();
+
+		TRACE("tick1:%lf \t tick2: %lf \t tick3:%lf", double(tick1/1000.0), double(tick2/ 1000.0), double(tick3/ 1000.0));
 	//}
 		CString* pResultPath = new CString(ResultPath);
 	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, (WPARAM)pResultPath, 0);

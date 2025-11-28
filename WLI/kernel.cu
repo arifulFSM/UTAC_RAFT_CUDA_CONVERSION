@@ -141,11 +141,16 @@ __global__ void CollectZCHKernel(
 	//PhasePV5(d_pPHS1, d_pVIS1, chGray, st, ed, inc, inc2);// device function
 	float N, D;
 	float sn = 1.9999831f;
+	float visibilityThreshold = 500, visibility;
+	bool visibilityHigh= false;
 	for (int i = st; i < ed; i++) {
 		N = sn * (chGray[i - inc] - chGray[i + inc]);
 		D = chGray[i] * 2 - chGray[i + inc2] - chGray[i - inc2];
 		d_pPHS1[i] = /*(float)*/atan2(N, D);
 		//d_pVIS1[i] = /*(float)*/sqrtf(N * N + D * D);
+		if ((N * N + D * D) > visibilityThreshold) {
+			visibilityHigh |= 1;
+		}
 	}
 
 	//PeakPhas algorith implementation to calcualte the rsl
@@ -192,8 +197,12 @@ __global__ void CollectZCHKernel(
 	else
 		rsl=0.0f;
 	if (rsl > 200.f) rsl = BADDATA;
-
-	d_OutImg[y * wd + x] = rsl;
+	
+	if (!visibilityHigh) {
+		d_OutImg[y * wd + x] = BADDATA;
+	}
+	else
+		d_OutImg[y * wd + x] = rsl;
 	//d_OutImg[y * wd + x] = 5.0;// sum / float(numImages);
 }
 
@@ -241,8 +250,10 @@ extern "C" void PSO(std::vector<std::pair<cv::Mat, float>>& CVImgs,cv::Mat& CVIm
 	}
 	
 	std::vector<unsigned char>h_images;
-	MatsToBuffer(CVImgs, h_images);
-	long long int totalBytes = h_images.size(); // numImgs * ht * wd * channel
+	//MatsToBuffer(CVImgs, h_images);
+	long long int singleImg = CVImgs[0].first.total() * CVImgs[0].first.elemSize();;
+	long long int totalBytes = numImgs * singleImg;// h_images.size(); 
+	//long long int singleImg = (size_t)wd * (size_t)ht * channel * sizeof(unsigned char);
 
 	//allocate device memory
 	unsigned char* d_images=nullptr;
@@ -257,7 +268,10 @@ extern "C" void PSO(std::vector<std::pair<cv::Mat, float>>& CVImgs,cv::Mat& CVIm
 	cudaMalloc(&d_HeightData, (size_t)numImgs * sizeof(float));
 	 
 	//copy data from host to device
-	cudaMemcpy(d_images, h_images.data(), totalBytes, cudaMemcpyHostToDevice);
+	for (long long int i = 0; i < numImgs; ++i) {
+	cudaMemcpy((unsigned char*)d_images+i*singleImg, CVImgs[i].first.data, singleImg, cudaMemcpyHostToDevice);
+	}
+	//cudaMemcpy(d_images, h_images.data(), totalBytes, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_HeightData, pHeightData/*.data()*/, (size_t)numImgs * sizeof(float), cudaMemcpyHostToDevice);
 
 	//launch kernel

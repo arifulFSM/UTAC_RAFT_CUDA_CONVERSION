@@ -309,7 +309,7 @@ void Cfilters::ApplyDespikeRowColWise(cv::Mat& ImCV) {
 
 	cv::Mat localIM = ImCV.clone();
 
-	int windowSize = 14;
+	int windowSize = 10;
 	int half = windowSize / 2;
 
 	// row wise despike.. 

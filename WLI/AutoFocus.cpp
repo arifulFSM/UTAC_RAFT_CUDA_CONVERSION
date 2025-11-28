@@ -63,8 +63,6 @@ void CAutoFocus::CalcCoeffs(float& a, float& b, float& c) {
 
 float CAutoFocus::AutoFocus(int direction, double Range, double StepSize, BOOL multiDirection = FALSE) {
 	//gBCam.StopGrabbing();
-	std::ofstream myfile, myfile2;
-	myfile.open("E:/SmoothScore.csv");
 	//myfile2.open("F:/TEST/Score.csv");
 	if (multiDirection) {
 		Dev.MC.get()->stage.MoveR(MOT::MAXIS::Z, (direction * -1 * Range) / (2 * 1000.0f), 20000, true);
@@ -106,10 +104,11 @@ float CAutoFocus::AutoFocus(int direction, double Range, double StepSize, BOOL m
 		/*while (!Dev.Cam.Grab(BitmapImage, eID, Dev.Cam.pCm[eID]->subSampling)) {
 		}*/
 		Dev.Cam.ExecuteTrigger(CAM::PRICAM);
-		while (!Dev.Cam.GetBitmapImage(BitmapImage, CAM::PRICAM));
+		Dev.Cam.GetBitmapImage(BitmapImage, CAM::PRICAM);
 
 		wd = BitmapImage.GetWidth();
 		ht = BitmapImage.GetHeight();
+
 		//Sharpness.push_back({ calculateSharpness(), pos });
 		ScoreTemp = calculateSharpness();
 		if (Step == 0) {
@@ -125,7 +124,7 @@ float CAutoFocus::AutoFocus(int direction, double Range, double StepSize, BOOL m
 			BitmapImage.Detach();
 			Dev.Cam.SetTriggerMode(CAM::PRICAM, false);
 			Dev.MC.get()->stage.StopZJog();
-			return 0.010;
+			return -0.020;
 		}
 		//myfile << Sharpness[pos].first << "\n";
 		pos++;
@@ -253,7 +252,6 @@ float CAutoFocus::AutoFocus(int direction, double Range, double StepSize, BOOL m
 	else if ((maxi - 1) >= 0 && (maxi + 1) < Sharpness.size()) {
 	}*/
 	direction *= -1;	//reverse direction
-	myfile.close();
 	//myfile2.close();
 	//delete[] SmoothData;
 	delete[] cumLeft;

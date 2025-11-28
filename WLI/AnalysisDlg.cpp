@@ -857,7 +857,7 @@ void AnalysisDlg::lineProfile()
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
-	applyDespike(pProfileYData,cnt);// 20250916
+	//applyDespike(pProfileYData,cnt);// 20250916
 	//file.close();
 	//PEvset(m_hPEl, PEP_faXDATA, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
@@ -2561,6 +2561,9 @@ void AnalysisDlg::readData() {
 			while (std::getline(lineStream, value, ',')) {
 				float val;
 				val = static_cast<float>(stof(value));
+				if (isnan(static_cast<double>(val))) {
+					val = PEMSC_NONE;
+				}
 				vec.push_back(val);
 				mxVal = max(mxVal, val);
 				if (val < mnVal) {
@@ -2656,13 +2659,10 @@ void AnalysisDlg::OnBnClickedRadio2points()
 
 //20251127
 afx_msg LRESULT AnalysisDlg::onUmAnalysisDlg(WPARAM wParam, LPARAM lParam) {
-	if (!bTabSelected) {
-		bTabSelected = TRUE;
-		CString* pResultPath = (CString*)wParam;
-		CString path = *pResultPath;
-		showDirect2D3D(path);
-		delete pResultPath;
-	}
+	CString* pResultPath = (CString*)wParam;
+	CString path = *pResultPath;
+	showDirect2D3D(path);
+	delete pResultPath;
 	return TRUE;
 }
 
@@ -2689,6 +2689,9 @@ void AnalysisDlg::readDataFromFile(CString fileName){
 		while (std::getline(lineStream, value, ',')) {
 			float val;
 			val = static_cast<float>(stof(value));
+			if (isnan(static_cast<double>(val))) {
+				val = PEMSC_NONE;
+			}
 			vec.push_back(val);
 			mxVal = max(mxVal, val);
 			if (val < mnVal) {

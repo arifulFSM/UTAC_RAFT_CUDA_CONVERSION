@@ -458,7 +458,7 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 		fY2 = new float[ed-st];
 ///***
 		for (int i = st; i < ed; i++, pI++, pX++, pZ1++, pZ2++, pZ3++, pZ4++) {
-			*pX = (*pI)->PzPos_um; 
+			fX2[i - st] = *pX = (*pI)->PzPos_um;
 			COLORREF cr = (*pI)->GetPixRGB(x, y);
 			v1 = *pZ1 = GetRValue(cr);
 			v2 = *pZ2 = GetGValue(cr);
@@ -475,7 +475,7 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 				v4 = *pZ4 = (v1 + 3 * v2 + v3) / 5.f;
 				break;
 			default:
-				v4 = *pZ4 = (v1 + v2 + v3) / 3.f;
+				fY2[i-st] = v4 = *pZ4 = (v1 + v2 + v3) / 3.f;
 				break;
 			}
 			if (!bBg) avew += v4;
@@ -489,8 +489,12 @@ bool WLI::CStrip::CollectZCH(SFrng& F, int x, int y, SROI& R, WLI::FRP Ch) {
 		FilterFFT(NFFT, fX2, fY2, ed - st, nFFTMin);
 		for (i = 0; i < ed - st; i++)
 			fY2[i] += avew / (ed - st);
+		fY2[0] = fY2[1];
+		fY2[ed - st - 1] = fY2[ed - st - 2];
 		pZ4 = F.Z.Get(WLI::WHTA, st, nSteps);
-		memcpy(pZ4, fY2, (ed - st) * sizeof(float));
+		memset(pZ4, 0, nSteps * sizeof(float));
+		for (i = 0; i < ed - st; i++)
+			pZ4[i + st] = fY2[i];
 		if (fX2)
 			delete[] fX2;
 		if (fY2)
