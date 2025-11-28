@@ -58,6 +58,11 @@ AnalysisDlg::AnalysisDlg(CWnd* pParent /*=nullptr*/)
 	, depthLine(FALSE)
 	, isDistMarked(FALSE)
 	, twoPointHeight(FALSE)
+	, m_bIsSelectingLine(FALSE)  // ADD THIS   
+	, m_previewX1(0)              // ADD THIS
+	, m_previewY1(0)              // ADD THIS
+	, m_previewX2(0)              // ADD THIS
+	, m_previewY2(0)              // ADD THIS
 {
 
 	m_fProfileHeight = 0.0;
@@ -153,6 +158,11 @@ BOOL AnalysisDlg::OnInitDialog() {
 	((CButton*)GetDlgItem(IDC_HISTOGRAM_CONTROL))->EnableWindow(FALSE);
 	((CButton*)GetDlgItem(IDC_RADIO_MINMAX))->SetCheck(TRUE);
 	((CButton*)GetDlgItem(IDC_RADIO_2POINTS))->SetCheck(FALSE);
+
+	// 20252411
+	m_bIsSelectingLine = FALSE;
+	m_previewX1 = 0; m_previewY1 = 0;
+	// 20252411
 	return true;
 }
 
@@ -268,177 +278,208 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 	//	}
 	//}
 
-	// handle mouse event on line profile
-	//if (lParam == (LPARAM)m_hPEl) {
-	//	TCHAR  buffer[128];
-	//	double dX;
-	//	PEvget(m_hPEl, PEP_fCURSORVALUEX, &dX);
-	//	double dY;
-	//	PEvget(m_hPEl, PEP_fCURSORVALUEY, &dY);
-	//	double dZ;
-	//	PEvget(m_hPEl, PEP_fCURSORVALUEZ, &dZ);
-	//	POINT pt;
-	//	HOTSPOTDATA hsd;
-	//	PEvget(m_hPEl, PEP_ptLASTMOUSEMOVE, &pt);
-	//	if (HIWORD(wParam) == PEWN_LBUTTONUP && hsd.nHotSpotType == PEHS_DATAPOINT) {
-	//		// call PEgethotspot //
-	//		PEgethotspot(m_hPEl, pt.x, pt.y);
-	//		PEvget(m_hPEl, PEP_structHOTSPOTDATA, &hsd);
-	//		PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPBKCOLOR, PERGB(0, 50, 50, 50));
-	//		PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPTEXTCOLOR, PERGB(0, 100, 255, 50));
-	//		if (isMM)sprintf_s(buffer, TEXT(" X=%.0f[px]\t Y=%.0f[px]\t Height=%.4f[um]"), dZ, dX, dY / 1000.0);
-	//		else sprintf_s(buffer, TEXT(" X=%.0f[px]\t Y=%.0f[px]\t Height=%.4f[um]"), dZ, dX, dY);
-	//		PEszset(m_hPEl, PEP_szTRACKINGTEXT, buffer);
-	//		//}
-	//		if (HIWORD(wParam) == PEWN_LBUTTONUP) {
-	//			POINT pt;
-	//			HOTSPOTDATA hsd;
-	//			TCHAR buffer[128];
-	//			TCHAR buffer2[128];
-	//			// get last mouse location within control //
-	//			PEvget(m_hPEl, PEP_ptLASTMOUSEMOVE, &pt);
-	//			// call PEgethotspot //
-	//			PEgethotspot(m_hPEl, pt.x, pt.y);
-	//			// now look at HotSpotData structure //
-	//			PEvget(m_hPEl, PEP_structHOTSPOTDATA, &hsd);
-	//			if (hsd.nHotSpotType == PEHS_DATAPOINT) {
-	//			}
-	//		}
-	//		if (HIWORD(wParam) == PEWN_CUSTOMTRACKINGDATATEXT)
-	//		{
-	//			// v9 features 
-	//			double dX;
-	//			PEvget(m_hPEl, PEP_fCURSORVALUEX, &dX);
-	//			TCHAR  buffer[96];
-	//			double dY;
-	//			PEvget(m_hPEl, PEP_fCURSORVALUEY, &dY);
-	//			_stprintf(buffer, TEXT("X Axis: %.3f  \nY Axis: %.3f"), dX, dY);
-	//			if (dY < 0.0F)
-	//			{
-	//				//PEszset(m_hPEl, PEP_szTRACKINGTOOLTIPTITLE, TEXT("N E G A T I V E"));
-	//				PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPBKCOLOR, PERGB(0, 0, 0, 0));
-	//				PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPTEXTCOLOR, PERGB(0, 245, 0, 0));
-	//			}
-	//			else
-	//			{
-	//				//PEszset(m_hPEl, PEP_szTRACKINGTOOLTIPTITLE, TEXT("P O S I T I V E"));
-	//				PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPBKCOLOR, PERGB(0, 50, 50, 50));
-	//				PEnset(m_hPEl, PEP_dwTRACKINGTOOLTIPTEXTCOLOR, PERGB(0, 0, 225, 0));
-	//			}
-	//			PEszset(m_hPEl, PEP_szTRACKINGTEXT, buffer);
-	//		}
-	//	}
-	//}
 
-	//handle mouse event on 2D plot
+	// 20252411 -------------------- 
+	// ---------------------------------------------------------
+	// HANDLE 2D PLOT EVENTS (m_hPE2)
+	// ---------------------------------------------------------
 	if (lParam == (LPARAM)m_hPE2) {
-		TCHAR  buffer[128];
-		double dX;
+
+
+		double dX, dY, dZ;
 		PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
-		double dY;
 		PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
-		double dZ;
 		PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
-		POINT pt;
-		HOTSPOTDATA hsd;
-		PEvget(m_hPE2, PEP_ptLASTMOUSEMOVE, &pt);
-		dX /= m_xStep;
-		dY /= m_yStep;
 
-		// call PEgethotspot //
-		PEgethotspot(m_hPE2, pt.x, pt.y);
+		// Convert physical units to Grid Indices (Data Array Coordinates)
+		int maxRow = static_cast<int>(filterData.size());
+		int maxCol = (maxRow > 0) ? static_cast<int>(filterData[0].size()) : 0;
 
-		// now look at HotSpotData structure //
-		PEvget(m_hPE2, PEP_structHOTSPOTDATA, &hsd);
-		PEnset(m_hPE2, PEP_dwTRACKINGTOOLTIPBKCOLOR, PERGB(0, 50, 50, 50));
-		PEnset(m_hPE2, PEP_dwTRACKINGTOOLTIPTEXTCOLOR, PERGB(0, 100, 255, 50));
-		// 20251118
-		// _stprintf_s automatically chooses sprintf_s or swprintf_s based on Unicode/ANSI.
-		if (isMM)_stprintf_s(buffer, TEXT("X=%.0f\t  Y=%.0f\t Height=%.3f [um]"), dX * m_xStep, dY * m_yStep, dZ);
-		else _stprintf_s(buffer, TEXT("X=%.0f\t  Y=%.0f\t Height=%.3f [um]"), dX * m_xStep, dY * m_yStep, dZ);
-		PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
-		// left button event handle start 
-		if (HIWORD(wParam) == PEWN_LBUTTONUP && isCtrlPressed) {
-			m_lineProfileX1 = static_cast<int>(dX);
-			m_lineProfileY1 = static_cast<int>(dY);
-			pair<float, float>checkPoint = { m_lineProfileX1,m_lineProfileY1 };
-			BOOL flag = FALSE;
-			flag = isPointOnLine(checkPoint);
-			if (flag) {
-				Create2D();
-				lineProfile();
+		if (maxRow == 0 || maxCol == 0) return TRUE; // Safety check
+
+		int curCol = static_cast<int>(dX / m_xStep);
+		int curRow = static_cast<int>(dY / m_yStep);
+
+		// Clamp coordinates to valid data range
+		if (curCol < 0) curCol = 0;
+		if (curCol >= maxCol) curCol = maxCol - 1;
+		if (curRow < 0) curRow = 0;
+		if (curRow >= maxRow) curRow = maxRow - 1;
+
+		// Get the event type
+		WORD wNotifyCode = HIWORD(wParam);
+
+		// --- HANDLE MOUSE MOVE EVENTS ---
+		if (wNotifyCode == PEWN_MOUSEMOVE ||
+			wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT) {
+
+			// Display Tooltip (Always show coordinates)
+			TCHAR buffer[128];
+			if (isMM) {
+				_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f mm"),
+					dX, dY, dZ / 1000.0);
 			}
-			leftButtonClkCnt = 0;
-			//p1.reset();
-		}
-		else if (HIWORD(wParam) == PEWN_LBUTTONUP && isDistMarked) {
-			m_lineProfileX1 = static_cast<int>(dX);
-			m_lineProfileY1 = static_cast<int>(dY);
-			pointDist.push_back({ m_lineProfileX1,m_lineProfileY1 });
+			else {
+				_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f um"),
+					dX, dY, dZ);
+			}
+			PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
 
-			Create2D();
-		}
-		else if (HIWORD(wParam) == PEWN_LBUTTONUP && leftButtonClkCnt == 0) {
-			drawProfile = TRUE;
-			m_lineProfileX1 = static_cast<int>(dX);
-			m_lineProfileY1 = static_cast<int>(dY);
-			p1 = { m_lineProfileX1,m_lineProfileY1 };
-			height1Val = static_cast<float>(dZ);
-			//if(isCtrlPressed)isPointOnLine(p1);
-			leftButtonClkCnt = 1;
-		}
-		else if (HIWORD(wParam) == PEWN_LBUTTONUP && leftButtonClkCnt == 1) {
-			isDepth = TRUE;
-			depthLine = TRUE;
-			distLine = FALSE;
-			//isDist = FALSE;
-			m_lineProfileX2 = static_cast<int>(dX);
-			m_lineProfileY2 = static_cast<int>(dY);
-			p2 = { m_lineProfileX2,m_lineProfileY2 };
-			if (twoPointHeight == TRUE)flagDepth = TRUE;
-			else flagDepth = FALSE;
-			multiProfile.push_back({ { p1,p2 },flagDepth });
-			height2Val = static_cast<float>(dZ);
-			heightTwoPt.push_back({ height1Val,height2Val });
-			profileCnt++;
-			leftButtonClkCnt = 0;
-			Create2D();
-			/*if (isArea)areaProfile();
-			else */
-			lineProfile();
-			//AdditionalCalculations();
+			if (m_bIsSelectingLine) {
+				// Throttle updates to every 30ms (33 FPS)
+				static DWORD lastUpdateTime = 0;
+				DWORD currentTime = GetTickCount();
+
+				if (currentTime - lastUpdateTime > 100) {
+					lastUpdateTime = currentTime;
+
+					// Clamp coordinates
+					if (curCol < 0) curCol = 0;
+					if (curCol >= maxCol) curCol = maxCol - 1;
+					if (curRow < 0) curRow = 0;
+					if (curRow >= maxRow) curRow = maxRow - 1;
+
+					m_previewX2 = curCol;
+					m_previewY2 = curRow;
+					PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+					UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+				}
+			}
+
+			return TRUE; // Event handled
 		}
 
-		//left button event handle end
+		// --- HANDLE LEFT BUTTON UP (CLICK EVENTS) ---
+		if (wNotifyCode == PEWN_LBUTTONUP) {
 
-		// middle button event handle start
-		//if (HIWORD(wParam) == PEWN_MBUTTONCLK) {
-		//	drawProfile = TRUE;
-		//	m_lineProfileX1 = static_cast<int>(dX);
-		//	m_lineProfileY1 = static_cast<int>(dY);
-		//	p1 = { m_lineProfileX1,m_lineProfileY1 };
-		//}
-		//else if (HIWORD(wParam) == PEWN_MBUTTONUP) {
-		//	//isDepth = FALSE;
-		//	isDist = TRUE;
-		//	distLine = TRUE;
-		//	depthLine = FALSE;
-		//	profileCntDist++;
-		//	m_lineProfileX2 = static_cast<int>(dX);
-		//	m_lineProfileY2 = static_cast<int>(dY);
-		//	p2 = { m_lineProfileX2,m_lineProfileY2 };
-		//	//BOOL flag1 = isPointOnLine(p1);
-		//	//BOOL flag2 = isPointOnLine(p2);
-		//	multiProfileDist.push_back({ { p1,p2 },0 });
-		//	Create2D();
-		//	/*if (isArea)areaProfile();
-		//	else*/
-		//	lineProfile();
-		//	//AdditionalCalculations();
-		//}
-		// middle button event handle end
-		return true;
+			// =========================================================
+			// 1. HANDLE SPECIAL MODES (Ctrl Pressed or Distance Marker)
+			//    (Functionality from Old Code)
+			// =========================================================
+
+			// CASE A: Ctrl + Click (Check if point is on an existing line)
+			if (isCtrlPressed) {
+				m_lineProfileX1 = curCol; // Assuming curCol/curRow are the current mouse coords
+				m_lineProfileY1 = curRow;
+
+				pair<float, float> checkPoint = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+				BOOL flag = FALSE;
+				flag = isPointOnLine(checkPoint);
+
+				if (flag) {
+					Create2D();
+					lineProfile();
+				}
+
+				// Reset selection state if we were in the middle of one
+				m_bIsSelectingLine = FALSE;
+				//p1.reset();
+
+				return TRUE; // Exit early
+			}
+
+			// CASE B: Distance Marking Mode
+			else if (isDistMarked) {
+				m_lineProfileX1 = curCol;
+				m_lineProfileY1 = curRow;
+				pointDist.push_back({ (float)m_lineProfileX1, (float)m_lineProfileY1 });
+
+				Create2D();
+				return TRUE; // Exit early
+			}
+
+
+			// =========================================================
+			// 2. STANDARD LINE PROFILING (First & Second Click)
+			//    (Functionality from Your New Code + Missing Data Capture)
+			// =========================================================
+
+			// FIRST CLICK: Start line selection
+			else if (!m_bIsSelectingLine) {
+				m_bIsSelectingLine = TRUE;
+				isInsidePlot = TRUE;
+
+				// Store Start Point
+				m_previewX1 = curCol;
+				m_previewY1 = curRow;
+				m_previewX2 = curCol;
+				m_previewY2 = curRow;
+
+				// --- OLD CODE COMPATIBILITY: Capture initial data ---
+				m_lineProfileX1 = m_previewX1;
+				m_lineProfileY1 = m_previewY1;
+				p1 = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+				drawProfile = TRUE;
+
+				// Get Height 1 (dZ) safely
+				height1Val = (m_lineProfileY1 < maxRow && m_lineProfileX1 < maxCol) ?
+					filterData[m_lineProfileY1][m_lineProfileX1] : 0.0f;
+				// ----------------------------------------------------
+
+				// Disable zooming during selection
+				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
+				PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+				// Draw initial point preview
+				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+			}
+
+			// SECOND CLICK: Finalize line selection
+			else {
+				//ReleaseCapture();
+				m_bIsSelectingLine = FALSE;
+				isInsidePlot = FALSE;
+
+				// Re-enable zooming
+				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+				// Save final coordinates
+				m_lineProfileX1 = m_previewX1; // Start
+				m_lineProfileY1 = m_previewY1;
+				m_lineProfileX2 = curCol;      // End
+				m_lineProfileY2 = curRow;
+
+				// --- OLD CODE LOGIC INTEGRATION ---
+				isDepth = TRUE;
+				depthLine = TRUE;
+				distLine = FALSE; // Reset distLine as per old code
+
+				if (twoPointHeight == TRUE) flagDepth = TRUE;
+				else flagDepth = FALSE;
+
+				p2 = { (float)m_lineProfileX2, (float)m_lineProfileY2 };
+
+				// Get Height 2 (dZ) safely
+				height2Val = (m_lineProfileY2 < maxRow && m_lineProfileX2 < maxCol) ?
+					filterData[m_lineProfileY2][m_lineProfileX2] : 0.0f;
+
+				// Push to history vectors
+				multiProfile.push_back({ { p1, p2 }, flagDepth });
+				heightTwoPt.push_back({ height1Val, height2Val });
+				profileCnt++;
+				// ----------------------------------
+
+				// Redraw everything
+				Create2D();
+
+				// Logic for Area vs Line profile
+				/*if (isArea) areaProfile();
+				else */
+				lineProfile();
+
+				// AdditionalCalculations();
+			}
+
+			return TRUE; // Event handled
+		}
+
+		// Allow other events to propagate
+		return CResizableDialog::OnCommand(wParam, lParam);
 	}
+	// 20252411 ------------------------
 
 	// handle mouse event on 3D plot
 	if (lParam == (LPARAM)m_hPE3) {
@@ -500,7 +541,9 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 			}
 		}
 	}
+	// 20252411
 	return true;
+	//return CResizableDialog::OnCommand(wParam, lParam);
 }
 
 void AnalysisDlg::calcFrequency(std::vector<std::vector<float>>& data) {
@@ -820,7 +863,7 @@ void AnalysisDlg::lineProfile()
 	double Di = sqrt(pow(nX2 - nX1, 2) + pow(nY2 - nY1, 2));
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
 	double scale = Dr / Di;
-	int cnt = 0;
+
 	for (i = 0; i < nTotalCnt; i++) {
 		pProfileYData[i] = 0;
 		k = 0;
@@ -833,7 +876,7 @@ void AnalysisDlg::lineProfile()
 			if ((Row >= 0) && (Row < rowNumber) && (Col >= 0) && (Col < colNumber))
 			{
 				pProfileYData[i] += profile[Row][Col];
-				k++; cnt++;
+				k++;
 			}
 		}
 		if (k > 1)
@@ -857,10 +900,11 @@ void AnalysisDlg::lineProfile()
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
-	//applyDespike(pProfileYData,cnt);// 20250916
 	//file.close();
 	//PEvset(m_hPEl, PEP_faXDATA, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
+
+
 
 	// Manually Control Y Axis //
 	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
@@ -1057,6 +1101,8 @@ void AnalysisDlg::lineProfile()
 		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
 		//==========================================
 	}
+
+
 
 }
 
@@ -1268,7 +1314,7 @@ void AnalysisDlg::Create2D() {
 	PEnset(m_hPE2, PEP_bANNOTATIONSINFRONT, FALSE);
 
 	// Set Contour Color regions //
-	PEnset(m_hPE2, PEP_nCONTOURCOLORBLENDS, 4);
+	PEnset(m_hPE2, PEP_nCONTOURCOLORBLENDS, 8);
 	PEnset(m_hPE2, PEP_nCONTOURCOLORSET, PECCS_GREEN_YELLOW_RED);//PECCS_BLUE_GREEN_YELLOW_RED
 	PEnset(m_hPE2, PEP_nCONTOURCOLORALPHA, 255);
 	PEnset(m_hPE2, PEP_bSHOWLEGEND, TRUE);
@@ -1713,14 +1759,26 @@ void AnalysisDlg::Create2D() {
 		delete pMyZData;
 
 
+	// 20252411 / Fahim / -----------------------
+	// *** CRITICAL: Enable Mouse Move Event Generation ***
+	PEnset(m_hPE2, PEP_bMOUSECURSORCONTROL, TRUE);
+	PEnset(m_hPE2, PEP_bALLOWDATAHOTSPOTS, TRUE);
+
+	// Force ProEssentials to send WM_COMMAND messages for ALL mouse moves
+	PEnset(m_hPE2, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+	PEnset(m_hPE2, PEP_bCURSORPROMPTTRACKING, TRUE);
+
+	// Ensure the control sends messages to parent window
+	PEnset(m_hPE2, PEP_nCURSORPROMPTSTYLE, PECPS_ZVALUE);
+	PEnset(m_hPE2, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+	// 20252411 -------------------------------
+
 	// Set Various Other Properties ///
 	PEnset(m_hPE2, PEP_bBITMAPGRADIENTMODE, TRUE);
 	PEnset(m_hPE2, PEP_nQUICKSTYLE, PEQS_LIGHT_NO_BORDER);
 	PEnset(m_hPE2, PEP_nBORDERTYPES, PETAB_NO_BORDER);
 
 	// This will allow you to move cursor by clicking data point //
-	PEnset(m_hPE2, PEP_bMOUSECURSORCONTROL, TRUE);
-	PEnset(m_hPE2, PEP_bALLOWDATAHOTSPOTS, TRUE);
 
 	// Set the plotting method //
 	PEnset(m_hPE2, PEP_bALLOWCONTOURCOLORS, TRUE);
@@ -1818,7 +1876,6 @@ void AnalysisDlg::Create2D() {
 	PEnset(m_hPE2, PEP_bFORCE3DXNEWCOLORS, TRUE);
 
 }
-
 void AnalysisDlg::Create3D() {
 	if (m_hPE3)PEdestroy(m_hPE3);
 	RECT wndRect, itemRect;
@@ -2730,3 +2787,343 @@ void AnalysisDlg::showDirect2D3D(CString path) {
 	}
 }
 
+
+
+// 20251124
+void AnalysisDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
+{
+	// Use annotation indices 500 & 501 (high numbers avoid conflicts)
+	const int PREVIEW_LINE_START_IDX = 500;
+	const int PREVIEW_LINE_END_IDX = 501;
+
+	// Convert to Physical Units
+	double dX1 = x1 * m_xStep;
+	double dY1 = y1 * m_yStep;
+	double dX2 = x2 * m_xStep;
+	double dY2 = y2 * m_yStep;
+
+	int symbol = PEGAT_THICKSOLIDLINE;
+	DWORD color = PERGB(255, 5, 249, 253); // Same as line profile
+
+	// Segment 1: Start Point
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PREVIEW_LINE_START_IDX, &dX1);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, PREVIEW_LINE_START_IDX, &dY1);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, PREVIEW_LINE_START_IDX, &symbol);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, PREVIEW_LINE_START_IDX, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, PREVIEW_LINE_START_IDX, (void*)TEXT(""));
+
+	// Segment 2: End Point (continues from start)
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PREVIEW_LINE_END_IDX, &dX2);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, PREVIEW_LINE_END_IDX, &dY2);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, PREVIEW_LINE_END_IDX, &symbol);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, PREVIEW_LINE_END_IDX, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, PREVIEW_LINE_END_IDX, (void*)TEXT(""));
+
+
+	// 20251127 / Fahim / -----------------------------------
+	// 5. Redraw efficiently
+	PEreinitialize(m_hPE2);  // Recalculates internal structures
+	PEresetimage(m_hPE2, 0, 0);  // Redraws to cached bitmap
+
+	//::RedrawWindow(m_hPEl, );
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	// 6. Force immediate paint (no flicker because window isn't destroyed)
+	::UpdateWindow(m_hPE2);
+	// 20251127 -------------------------------------------
+}
+
+
+void AnalysisDlg::CreateTemporaryLineProfileWindow()
+{
+	if (m_hPEl && ::IsWindow(m_hPEl))
+		return;
+
+	RECT wndRect, itemRect;
+	this->GetWindowRect(&wndRect);
+	GetDlgItem(IDC_LINEPROFILE_VIEW)->GetWindowRect(&itemRect);
+	itemRect.left -= wndRect.left;
+	itemRect.top -= wndRect.top;
+	itemRect.right -= wndRect.left;
+	itemRect.bottom -= wndRect.top;
+
+	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+
+	// --- CRITICAL INITIALIZATION (missing in your version) ---
+	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+	PEnset(m_hPEl, PEP_nSUBSETS, 1);
+	PEnset(m_hPEl, PEP_nPOINTS, 2);
+	//PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+
+	// Optional but recommended
+	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+
+	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
+	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
+	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
+
+	// Manually Control Y Axis //
+	//mnVal = -50;
+	//mxVal = 50;
+	PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+	double d;
+	if (mxVal < 0.0) {
+		d = static_cast<double>(mnVal + (mnVal / 2.0));
+		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
+		d = static_cast<double>(mxVal + abs(mxVal) / 2.0);
+		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
+	}
+	else {
+		d = static_cast<double>(mnVal - (abs(mnVal) / 2.0));
+		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
+		d = static_cast<double>(mxVal + (mxVal / 2.0));
+		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
+
+	}
+
+	// Main title and sub title
+	TCHAR mainTitle[] = TEXT("|Line Profile|");
+	TCHAR subTitle[] = TEXT("||");
+	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
+	// Axis label
+	TCHAR szBufZ[] = TEXT("Height um");
+	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufZ);
+	TCHAR szBufX[] = TEXT("X um");
+	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
+
+	// 20251118/Fahim/ typecast
+	if (isDepth)PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Height Difference"));
+	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
+
+	// subset colors, line type, point type
+	DWORD dwArray[1] = { PERGB(255,5,249,253) };
+	int nLineTypes[] = { PELT_THICKSOLID };
+	int nPointTypes[] = { PEPT_DOTSOLID };
+
+	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+
+	// v9 features 
+	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+
+	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMOTHERTEXT, TRUE);
+
+	PEnset(m_hPEl, PEP_bALLOWTITLEHOTSPOTS, FALSE);
+	PEnset(m_hPEl, PEP_bALLOWSUBSETHOTSPOTS, TRUE);
+	PEnset(m_hPEl, PEP_bALLOWAXISLABELHOTSPOTS, FALSE);
+	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
+	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
+
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, TRUE);
+	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+
+	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
+
+	if (lowThresh != -1 && highThresh != -1) {
+		int nAIF = PEAIF_IN_FRONT;
+		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
+		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
+		double fXLoc[] = { lowThresh,highThresh };
+
+		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
+		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
+		PEvset(m_hPEl, PEP_dwaVERTLINEANNOTATIONCOLOR, dwArray, 2);
+		PEvsetcell(m_hPEl, PEP_naVERTLINEANNOTATIONINFRONT, 0, &nAIF);
+
+		CString low, high;
+		TCHAR* lowBar, * highBar;
+		int annotationCnt = 0, NoBold = 1;
+		low.Format(_T("|t %0.1lf  "), lowThresh);
+		lowBar = _tcsdup(low);
+		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, lowBar);
+		high.Format(_T("|t %0.1lf  "), highThresh);
+		highBar = _tcsdup(high);
+		annotationCnt++;
+		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, highBar);
+
+		// line from low bar to high bar for width================
+		annotationCnt++;
+		double x1d = (static_cast<double>(lowThresh));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
+		double y1d = (static_cast<double>(highY));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
+		int symbol = PEGAT_THICKSOLIDLINE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		DWORD col2 = PERGB(255, 255, 255, 255);
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		// 20251118
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+
+		annotationCnt++;
+		double x2d = (static_cast<double>(highThresh));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
+		double y2d = (static_cast<double>(highY));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
+		symbol = PEGAT_LINECONTINUE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		col2 = 0;
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		// 20251118 / Fahim/ typecast
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+		//========================
+
+		// width ===============================
+		annotationCnt++;
+
+		double xPos = (lowThresh)+(highThresh - lowThresh) / 2;
+		double yPos = highY + 1;
+		double widthDiff = (abs(lowThresh - highThresh)) * m_xStep;
+		CString width;
+		width.Format(_T("W:%0.2lf um"/* X = % d Y = % d */), widthDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+
+		TCHAR* widthVal;
+		widthVal = _tcsdup(width);
+
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
+		//double yPos = (static_cast<double>((y1 + 1))) * 10;
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
+		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		col2 = PERGB(255, 100, 255, 100);
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, widthVal);
+		symbol = TRUE;
+		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+		//======================================
+
+		/// height diff =======================
+		annotationCnt++;
+		x1d = (static_cast<double>(highThresh));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
+		y1d = (static_cast<double>(lowY));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
+		symbol = PEGAT_THICKSOLIDLINE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		col2 = PERGB(255, 255, 255, 255);
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+
+		annotationCnt++;
+		x2d = (static_cast<double>(highThresh));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
+		y2d = (static_cast<double>(highY));
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
+		symbol = PEGAT_LINECONTINUE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		col2 = 0;
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+
+
+		annotationCnt++;
+		xPos = highThresh + 2;
+		yPos = lowY + (highY - lowY) / 2;
+		double heighDiff = (abs(lowY - highY));
+		CString depth;
+		depth.Format(_T("D:%0.2lf um"/* X = % d Y = % d */), heighDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+
+		TCHAR* depthVal;
+		depthVal = _tcsdup(depth);
+
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
+		//double yPos = (static_cast<double>((y1 + 1))) * 10;
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
+		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+		col2 = PERGB(255, 100, 255, 100);
+		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, depthVal);
+		symbol = TRUE;
+		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+		//==========================================
+	}
+
+	// Render once
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+}
+
+void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
+{
+	// Safety: Ensure control exists
+	if (!m_hPEl || !::IsWindow(m_hPEl)) {
+		CreateTemporaryLineProfileWindow();
+		return;
+	}
+
+	// Safety: Ensure data exists
+	if (filterData.empty() || filterData[0].empty()) return;
+
+	// 1. Calculate geometry
+	double diffX = nX2 - nX1;
+	double diffY = nY2 - nY1;
+	long nTotalCnt = static_cast<long>(sqrt(diffX * diffX + diffY * diffY));
+	if (nTotalCnt < 20) nTotalCnt = 20;
+
+	// 2. Extract profile data
+	std::vector<float> profile(nTotalCnt);
+	float mnVal = 1e9f, mxVal = -1e9f;
+	int rowNumber = (int)filterData.size();
+	int colNumber = (int)filterData[0].size();
+
+	for (long i = 0; i < nTotalCnt; i++) {
+		double t = (double)i / (double)(nTotalCnt - 1);
+		int Row = (int)(nY1 + (diffY * t));
+		int Col = (int)(nX1 + (diffX * t));
+
+		float val = 0.0f;
+		if (Row >= 0 && Row < rowNumber && Col >= 0 && Col < colNumber) {
+			val = filterData[Row][Col];
+		}
+
+		profile[i] = val;
+		if (val < mnVal) mnVal = val;
+		if (val > mxVal) mxVal = val;
+	}
+
+	// 3. Update graph WITHOUT destroying it
+	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
+	PEvset(m_hPEl, PEP_faYDATA, profile.data(), nTotalCnt);
+	// B. Transfer the data pointer (Use .data() for raw C-style array pointer)
+	//PEvset(m_hPEl, PEP_faYDATA, profileYData.data(), nTotalCnt);
+
+	// 4. Update Y-axis scale
+	double dMin = mnVal - (fabs(mnVal) * 0.1);
+	double dMax = mxVal + (fabs(mxVal) * 0.1);
+	if (dMin == dMax) { dMin -= 1.0; dMax += 1.0; }
+
+	PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+	PEvset(m_hPEl, PEP_fMANUALMINY, &dMin, 1);
+	PEvset(m_hPEl, PEP_fMANUALMAXY, &dMax, 1);
+
+
+
+	// 5. Redraw efficiently
+	PEreinitialize(m_hPEl);  // Recalculates internal structures
+	PEresetimage(m_hPEl, 0, 0);  // Redraws to cached bitmap
+
+	//::RedrawWindow(m_hPEl, );
+	::InvalidateRect(m_hPEl, NULL, FALSE);
+	// 6. Force immediate paint (no flicker because window isn't destroyed)
+	::UpdateWindow(m_hPEl);
+
+}

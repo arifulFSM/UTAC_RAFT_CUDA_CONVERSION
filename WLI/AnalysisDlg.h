@@ -139,4 +139,20 @@ public:
 	void showDirect2D3D(CString path);//20251127
 	void readDataFromFile(CString fileName);//20251127
 	MeasurementDlg measurementDlgPtr;
+
+	//20251124 -----------------
+	// State variables
+	// Real-time mouse tracking state
+	BOOL m_bIsSelectingLine;     // TRUE when waiting for second click
+	int m_previewX1, m_previewY1; // First click (grid coordinates)
+	int m_previewX2, m_previewY2; // Current mouse position (grid coordinates)
+
+	BOOL isInsidePlot = false;
+
+	// Helper methods
+	void CreateTemporaryLineProfileWindow();
+	void UpdateLineProfileGraph(int x1, int y1, int x2, int y2);
+	void DrawPreviewLineOn2D(int x1, int y1, int x2, int y2);
+	void UpdateLineProfileGraph_Recreate(int nX1, int nY1, int nX2, int nY2);
+	// 20251124 ------------------
 };
