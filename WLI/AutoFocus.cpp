@@ -124,7 +124,7 @@ float CAutoFocus::AutoFocus(int direction, double Range, double StepSize, BOOL m
 			BitmapImage.Detach();
 			Dev.Cam.SetTriggerMode(CAM::PRICAM, false);
 			Dev.MC.get()->stage.StopZJog();
-			return -0.020;
+			return -0.025;
 		}
 		//myfile << Sharpness[pos].first << "\n";
 		pos++;

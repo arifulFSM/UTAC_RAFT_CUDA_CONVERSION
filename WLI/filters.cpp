@@ -352,6 +352,26 @@ void Cfilters::ApplyDespikeRowColWise(cv::Mat& ImCV) {
 	}
 }
 
+void Cfilters::applyDespike1DVec(float* pProfileYData, int sz)
+{
+	int windowSize = 10;
+	int half = windowSize / 2;
+
+	for (int i = half; i < sz - half; ++i) {
+		std::vector<float> win;
+		win.reserve(windowSize);
+		for (int j = -half; j <= half; ++j) {
+			win.push_back(pProfileYData[i + j]);
+		}
+
+		std::vector<float>tmp = win;
+		std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
+		float median = tmp[half];
+
+		pProfileYData[i] = median;
+	}
+}
+
 void Cfilters::ApplyFFT(std::vector<std::vector<float>>& img) {
 	convertArray(img);
 	FilterArray(pfPos, pfSig, m_nMin, m_nMax);
