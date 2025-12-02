@@ -81,16 +81,16 @@ public:
 	BOOL isDistMarked;
 
 
-	//[alexander line profile 
-	float m_fProfileMark[6];
-	float m_fProfileHeight;
-	int m_nProfileWidth;
-	bool m_bBestfit;
-	float m_fk;
-	float m_fb;
-	float m_fLevel1;
-	float m_fLevel2;
-	int nProfileType;
+	////[alexander line profile 
+	//float m_fProfileMark[6];
+	//float m_fProfileHeight;
+	//int m_nProfileWidth;
+	//bool m_bBestfit;
+	//float m_fk;
+	//float m_fb;
+	//float m_fLevel1;
+	//float m_fLevel2;
+	//int nProfileType;
 	long nProfCnt;
 	float* pProfile;
 	float* pProfileXData, * pProfileYData;
@@ -99,8 +99,6 @@ public:
 	int nLeftBorder, nRightBorder;
 	BOOL isCtrlPressed;
 
-	void AdditionalCalculations(/*std::vector<std::vector<float>>& data*/);
-	void ShowProfile(int nLeftBorder, int nRightBorder);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	//]
