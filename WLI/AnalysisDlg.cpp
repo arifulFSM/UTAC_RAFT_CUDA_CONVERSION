@@ -25,6 +25,7 @@ using namespace std;
 #pragma comment(lib,"PEGRP64G.lib")
 
 //10212024 / ARIFUL ISLAM
+// 20251124 / Mohammad Fahim Hossain / Implemented Real-Time Line Profile graph
 
 //IMPLEMENT_DYNAMIC(CSetupProp17Dlg, CDialogEx)
 
@@ -510,37 +511,62 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 		PEszset(m_hPE3, PEP_szTRACKINGTEXT, buffer);
 	}
 
+	// 20251202 
 	if (lParam == (LPARAM)m_hPEl) {
-
-
 		double dX, dY;
 		PEvget(m_hPEl, PEP_fCURSORVALUEX, &dX);
 		PEvget(m_hPEl, PEP_fCURSORVALUEY, &dY);
 
 		HOTSPOTDATA hsd;
 		PEvget(m_hPEl, PEP_structHOTSPOTDATA, &hsd);
-		//KEYDOWNDATA hsd;
+
 		if (HIWORD(wParam) == PEWN_LBUTTONUP && hsd.nHotSpotType == PEHS_DATAPOINT) {
+
+			// Instead of using the mouse cursor dX, use the actual data point's X value.
+			// hsd.w1 is the Subset Index (usually 0 in your case)
+			// hsd.w2 is the Point Index
+			double exactPointX = 0.0;
+
+			// Retrieve the exact X value stored in the graph for this point index
+			//PEvgetcell(m_hPEl, PEP_faXDATA, hsd.w2, &exactPointX);
+			// Retrieve the EXACT double precision X value from the graph
+			PEvgetcellEx(m_hPEl, PEP_faXDATAII, hsd.w1, hsd.w2, &exactPointX);
+
+
+
 			mouseClickCount++;
-			if (mouseClickCount & 1) {// odd click	
-				PEvgetcellEx(m_hPEl, PEP_faXDATA, hsd.w1, hsd.w2, &thresh1);
-				x1 = static_cast<float>(dX);
-				y1 = static_cast<float>(dY);
+			if (mouseClickCount & 1) { // odd click (first point)
+				// Use exactPointX instead of dX
+				//x1 = static_cast<float>(exactPointX);
+				x1 = static_cast<float>(exactPointX);
+				y1 = static_cast<float>(dY); // Y is usually fine, or you can get PEP_faYDATA similarly
+				thresh1 = x1;
+
+				TRACE(_T("First Click Snap: %.4lf -> %.4f\n"), exactPointX, x1);
 			}
-			else {
-				x2 = static_cast<float>(dX);
+			else { // even click (second point)
+				// Use exactPointX instead of dX
+				//x2 = static_cast<float>(exactPointX);
+				x2 = static_cast<float>(exactPointX);
 				y2 = static_cast<float>(dY);
-				PEvgetcellEx(m_hPEl, PEP_faXDATA, hsd.w1, hsd.w2, &thresh2);
+				thresh2 = x2;
+
+				TRACE(_T("Second Click Snap: %.4lf -> %.4f\n"), exactPointX, x2);
 			}
+
 			if (mouseClickCount > 1) {
-				lowThresh = min(x1, x2);
-				highThresh = max(x1, x2);
+				lowThresh = min(thresh1, thresh2);
+				highThresh = max(thresh1, thresh2);
 				lowY = min(y1, y2);
 				highY = max(y1, y2);
+
+				// Redraw the line profile with annotations
 				lineProfile();
 			}
 		}
 	}
+	// 20251202
+
 	// 20252411
 	return true;
 	//return CResizableDialog::OnCommand(wParam, lParam);
@@ -805,7 +831,9 @@ void AnalysisDlg::lineProfile()
 	// This will allow you to move cursor by clicking data point //
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	// Reducing HOTSPOT size ensures the user must click ON the line.
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 
 	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
 	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
@@ -844,12 +872,11 @@ void AnalysisDlg::lineProfile()
 	nTotalCnt = static_cast<long>((long)sqrt((nX2 - nX1 + 1) * (nX2 - nX1 + 1)
 		+ (nY2 - nY1 + 1) * (nY2 - nY1 + 1)));
 	// build a profile
-	float* pProfileXData, * pProfileYData;
 	vector<float>dataVal;
 	float mxVal = -1e9, mnVal = 1e9;
 	//float fMin = 1e20, fMax = -1e20;
-	pProfileXData = new float[nTotalCnt];
-	pProfileYData = new float[nTotalCnt];
+	double* pProfileXData = new double[nTotalCnt];
+	float* pProfileYData = new float[nTotalCnt];   
 
 	PEnset(m_hPEl, PEP_nSUBSETS, 1);//nTotalCnt
 	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
@@ -891,7 +918,10 @@ void AnalysisDlg::lineProfile()
 			mnVal = pProfileYData[i];
 		}
 		dataVal.push_back(pProfileYData[i]);
-		float xval = (static_cast<float>(i)) * scale;
+		double xval = (static_cast<double>(i)) * scale;
+		//20251201
+		pProfileXData[i] = xval;  // <-- Set actual X coordinate
+		//20251201
 		CString xAxisVal;
 		xAxisVal.Format(_T("%0.2lf"), xval);
 		//TCHAR* xAxis;
@@ -901,7 +931,7 @@ void AnalysisDlg::lineProfile()
 
 	}
 	//file.close();
-	//PEvset(m_hPEl, PEP_faXDATA, pProfileXData, nTotalCnt);
+	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
 
 
@@ -967,7 +997,7 @@ void AnalysisDlg::lineProfile()
 	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
 	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
 
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, TRUE);
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, FALSE);
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
 
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
@@ -981,7 +1011,9 @@ void AnalysisDlg::lineProfile()
 		int nAIF = PEAIF_IN_FRONT;
 		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
 		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
-		double fXLoc[] = { lowThresh,highThresh };
+		// 20251201
+		double fXLoc[] = { static_cast<double>(lowThresh), static_cast<double>(highThresh) };
+		// 20251201
 
 		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
 		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
