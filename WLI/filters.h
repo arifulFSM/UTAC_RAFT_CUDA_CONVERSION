@@ -39,4 +39,11 @@ public:
 	void ApplyDespike(std::vector<std::vector<float>>& img);
 	void ApplyFFT(std::vector<std::vector<float>>& img);
 	void ApplyDespikeRowColWise(cv::Mat& ImCV);
+
+	//20251201
+	void iterativeAverageFill(int maxIterations, std::vector<float>& HeightData, int ht, int wd);
+	/*void RBFInterpolation(std::vector<std::vector<float>>& img);
+private:
+	float RBFInterpolatePoint(const std::vector<std::vector<float>>& img, int ht, int wd, int px, int py, int kRadius, float cShape);
+	bool SolveLinearSystem(std::vector<std::vector<float>>& A, std::vector<float>& b, std::vector<float>& x);*/
 };

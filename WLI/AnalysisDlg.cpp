@@ -1615,7 +1615,7 @@ void AnalysisDlg::Create2D() {
 				annotationCnt++;
 				x1d = (static_cast<double>(x1)) * m_xStep;
 				y1d = (static_cast<double>(y1)) * m_yStep;
-				symbol = PEGAT_THICKSOLIDLINE;
+				symbol = PEGAT_THINSOLIDLINE;
 				col2 = PERGB(255, 255, 255, 255);
 				PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
 				PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);

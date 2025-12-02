@@ -155,4 +155,9 @@ public:
 	void DrawPreviewLineOn2D(int x1, int y1, int x2, int y2);
 	void UpdateLineProfileGraph_Recreate(int nX1, int nY1, int nX2, int nY2);
 	// 20251124 ------------------
+	
+	//20251201 ============================
+	Cfilters filter;
+	std::vector<std::vector<float>>RBFData;
+	//=====================================
 };

@@ -13,6 +13,7 @@
 #include <MotionControlDlg.h> //Morsalinn
 #include <chrono> // Morsalinn
 #include "MTH/LSF3D.h"//20250916
+#include <kernel.h>//20251201
 
 // MeasurementDlg dialog
 
@@ -837,10 +838,9 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 	filter.ApplyDespikeRowColWise(ImCV);//20250916
 	//filter.ApplyDespikeRowColWise(ImCV);//20250916
 
-	//HeightData.clear();
 	float piezoRange = (pRcp->MERange / 4.0);
 	HeightDataCV.clear();
-	for (int y = 0; y < ht - 1; y++) {
+	for (int y = ht-2; y >=0; y--) {
 		float* row = ImCV.ptr<float>(y);
 		for (int x = 0; x < wd - 1; x++) {
 			/*if (row[x]<-(piezoRange - 10) || row[x]>(piezoRange - 10)) {
@@ -850,9 +850,9 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 		}
 	}
 
-	//filter.removeOutliers(HeightDataCV, wd, ht);
+	filter.iterativeAverageFill(50, HeightDataCV, ht-1, wd-1);
 
-	for (int y = ht - 2; y >= 0; y--) {
+	for (int y = 0; y < ht-1; y++) {
 		for (int x = 0; x < wd - 1; x++) {
 			myfile << HeightDataCV[y * (wd - 1) + x] << ',';
 		}

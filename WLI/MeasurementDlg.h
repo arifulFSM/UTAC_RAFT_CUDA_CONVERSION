@@ -97,4 +97,5 @@ public:
 	Histogram His5;// 20250916
 	afx_msg void OnBnClickedButtonGen2d3d();//20250916
 	CString ResultPath;//20251127
+	
 };

@@ -544,3 +544,170 @@ void Cfilters::revertArray(double* pfSig, std::vector<std::vector<float>>& img) 
 		}
 	}
 }
+
+//20251201=====================
+//static inline float phi(float r, float c) {
+//	return std::sqrt(r * r + c * c);
+//}
+//
+//bool Cfilters::SolveLinearSystem(std::vector<std::vector<float>>& A, std::vector<float>& b, std::vector<float>& x) {
+//	int n = A.size();
+//	x.resize(n);
+//	for (int i = 0; i < n; ++i) {
+//		float maxVal = std::abs(A[i][i]);
+//		int pivot = i;
+//		
+//		for (int r = i + 1; r < n; ++r) {
+//			if(std::abs(A[r][i]) > maxVal) {
+//				maxVal = std::abs(A[r][i]);
+//				pivot = r;
+//			}
+//		}
+//
+//		if (pivot != i) {
+//			std::swap(A[i], A[pivot]);
+//			std::swap(b[i], b[pivot]);
+//		}
+//
+//		if (std::abs(A[i][i]) < 1e-12f)
+//			return false; // singular
+//
+//		for (int r = i + 1; r < n; r++) {
+//			float f = A[r][i] / A[i][i];
+//			for (int c = i; c < n; c++)
+//				A[r][c] -= f * A[i][c];
+//			b[r] -= f * b[i];
+//		}
+//	}
+//
+//	// Back substitution
+//	for (int i = n - 1; i >= 0; i--) {
+//		float sum = b[i];
+//		for (int c = i + 1; c < n; c++)
+//			sum -= A[i][c] * x[c];
+//		x[i] = sum / A[i][i];
+//	}
+//	return true;
+//}
+//
+//float Cfilters::RBFInterpolatePoint(const std::vector < std::vector<float>>& img,
+//	int ht, int wd,
+//	int px, int py,
+//	int kRadius = 5,
+//	float cShape = 2.0f) {
+//
+//	std::vector<std::pair<std::pair<int, int>, float>>pts;
+//
+//	for (int dy = -kRadius; dy <= kRadius; dy++) {
+//		for (int dx = -kRadius; dx <= kRadius; dx++) {
+//			int y = py + dy;
+//			int x = px + dx;
+//			if (x >= 0 && x < wd && y >= 0 && y <= ht) {
+//				float v = img[y][x];
+//				if (isnan(static_cast<double>(v))) {
+//					pts.push_back({ {x,y},v });
+//				}
+//			}
+//		}
+//	}
+//
+//	int N = pts.size();
+//	if (N < 3) {
+//		return 0;
+//	}
+//
+//	std::vector<std::vector<float>>A(N, std::vector<float>(N));
+//	std::vector<float>b(N), w;
+//
+//	for (int i = 9; i < N; ++i) {
+//		float xi = pts[i].first.first;
+//		float yi = pts[i].first.second;
+//		b[i] = pts[i].second;
+//
+//		for (int j = 0; j < N; ++j) {
+//			float xj = pts[j].first.first;
+//			float yj = pts[j].first.second;
+//
+//			float dx = xi - xj;
+//			float dy = yi - yj;
+//			float r = std::sqrt(dx * dx + dy * dy);
+//			A[i][j] = phi(r, cShape);
+//		}
+//	}
+//
+//	if (!SolveLinearSystem(A, b, w)) {
+//		return 0;
+//	}
+//
+//	float result = 0.0;
+//	for (int i = 0; i < N; ++i) {
+//		float xi = pts[i].first.first;
+//		float yi = pts[i].first.second;
+//
+//		float dx = px - xi;
+//		float dy = py - yi;
+//		float r = std::sqrt(dx * dx + dy * dy);
+//		result += w[i] * phi(r, cShape);
+//	}
+//	return result;
+//}
+//
+//void Cfilters::RBFInterpolation(std::vector<std::vector<float>>& img) {
+//	int ht = img.size();
+//	int wd = img[0].size();
+//
+//	std::vector<std::vector<float>> out = img;
+//
+//#pragma omp parallel for
+//	for (int y = 0; y < ht; y++) {
+//		for (int x = 0; x < wd; ++x) {
+//			if (isnan(static_cast<double>(img[y][x]))) {
+//				out[y][x] = RBFInterpolatePoint(img, ht, wd, x, y);
+//			}
+//		}
+//	}
+//}
+
+
+void Cfilters::iterativeAverageFill(int maxIterations, std::vector<float>& HeightData, int ht, int wd) {
+	std::vector<float>data = HeightData;
+	for (int iter = 0; iter < maxIterations; iter++) {
+		bool changed = false;
+		HeightData = data;
+		for (int r = 0; r < ht; r++) {
+			for (int c = 0; c < wd; c++) {
+				if (std::isnan(static_cast<double>(HeightData[r * (wd) + c]))) {
+					double sum = 0.0;
+					int count = 0;
+
+					// Check 4-connected neighbors
+					int dr[] = { -1, 1, 0, 0, +1, +1, -1, -1 };
+					int dc[] = { 0, 0, -1, 1, -1, +1, -1, +1 };
+
+					for (int i = 0; i < 8; i++) {
+						int nr = r + dr[i];
+						int nc = c + dc[i];
+
+						if (nr >= 0 && nr < ht && nc >= 0 && nc < wd) {
+							if (!std::isnan(static_cast<double>(HeightData[nr * (wd) + nc]))) {
+								sum += data[nr * (wd) + nc];
+								count++;
+							}
+						}
+					}
+
+					if (count > 0) {
+						HeightData[r * (wd) + c] = sum / count;
+						changed = true;
+					}
+				}
+			}
+		}
+		data = HeightData;
+		if (!changed) break;
+	}
+	HeightData = data;
+}
+
+
+//=============================
