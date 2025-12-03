@@ -2955,7 +2955,7 @@ void AnalysisDlg::DrawLineAnnotations()
 	// Draw second line (green) - state 4 (complete)
 	if (m_lineDrawingState == 4) {
 		DrawLineAnnotation(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2,
-			2, 3, PERGB(255, 0, 255, 0));
+			2, 3, PERGB(255, 255, 0, 0));
 	}
 }
 
