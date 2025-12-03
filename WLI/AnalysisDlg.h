@@ -158,4 +158,19 @@ public:
 	Cfilters filter;
 	std::vector<std::vector<float>>RBFData;
 	//=====================================
+	// 20251202 / Fahim / Line Profile update
+	// Line drawing state
+	int m_lineDrawingState;  // 0=none, 1=drawing line1, 2=drawing line2, 3=both complete
+	double m_line1X1, m_line1Y1, m_line1X2, m_line1Y2;  // First line coordinates
+	double m_line2X1, m_line2Y1, m_line2X2, m_line2Y2;  // Second line coordinates
+	BOOL m_isDrawingCurrentLine;  // TRUE while dragging
+	double m_currentLineStartX, m_currentLineStartY;  // Temp storage during drag
+
+	void StartLineDrawing();
+	void DrawLineAnnotation(double x1, double y1, double x2, double y2, int startIdx, int endIdx, DWORD color);
+	void DrawLineAnnotations();
+	void ClearLineAnnotations();
+	double CalculateLineMedianX(double x1, double x2);
+	void DisplayDistanceBetweenLines();
+	//======================================
 };
