@@ -518,8 +518,52 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 		WORD wNotifyCode = HIWORD(wParam);
 
-		// Handle Left Button Up - This is the primary event for older ProEssentials versions
+		// MOUSE MOVE - Real-time line preview
+		if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT) {
+			// Show preview only when we're waiting for the second point of a line
+			if (m_lineDrawingState == 1) {
+				// Preview Line 1
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, dX, dY,
+					0, 1, PERGB(255, 255, 0, 0)); // Solid Red; For Light red = PERGB(255, 255, 0, 0)
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+			else if (m_lineDrawingState == 3) {
+				// Preview Line 2 (show Line 1 + preview of Line 2)
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
+					0, 1, PERGB(255, 255, 0, 0)); // Solid red Line 1
+				DrawLineAnnotation(m_line2X1, m_line2Y1, dX, dY,
+					2, 3, PERGB(255, 255, 0, 0)); 
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+
+			return TRUE;
+		}
+
+		// LEFT BUTTON UP - Capture points
 		if (wNotifyCode == PEWN_LBUTTONUP) {
+
+			// If we already completed both lines, clicking again clears everything
+			if (m_lineDrawingState == 4) {
+				// Clear and restart
+				m_lineDrawingState = 0;
+				ClearLineAnnotations();
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+				// Don't return - let it fall through to capture this click as the new Line 1 start
+			}
+
 			// State machine for collecting 4 clicks (2 points per line)
 			if (m_lineDrawingState == 0) {
 				// First click - start of line 1
@@ -527,15 +571,15 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				m_line1Y1 = dY;
 				m_lineDrawingState = 1;
 
-				// Visual feedback
+				// Visual feedback - just a dot
 				ClearLineAnnotations();
 				int symbol = PEGAT_DOTSOLID;
 				DWORD color = PERGB(255, 255, 0, 0);
-				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 0, &dX);
-				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 0, &dY);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 0, &m_line1X1);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 0, &m_line1Y1);
 				PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, 0, &symbol);
 				PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, 0, &color);
-				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 0, (void*)TEXT("P1"));
+				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 0, (void*)TEXT(""));
 
 				PEreinitialize(m_hPEl);
 				PEresetimage(m_hPEl, 0, 0);
@@ -564,18 +608,18 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				m_line2Y1 = dY;
 				m_lineDrawingState = 3;
 
-				// Draw line 1 + point for line 2 start
+				// Draw line 1 + dot for line 2 start
 				ClearLineAnnotations();
 				DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
 					0, 1, PERGB(255, 255, 0, 0));
 
 				int symbol = PEGAT_DOTSOLID;
-				DWORD color = PERGB(255, 0, 255, 0);
-				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 2, &dX);
-				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 2, &dY);
+				DWORD color = PERGB(255, 255, 0, 0);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 2, &m_line2X1);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 2, &m_line2Y1);
 				PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, 2, &symbol);
 				PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, 2, &color);
-				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 2, (void*)TEXT("P3"));
+				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 2, (void*)TEXT(""));
 
 				PEreinitialize(m_hPEl);
 				PEresetimage(m_hPEl, 0, 0);
@@ -609,7 +653,10 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 			m_lineDrawingState = 0;
 			m_isDrawingCurrentLine = FALSE;
 			ClearLineAnnotations();
-			lineProfile(); // Redraw clean graph
+			PEreinitialize(m_hPEl);
+			PEresetimage(m_hPEl, 0, 0);
+			::InvalidateRect(m_hPEl, NULL, FALSE);
+			::UpdateWindow(m_hPEl);
 			return TRUE;
 		}
 	}
@@ -1190,9 +1237,11 @@ void AnalysisDlg::lineProfile()
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, FALSE); // Disable data point snapping
 	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
 	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
 
 	// Show instruction in subtitle
-	TCHAR subtitle[] = TEXT("Left-click twice to draw each line | Right-click to clear");
+	TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
 	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);
 
 
@@ -2912,7 +2961,6 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 	PEvset(m_hPEl, PEP_fMANUALMAXY, &dMax, 1);
 
 
-
 	// 5. Redraw efficiently
 	PEreinitialize(m_hPEl);  // Recalculates internal structures
 	PEresetimage(m_hPEl, 0, 0);  // Redraws to cached bitmap
@@ -2927,7 +2975,8 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 void AnalysisDlg::DrawLineAnnotation(double x1, double y1, double x2, double y2,
 	int startIdx, int endIdx, DWORD color)
 {
-	int symbol = PEGAT_THICKSOLIDLINE;
+	int symbol = PEGAT_MEDIUMSOLIDLINE;
+	
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, startIdx, &x1);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, startIdx, &y1);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, startIdx, &symbol);
@@ -2952,7 +3001,7 @@ void AnalysisDlg::DrawLineAnnotations()
 			0, 1, PERGB(255, 255, 0, 0));
 	}
 
-	// Draw second line (green) - state 4 (complete)
+	// Draw second line (red) - state 4 (complete)
 	if (m_lineDrawingState == 4) {
 		DrawLineAnnotation(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2,
 			2, 3, PERGB(255, 255, 0, 0));
@@ -2989,13 +3038,10 @@ double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
 	double leftX = min(line1MedianX, line2MedianX);
 	double rightX = max(line1MedianX, line2MedianX);
 
-	// Get Y position (average of all Y coordinates)
-	double avgY = (m_line1Y1 + m_line1Y2 + m_line2Y1 + m_line2Y2) / 4.0;
-
 	// Get Y range for positioning the connecting line
 	double maxY = max(max(m_line1Y1, m_line1Y2), max(m_line2Y1, m_line2Y2));
 	double minY = min(min(m_line1Y1, m_line1Y2), min(m_line2Y1, m_line2Y2));
-	double connectY = maxY + (maxY - minY) * 0.1; // Slightly above the lines
+	double connectY = maxY + (maxY - minY) * 0.15; // Above the lines
 
 	// Annotation index for distance display (starting from 4 to avoid line annotations)
 	int annotationIdx = 4;
@@ -3020,7 +3066,7 @@ double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
 	// Add distance text at midpoint
 	annotationIdx++;
 	double textX = (leftX + rightX) / 2.0;
-	double textY = connectY + (maxY - minY) * 0.05;
+	double textY = connectY + (maxY - minY) * 0.08;
 
 	CString distText;
 	distText.Format(_T("Distance: %.2f um"), distance);
@@ -3040,14 +3086,111 @@ double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
 
 	delete[] distValue;
 
-	// Also display in status or output
-	CString msg;
-	msg.Format(_T("Line 1 Median X: %.2f um\nLine 2 Median X: %.2f um\nDistance: %.2f um"),
+	// Output to debug or status bar (remove AfxMessageBox for smoother UX)
+	TRACE(_T("Line 1 Median X: %.2f um | Line 2 Median X: %.2f um | Distance: %.2f um\n"),
 		line1MedianX, line2MedianX, distance);
-	AfxMessageBox(msg, MB_OK | MB_ICONINFORMATION);
 }*/
 
 void AnalysisDlg::DisplayDistanceBetweenLines()
+{
+	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
+	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
+	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
+
+	// 2. Calculate vertical distance (absolute difference)
+	double distance = fabs(line2MedianY - line1MedianY);
+
+	// 3. Determine geometric points for the vertical ruler
+	// Top and Bottom Y coordinates
+	double bottomY = min(line1MedianY, line2MedianY);
+	double topY = max(line1MedianY, line2MedianY);
+
+	// Determine X range to position the ruler to the right of the data
+	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
+	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
+	double xRange = maxX - minX;
+	if (xRange == 0) xRange = 1.0; // Prevent zero logic if lines are vertical
+
+	// Place the ruler 10% to the right of the right-most data point
+	double rulerX = maxX + (xRange * 0.10);
+
+	// 4. Setup Annotations
+	int annotationIdx = 4; // Start index
+	int symbol;
+	DWORD color = PERGB(255, 255, 255, 255); // Yellow
+
+	// --- Draw Vertical Line (Start Point) ---
+	//symbol = PEGAT_THICKSOLIDLINE;
+	symbol = PEGAT_THINSOLIDLINE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// --- Draw Vertical Line (End Point) ---
+	annotationIdx++;
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// Added for arrow
+	// --- Annotation 3: OVERLAY Bottom Arrow Symbol ---
+	// This point is placed right on top of the starting point (bottomY) to add the arrow.
+	annotationIdx++;
+	symbol = PEGAT_ARROWSOLID_LARGE; // South-facing arrow at the bottom
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// --- Annotation 4: OVERLAY Top Arrow Symbol ---
+	// This point is placed right on top of the ending point (topY) to add the arrow.
+	annotationIdx++;
+	symbol = PEGAT_ARROWSOLID_LARGE; // North-facing arrow at the top
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+	// Ended
+
+	// --- Draw Distance Text (To the side) ---
+	annotationIdx++;
+
+	// Text Position: Vertical center of the line, slightly right of the ruler
+	double textY = (bottomY + topY) / 2.0;
+	double textX = rulerX + (xRange * 0.02); // Small offset from the line
+
+	CString distText;
+	distText.Format(_T("dY: %.2f um"), distance);
+	TCHAR* distValue = _tcsdup(distText);
+
+	symbol = PEGAT_NOSYMBOL; // Just text
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	// Styling
+	int shadow = TRUE;
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+
+	delete[] distValue;
+
+	// Force Graph Update (Optional but recommended to see changes immediately)
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+}
+
+
+/*void AnalysisDlg::DisplayDistanceBetweenLines() // vertical
 {
 	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
 	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
@@ -3125,4 +3268,4 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	// Force a repaint to ensure annotations appear immediately
 	PEreinitialize(m_hPEl);
 	PEresetimage(m_hPEl, 0, 0);
-}
+}*/
