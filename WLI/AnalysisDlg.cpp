@@ -1519,7 +1519,8 @@ void AnalysisDlg::Create2D() {
 					heightDiff = (abs(heightTwoPt[profile - 1].first - heightTwoPt[profile - 1].second));
 					/*if (isMM)height.Format("Height diff= %0.2lf mm", heightDiff);
 					else height.Format("Height diff= %0.2lf um", heightDiff * 1000.0F);*/
-					height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
 
 				}
 				else
@@ -1561,7 +1562,8 @@ void AnalysisDlg::Create2D() {
 					heightDiff = (abs(mxHeight - mnHeight));
 					//CString height;
 					/*if (isMM)height.Format("Height diff= %0.2lf mm", heightDiff);
-					else*/ height.Format(_T("HD:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					else*/ //height.Format(_T("HD:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
 				}
 
 				TCHAR* heightDiffVal;
@@ -3117,7 +3119,7 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	// 4. Setup Annotations
 	int annotationIdx = 4; // Start index
 	int symbol;
-	DWORD color = PERGB(255, 255, 255, 255); // Yellow
+	DWORD color = PERGB(255, 255, 255, 255); // WHITE
 
 	// --- Draw Vertical Line (Start Point) ---
 	//symbol = PEGAT_THICKSOLIDLINE;
@@ -3164,10 +3166,11 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 
 	// Text Position: Vertical center of the line, slightly right of the ruler
 	double textY = (bottomY + topY) / 2.0;
-	double textX = rulerX + (xRange * 0.02); // Small offset from the line
+	//double textX = rulerX + (xRange * 0.25); // Small offset from the line
+	double textX = rulerX + 55; // Small offset from the line
 
 	CString distText;
-	distText.Format(_T("dY: %.2f um"), distance);
+	distText.Format(_T("%.2f um"), distance);
 	TCHAR* distValue = _tcsdup(distText);
 
 	symbol = PEGAT_NOSYMBOL; // Just text
@@ -3180,7 +3183,7 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	// Styling
 	int shadow = TRUE;
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
-	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 200);
 
 	delete[] distValue;
 
