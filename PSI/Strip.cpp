@@ -1138,7 +1138,7 @@ bool WLI::CStrip::GenHMapV5CVCUDA(RCP::SRecipe& Rcp) {
 
 		//CUDA Kernel Call ========================
 
-		PSO(CVImgs,CVIm16um, inc);
+		//PSO(CVImgs,CVIm16um, inc);
 
 		break;
 	case RCP::PSI:

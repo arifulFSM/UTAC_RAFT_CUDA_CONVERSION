@@ -37,49 +37,47 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Simul|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Simul|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -106,8 +104,8 @@
     <TargetName>$(ProjectName)_LT</TargetName>
     <OutDir>C:\WLIN\</OutDir>
     <IntDir>$(OutDir)Debug\</IntDir>
-    <IncludePath>$(CUDA_PATH)\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(CUDA_PATH)\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Simul|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -160,7 +158,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)CAM\;$(SolutionDir)MOTOR\;$(PYLON_DEV_DIR)lib\x64;C:\Program Files\Basler\pylon 7\Development\lib\x64;C:\opencv\build\x64\vc16\lib</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)$(ProjectName)_LT.exe</OutputFile>
-      <AdditionalDependencies>cuda.lib;cudart.lib;opencv_world490d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world4120d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -405,13 +403,17 @@
     <ClInclude Include="BaslerCameraDlg.h" />
     <ClInclude Include="BaslerColourCam.h" />
     <ClInclude Include="BaslerMonoCam.h" />
+    <ClInclude Include="BottomTabCtrl.h" />
     <ClInclude Include="CameraDlg.h" />
     <ClInclude Include="CameraProp.h" />
     <ClInclude Include="CamSetDlg.h" />
+    <ClInclude Include="CardPanel.h" />
     <ClInclude Include="CEOPiezo.h" />
     <ClInclude Include="ChuckMask.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="ColorButton.h" />
     <ClInclude Include="ColorDefine.h" />
+    <ClInclude Include="ColorSliderCtrl.h" />
     <ClInclude Include="Coor.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="DataList.h" />
@@ -427,6 +429,8 @@
     <ClInclude Include="Glbs.h" />
     <ClInclude Include="HeightDlg.h" />
     <ClInclude Include="HeightPlot.h" />
+    <ClInclude Include="IconBorderButton.h" />
+    <ClInclude Include="IconButton.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="LevelSetupDlg.h" />
     <ClInclude Include="MainFrm.h" />
@@ -435,12 +439,15 @@
     <ClInclude Include="MeasurementProperties.h" />
     <ClInclude Include="MeParam.h" />
     <ClInclude Include="MoCtrl.h" />
+    <ClInclude Include="ModernTabCtrl.h" />
     <ClInclude Include="MoreSettingDlg.h" />
     <ClInclude Include="MotionControlDlg.h" />
     <ClInclude Include="MotPropDlg.h" />
     <ClInclude Include="MParam.h" />
     <ClInclude Include="MPList.h" />
     <ClInclude Include="MPoint.h" />
+    <ClInclude Include="ObjectiveLensCtrl.h" />
+    <ClInclude Include="OperationDlg.h" />
     <ClInclude Include="Pattern.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Pegrpapi.h" />
@@ -456,9 +463,11 @@
     <ClInclude Include="ResultDlg.h" />
     <ClInclude Include="RoughnessDlg.h" />
     <ClInclude Include="ScanPar.h" />
+    <ClInclude Include="SignalTower.h" />
     <ClInclude Include="Spot.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StripDlg.h" />
+    <ClInclude Include="StyleStatic.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TiltControlDlg.h" />
     <ClInclude Include="WaferMap.h" />
@@ -522,12 +531,16 @@
     <ClCompile Include="BaslerCameraDlg.cpp" />
     <ClCompile Include="BaslerColourCam.cpp" />
     <ClCompile Include="BaslerMonoCam.cpp" />
+    <ClCompile Include="BottomTabCtrl.cpp" />
     <ClCompile Include="CameraDlg.cpp" />
     <ClCompile Include="CameraProp.cpp" />
     <ClCompile Include="CamSetDlg.cpp" />
+    <ClCompile Include="CardPanel.cpp" />
     <ClCompile Include="CEOPiezo.cpp" />
     <ClCompile Include="ChuckMask.cpp" />
     <ClCompile Include="Color.cpp" />
+    <ClCompile Include="ColorButton.cpp" />
+    <ClCompile Include="ColorSliderCtrl.cpp" />
     <ClCompile Include="Coor.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="DataList.cpp" />
@@ -541,6 +554,8 @@
     <ClCompile Include="Glbs.cpp" />
     <ClCompile Include="HeightDlg.cpp" />
     <ClCompile Include="HeightPlot.cpp" />
+    <ClCompile Include="IconBorderButton.cpp" />
+    <ClCompile Include="IconButton.cpp" />
     <ClCompile Include="LevelSetupDlg.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="MeasProgressDlg.cpp" />
@@ -548,11 +563,14 @@
     <ClCompile Include="MeasurementProperties.cpp" />
     <ClCompile Include="MeParam.cpp" />
     <ClCompile Include="MoCtrl.cpp" />
+    <ClCompile Include="ModernTabCtrl.cpp" />
     <ClCompile Include="MoreSettingDlg.cpp" />
     <ClCompile Include="MotionControlDlg.cpp" />
     <ClCompile Include="MotPropDlg.cpp" />
     <ClCompile Include="MPList.cpp" />
     <ClCompile Include="MPoint.cpp" />
+    <ClCompile Include="ObjectiveLensCtrl.cpp" />
+    <ClCompile Include="OperationDlg.cpp" />
     <ClCompile Include="Pattern.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -572,9 +590,11 @@
     <ClCompile Include="ResultRAFT.cpp" />
     <ClCompile Include="ResultDlg.cpp" />
     <ClCompile Include="RoughnessDlg.cpp" />
+    <ClCompile Include="SignalTower.cpp" />
     <ClCompile Include="Spot.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="StripDlg.cpp" />
+    <ClCompile Include="StyleStatic.cpp" />
     <ClCompile Include="TiltControlDlg.cpp" />
     <ClCompile Include="WaferMap.cpp" />
     <ClCompile Include="WaferParam.cpp" />
@@ -596,6 +616,38 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\test.jpg" />
+    <Image Include="..\IMG\bitmap\home.bmp" />
+    <Image Include="..\IMG\bitmap\z down.bmp" />
+    <Image Include="..\IMG\bitmap\z up.bmp" />
+    <Image Include="..\IMG\FSM_RAFT_VERSION.bmp" />
+    <Image Include="..\IMG\icons\bottom left.ico" />
+    <Image Include="..\IMG\icons\bottom right.ico" />
+    <Image Include="..\IMG\icons\bottom-left.ico" />
+    <Image Include="..\IMG\icons\bottom-right.ico" />
+    <Image Include="..\IMG\icons\down.ico" />
+    <Image Include="..\IMG\icons\download.ico" />
+    <Image Include="..\IMG\icons\home.ico" />
+    <Image Include="..\IMG\icons\home2.ico" />
+    <Image Include="..\IMG\icons\left.ico" />
+    <Image Include="..\IMG\icons\log-in.ico" />
+    <Image Include="..\IMG\icons\logout.ico" />
+    <Image Include="..\IMG\icons\measurement.ico" />
+    <Image Include="..\IMG\icons\right-arrow.ico" />
+    <Image Include="..\IMG\icons\save.ico" />
+    <Image Include="..\IMG\icons\settings.ico" />
+    <Image Include="..\IMG\icons\slow-motion (1).ico" />
+    <Image Include="..\IMG\icons\top left (1).ico" />
+    <Image Include="..\IMG\icons\top right.ico" />
+    <Image Include="..\IMG\icons\top-left.ico" />
+    <Image Include="..\IMG\icons\top-right.ico" />
+    <Image Include="..\IMG\icons\up.ico" />
+    <Image Include="..\IMG\icons\z down.ico" />
+    <Image Include="..\IMG\icons\z up.ico" />
+    <Image Include="..\IMG\icons\z-down.ico" />
+    <Image Include="..\IMG\icons\z-up.ico" />
+    <Image Include="..\IMG\icons\Z__10_-removebg-preview.ico" />
+    <Image Include="..\IMG\icons\Z__11_-removebg-preview.ico" />
+    <Image Include="..\IMG\icons\Z__12_-removebg-preview.ico" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\bmp00001.bmp" />
     <Image Include="res\RAFT.ico" />
@@ -612,7 +664,5 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

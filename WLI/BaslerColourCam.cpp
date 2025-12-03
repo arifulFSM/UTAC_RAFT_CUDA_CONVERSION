@@ -233,7 +233,7 @@ void CAM::CBaslerColourCam::DisplayImage() {
 
 BOOL CAM::CBaslerColourCam::StartStream(SCtx& _Ctx, USHORT ID) {
 	if (!m_camera.IsOpen() || m_camera.IsGrabbing()) {
-		AfxMessageBox(L"Camera Not Open Or Another Instance Running");
+		//AfxMessageBox(L"Camera Not Open Or Another Instance Running");
 		return FALSE;
 	}
 	Ctx = _Ctx;

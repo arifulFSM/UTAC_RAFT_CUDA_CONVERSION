@@ -36,6 +36,9 @@ IMPLEMENT_DYNCREATE(CWLIView, CResizableFormView)
 
 BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_WM_DESTROY()
+	ON_WM_CTLCOLOR() //BACKGROUND COLOR //20250112 - Mahmudul Haque
+	ON_WM_TIMER()
+
 	ON_COMMAND(ID_WLI_CAMERA, &CWLIView::OnWliCamera1)
 	ON_COMMAND(ID_WLI_MOTIONCONTROLLER, &CWLIView::OnWliMotioncontroller)
 	ON_COMMAND(ID_WLI_ACQUIRE, &CWLIView::OnWliAcquire)
@@ -66,6 +69,12 @@ CWLIView::~CWLIView() {
 void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	CResizableFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_TAB1, cTab);
+	DDX_Control(pDX, IDC_BUTTON_LOAD, loadButton);
+	DDX_Control(pDX, IDC_BUTTON_SAVE, saveButton);
+	DDX_Control(pDX, IDC_BUTTON_SETTING, settingButton);
+	DDX_Control(pDX, IDC_BUTTON_LOGIN, loginButton);
+	DDX_Control(pDX, IDC_SIGNAL_TOWER, m_signalTower);
+	DDX_Control(pDX, IDC_BUTTON_MOTION, cameraMotionButton);
 }
 
 CWLIView* CWLIView::GetView() {
@@ -123,8 +132,45 @@ void CWLIView::OnInitialUpdate() {
 		pHeight->Create(IDD_DIALOG4, &cTab);
 		//cTab.AddTab(pHeight, CString("Height").GetBuffer(), nTab++);
 	}
+	//20250112 - Mahmudul Haque
+	operationDlg = new COperationDlg();
+	if (operationDlg) {
+		operationDlg->Create(IDD_OPERATION_DLG, &cTab);
+		cTab.AddTab(operationDlg, CString("Operation").GetBuffer(), nTab++);
+	}
+
+	//cTab.SetCurSel(5);
+
+	//20250112 - Mahmudul Haque -------start ---------
+	AddResizedControl(IDC_FSM_LOGO, TOP_LEFT, TOP_LEFT);
+	
+	AddResizedControl(IDC_SIGNAL_TOWER, TOP_RIGHT, TOP_RIGHT);
+	AddResizedControl(IDC_BUTTON_LOGIN, TOP_RIGHT, TOP_RIGHT);
+
+
+	//AddResizedControl(IDC_CAMERA, CSize(0, 80), CSize(0, 80));
+	AddResizedControl(IDC_WAFERMAP, CSize(0, 95), CSize(0, 95));
+
+	//AddResizedControl(IDC_BUTTON_LOAD, CSize(65, 0), CSize(65, 0));
+	//AddResizedControl(IDC_BUTTON_SAVE, CSize(65, 0), CSize(65, 0));
+	//AddResizedControl(IDC_BUTTON_SETTING, CSize(65, 0), CSize(65, 0));
+	//AddResizedControl(IDC_BUTTON_MOTION, CSize(65, 0), CSize(65, 0));
+
+
+	m_brushBack.CreateSolidBrush(RGB(255, 255, 255)); //235, 236, 237 setting dialog background color
+
+	setButtonIcon(48);
+
+
+
+	UpdateTimeLabel();       // Show time immediately
+	SetTimer(1, 1000, NULL);
+	//20250112 ------------end ------------------
 
 	AnchorControls();
+
+
+
 }
 
 #ifdef _DEBUG
@@ -358,4 +404,73 @@ afx_msg LRESULT CWLIView::OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam) {
 		}
 	}
 	return 0;
+}
+
+//20250112 - Mahmudul Haque
+void CWLIView::setButtonIcon(int size)
+{
+	loadButton.SetIconByID(IDI_ICON1,size);
+	saveButton.SetIconByID(IDI_ICON5, size);
+	settingButton.SetIconByID(IDI_ICON6, size);
+	loginButton.SetIconByID(IDI_ICON2, size);
+	cameraMotionButton.SetIconByID(IDI_ICON7, size);
+}
+
+//20250112 - Mahmudul Haque
+//HBRUSH CWLIView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+//{
+//	if (nCtlColor == CTLCOLOR_DLG)
+//	{
+//		return m_brushBack;
+//	}
+//	return CResizableFormView::OnCtlColor(pDC, pWnd, nCtlColor);
+//}
+
+HBRUSH CWLIView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	// --- NEW CODE STARTS HERE ---
+	// Check if the control requesting color is your specific static text
+	if (pWnd->GetDlgCtrlID() == IDC_TIME_STAMP)
+	{
+		// Option A: Set the text background to Transparent (lets the brush show through)
+		pDC->SetBkMode(TRANSPARENT);
+
+		// Option B: OR Set the text background color explicitly (must match the brush)
+		// pDC->SetBkColor(RGB(255, 255, 0)); 
+
+		// Return the brush for the static control
+		return m_brushBack;
+	}
+	// --- NEW CODE ENDS HERE ---
+
+
+	// Your EXISTING code for the Dialog background
+	if (nCtlColor == CTLCOLOR_DLG)
+	{
+		return m_brushBack;
+	}
+
+	return CResizableFormView::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void CWLIView::UpdateTimeLabel()
+{
+	CTime currentTime = CTime::GetCurrentTime();
+	CString strTime = currentTime.Format(_T(" %m/%d/%Y \n %I:%M:%S %p"));
+
+	// Ensure the ID here matches your Resource ID exactly
+	if (GetDlgItem(IDC_TIME_STAMP) != NULL)
+	{
+		SetDlgItemText(IDC_TIME_STAMP, strTime);
+	}
+}
+
+
+void CWLIView::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 1)
+	{
+		UpdateTimeLabel();
+	}
+	CResizableFormView::OnTimer(nIDEvent);
 }

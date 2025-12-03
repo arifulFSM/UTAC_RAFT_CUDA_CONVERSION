@@ -52,6 +52,9 @@ CWLIApp theApp;
 
 // CWLIApp initialization
 
+	// Initialize GDI+
+ULONG_PTR m_gdiplusToken;
+
 BOOL CWLIApp::InitInstance() {
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
@@ -88,6 +91,21 @@ BOOL CWLIApp::InitInstance() {
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	//SetRegistryKey(_T("WLI-FSM"));
+
+
+	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
+
+
+
+
+
+
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	Gdiplus::GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, NULL);
+
+	CCardPanel::RegisterWindowClass();
+
+
 
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views
@@ -129,6 +147,9 @@ BOOL CWLIApp::InitInstance() {
 
 int CWLIApp::ExitInstance() {
 	Pylon::PylonTerminate();
+
+
+	Gdiplus::GdiplusShutdown(m_gdiplusToken);
 
 	AfxOleTerm(FALSE);
 

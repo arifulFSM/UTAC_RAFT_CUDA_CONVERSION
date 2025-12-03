@@ -11,6 +11,14 @@
 //#include "HeightDlg.h"
 #include "SRC/XTabCtrl.h"
 #include "SRC/ResizableFormView.h"
+#include "BottomTabCtrl.h"
+
+#include "ModernTabCtrl.h"
+#include "IconButton.h"
+#include "SignalTower.h"
+#include "OperationDlg.h"
+
+
 
 class CWLIDoc;
 class CStripDlg;
@@ -20,6 +28,7 @@ class CAcqDlg;
 class MeasurementDlg;
 class AnalysisDlg;
 class ResultDlg;
+class COperationDlg;
 
 class CWLIView : public CResizableFormView {
 	CStripDlg* pStrip = nullptr;
@@ -31,6 +40,7 @@ class CWLIView : public CResizableFormView {
 	RoughnessDlg* roughDlg = nullptr;
 	CAcqDlg* acqDlg = nullptr;
 	ResultDlg* rsltDlg = nullptr;
+	COperationDlg* operationDlg = nullptr;
 
 	void Refresh() {
 		// show image and plot
@@ -47,7 +57,7 @@ protected: // create from serialization only
 	CWLIView() noexcept;
 	DECLARE_DYNCREATE(CWLIView)
 
-		CXTabCtrl cTab;
+		CModernTabCtrl cTab;
 
 public:
 #ifdef AFX_DESIGN_TIME
@@ -98,6 +108,21 @@ public:
 	afx_msg void OnRecipeCreaterecipe();
 	afx_msg LRESULT OnUmResultDlg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam);
+
+	//20250112 - Mahmudul Haque
+	void setButtonIcon(int size);
+	CIconButton loadButton;
+	CIconButton saveButton;
+	CIconButton settingButton;
+	CIconButton loginButton;
+
+	CBrush m_brushBack;
+	HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	void UpdateTimeLabel();
+	void OnTimer(UINT_PTR nIDEvent);
+	//20250112 - Mahmudul Haque
+	CSignalTower m_signalTower;
+	CIconButton cameraMotionButton;
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

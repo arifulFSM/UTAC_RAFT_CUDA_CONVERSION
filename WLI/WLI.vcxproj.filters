@@ -106,6 +106,17 @@
     <ClCompile Include="FFT.cpp" />
     <ClCompile Include="FilterOption.cpp" />
     <ClCompile Include="filters.cpp" />
+    <ClCompile Include="BottomTabCtrl.cpp" />
+    <ClCompile Include="ModernTabCtrl.cpp" />
+    <ClCompile Include="IconButton.cpp" />
+    <ClCompile Include="SignalTower.cpp" />
+    <ClCompile Include="OperationDlg.cpp" />
+    <ClCompile Include="CardPanel.cpp" />
+    <ClCompile Include="IconBorderButton.cpp" />
+    <ClCompile Include="ColorButton.cpp" />
+    <ClCompile Include="StyleStatic.cpp" />
+    <ClCompile Include="ObjectiveLensCtrl.cpp" />
+    <ClCompile Include="ColorSliderCtrl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CAM\CamDev.h" />
@@ -230,6 +241,17 @@
     <ClInclude Include="FFT.h" />
     <ClInclude Include="FilterOption.h" />
     <ClInclude Include="filters.h" />
+    <ClInclude Include="BottomTabCtrl.h" />
+    <ClInclude Include="ModernTabCtrl.h" />
+    <ClInclude Include="IconButton.h" />
+    <ClInclude Include="SignalTower.h" />
+    <ClInclude Include="OperationDlg.h" />
+    <ClInclude Include="CardPanel.h" />
+    <ClInclude Include="IconBorderButton.h" />
+    <ClInclude Include="ColorButton.h" />
+    <ClInclude Include="StyleStatic.h" />
+    <ClInclude Include="ObjectiveLensCtrl.h" />
+    <ClInclude Include="ColorSliderCtrl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WLI.cpp">
@@ -532,12 +554,6 @@
     <ClCompile Include="WaferParam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C2DPlotDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C3DPlotDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClInclude Include="..\CAM\CamDev.h" />
     <ClInclude Include="..\CAM\Camera.h" />
     <ClInclude Include="..\CAM\CamPar.h" />
@@ -599,8 +615,6 @@
     <ClInclude Include="BaslerCameraDlg.h" />
     <ClInclude Include="BaslerColourCam.h" />
     <ClInclude Include="BaslerMonoCam.h" />
-    <ClInclude Include="C2DPlotDlg.h" />
-    <ClInclude Include="C3DPlotDlg.h" />
     <ClInclude Include="CameraDlg.h" />
     <ClInclude Include="CameraProp.h" />
     <ClInclude Include="CamSetDlg.h" />
@@ -677,6 +691,38 @@
     <Image Include="res\WLI.ico" />
     <Image Include="res\WLIDoc.ico" />
     <Image Include="res\RAFT.ico" />
+    <Image Include="..\IMG\FSM_RAFT_VERSION.bmp" />
+    <Image Include="..\IMG\icons\download.ico" />
+    <Image Include="..\IMG\icons\log-in.ico" />
+    <Image Include="..\IMG\icons\logout.ico" />
+    <Image Include="..\IMG\icons\measurement.ico" />
+    <Image Include="..\IMG\icons\save.ico" />
+    <Image Include="..\IMG\icons\settings.ico" />
+    <Image Include="..\IMG\icons\slow-motion (1).ico" />
+    <Image Include="..\IMG\icons\down.ico" />
+    <Image Include="..\IMG\icons\home.ico" />
+    <Image Include="..\IMG\icons\left.ico" />
+    <Image Include="..\IMG\icons\right-arrow.ico" />
+    <Image Include="..\IMG\icons\up.ico" />
+    <Image Include="..\IMG\icons\bottom-left.ico" />
+    <Image Include="..\IMG\icons\bottom-right.ico" />
+    <Image Include="..\IMG\icons\top-left.ico" />
+    <Image Include="..\IMG\icons\top-right.ico" />
+    <Image Include="..\IMG\icons\bottom left.ico" />
+    <Image Include="..\IMG\icons\bottom right.ico" />
+    <Image Include="..\IMG\icons\top left (1).ico" />
+    <Image Include="..\IMG\icons\top right.ico" />
+    <Image Include="..\IMG\bitmap\home.bmp" />
+    <Image Include="..\IMG\bitmap\z down.bmp" />
+    <Image Include="..\IMG\bitmap\z up.bmp" />
+    <Image Include="..\IMG\icons\home2.ico" />
+    <Image Include="..\IMG\icons\z down.ico" />
+    <Image Include="..\IMG\icons\z up.ico" />
+    <Image Include="..\IMG\icons\Z__10_-removebg-preview.ico" />
+    <Image Include="..\IMG\icons\Z__11_-removebg-preview.ico" />
+    <Image Include="..\IMG\icons\Z__12_-removebg-preview.ico" />
+    <Image Include="..\IMG\icons\z-down.ico" />
+    <Image Include="..\IMG\icons\z-up.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SRC\hightime.inl" />
