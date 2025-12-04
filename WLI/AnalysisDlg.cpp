@@ -930,8 +930,46 @@ void AnalysisDlg::lineProfile()
 	// Reducing HOTSPOT size ensures the user must click ON the line.
 	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 
+	//old
+	//PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+	//PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+	// 20251203
 	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+
+	// --- [START] MODIFICATIONS FOR BETTER UI ---
+
+	// [MODIFIED] 1. Dark Theme Backgrounds
+	// PERGB(Alpha, Red, Green, Blue) -> Dark Slate Gray
+	DWORD darkGray = PERGB(255, 30, 30, 33);
+	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+
+	// [MODIFIED] 2. Grid Lines (Solid & Subtle)
+	// Use PEGS_THIN (0) for solid lines since PEGS_SOLID is missing
+	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+
+	// FIX 1: Use PEP_dwGRIDLINECOLOR instead of PEP_dwGRIDCOLOR
+	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+
+	// [MODIFIED] 3. Fonts (With Type Casting)
+	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+
+	// FIX 2: Cast TEXT() to (LPWSTR) to fix the "incompatible type" error
+	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+
+	// [MODIFIED] 4. Axis Colors (Light Gray for contrast)
+	DWORD axisColor = PERGB(255, 160, 160, 160);
+	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220)); // Off-White Text
+
+	// --- [END] MODIFICATIONS ---
+	// 20251203
 
 	////Axis scale
 	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
@@ -1065,7 +1103,8 @@ void AnalysisDlg::lineProfile()
 	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
 
 	// subset colors, line type, point type
-	DWORD dwArray[1] = { PERGB(255,5,249,253) };
+	// 20251203
+	DWORD dwArray[1] = { PERGB(255,8,146,208) };
 	int nLineTypes[] = { PELT_THICKSOLID };
 	int nPointTypes[] = { PEPT_DOTSOLID };
 
@@ -2650,7 +2689,7 @@ void AnalysisDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 	double dY2 = y2 * m_yStep;
 
 	int symbol = PEGAT_THICKSOLIDLINE;
-	DWORD color = PERGB(255, 5, 249, 253); // Same as line profile
+	DWORD color = PERGB(255, 8, 146, 208); // Same as line profile
 
 	// Segment 1: Start Point
 	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PREVIEW_LINE_START_IDX, &dX1);
@@ -2698,13 +2737,49 @@ void AnalysisDlg::CreateTemporaryLineProfileWindow()
 
 	// --- CRITICAL INITIALIZATION (missing in your version) ---
 	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
 	PEnset(m_hPEl, PEP_nSUBSETS, 1);
 	PEnset(m_hPEl, PEP_nPOINTS, 2);
 	//PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
 
-	// Optional but recommended
+	// 20251203
 	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+
+	// --- [START] MODIFICATIONS FOR BETTER UI ---
+
+	// [MODIFIED] 1. Dark Theme Backgrounds
+	// PERGB(Alpha, Red, Green, Blue) -> Dark Slate Gray
+	DWORD darkGray = PERGB(255, 30, 30, 33);
+	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+
+	// [MODIFIED] 2. Grid Lines (Solid & Subtle)
+	// Use PEGS_THIN (0) for solid lines since PEGS_SOLID is missing
+	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+
+	// FIX 1: Use PEP_dwGRIDLINECOLOR instead of PEP_dwGRIDCOLOR
+	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+
+	// [MODIFIED] 3. Fonts (With Type Casting)
+	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+
+	// FIX 2: Cast TEXT() to (LPWSTR) to fix the "incompatible type" error
+	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+
+	// [MODIFIED] 4. Axis Colors (Light Gray for contrast)
+	DWORD axisColor = PERGB(255, 160, 160, 160);
+	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220)); // Off-White Text
+
+	// --- [END] MODIFICATIONS ---
+	// 20251203
+
+	// Optional but recommended
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
 
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
@@ -2749,7 +2824,8 @@ void AnalysisDlg::CreateTemporaryLineProfileWindow()
 	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
 
 	// subset colors, line type, point type
-	DWORD dwArray[1] = { PERGB(255,5,249,253) };
+	// 20251203
+	DWORD dwArray[1] = { PERGB(255,8,146,208) };
 	int nLineTypes[] = { PELT_THICKSOLID };
 	int nPointTypes[] = { PEPT_DOTSOLID };
 
