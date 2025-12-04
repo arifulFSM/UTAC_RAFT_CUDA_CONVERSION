@@ -532,12 +532,6 @@
     <ClCompile Include="WaferParam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C2DPlotDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C3DPlotDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClInclude Include="..\CAM\CamDev.h" />
     <ClInclude Include="..\CAM\Camera.h" />
     <ClInclude Include="..\CAM\CamPar.h" />
@@ -599,8 +593,6 @@
     <ClInclude Include="BaslerCameraDlg.h" />
     <ClInclude Include="BaslerColourCam.h" />
     <ClInclude Include="BaslerMonoCam.h" />
-    <ClInclude Include="C2DPlotDlg.h" />
-    <ClInclude Include="C3DPlotDlg.h" />
     <ClInclude Include="CameraDlg.h" />
     <ClInclude Include="CameraProp.h" />
     <ClInclude Include="CamSetDlg.h" />
