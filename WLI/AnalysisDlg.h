@@ -172,5 +172,6 @@ public:
 	void ClearLineAnnotations();
 	double CalculateLineMedianX(double x1, double x2);
 	void DisplayDistanceBetweenLines();
+	void DisplayDistanceBetweenLinesWidth();
 	//======================================
 };

@@ -3103,7 +3103,7 @@ double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
 	return (x1 + x2) / 2.0;
 }
 
-/*void AnalysisDlg::DisplayDistanceBetweenLines()
+void AnalysisDlg::DisplayDistanceBetweenLinesWidth() // width
 {
 	// Calculate median X positions
 	double line1MedianX = CalculateLineMedianX(m_line1X1, m_line1X2);
@@ -3167,9 +3167,9 @@ double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
 	// Output to debug or status bar (remove AfxMessageBox for smoother UX)
 	TRACE(_T("Line 1 Median X: %.2f um | Line 2 Median X: %.2f um | Distance: %.2f um\n"),
 		line1MedianX, line2MedianX, distance);
-}*/
+}
 
-void AnalysisDlg::DisplayDistanceBetweenLines()
+void AnalysisDlg::DisplayDistanceBetweenLines() // distance
 {
 	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
 	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
@@ -3196,7 +3196,7 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	int annotationIdx = 4; // Start index
 	int symbol;
 	DWORD color = PERGB(255, 255, 255, 255); // WHITE
-
+	
 	// --- Draw Vertical Line (Start Point) ---
 	//symbol = PEGAT_THICKSOLIDLINE;
 	symbol = PEGAT_THINSOLIDLINE;
@@ -3205,6 +3205,8 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	
 
 	// --- Draw Vertical Line (End Point) ---
 	annotationIdx++;
@@ -3235,6 +3237,7 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+	
 	// Ended
 
 	// --- Draw Distance Text (To the side) ---
@@ -3269,82 +3272,3 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 }
 
 
-/*void AnalysisDlg::DisplayDistanceBetweenLines() // vertical
-{
-	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
-	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
-	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
-
-	// 2. Calculate distance (absolute difference between Y medians)
-	double distance = fabs(line2MedianY - line1MedianY);
-
-	// 3. Determine bottom/top Y for vertical line drawing
-	double bottomY = min(line1MedianY, line2MedianY);
-	double topY = max(line1MedianY, line2MedianY);
-
-	// 4. Determine X position for the annotation line
-	// We find the right-most X point of the existing lines and add a margin
-	// so the ruler appears to the right of the data.
-	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
-	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
-
-	// Position the line 10% of the width to the right of the max X
-	double connectX = maxX + (maxX - minX) * 0.1;
-
-	// Annotation index setup (starting from 4)
-	int annotationIdx = 4;
-	int symbol;
-	DWORD color = PERGB(255, 255, 255, 0); // Yellow
-
-	// --- Draw Vertical Connecting Line ---
-
-	// Point 1: Bottom of the vertical line
-	symbol = PEGAT_THICKSOLIDLINE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
-
-	// Point 2: Top of the vertical line (Line Continue)
-	annotationIdx++;
-	symbol = PEGAT_LINECONTINUE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
-
-	// --- Add Distance Text ---
-
-	annotationIdx++;
-
-	// Position text at the Y-midpoint, slightly to the right of the vertical line
-	double textY = (bottomY + topY) / 2.0;
-	double textX = connectX + (maxX - minX) * 0.02; // Small offset to right
-
-	CString distText;
-	// Note: Assuming 'um' is the unit. Adjusted format for vertical context.
-	distText.Format(_T("Distance: %.2f um"), distance);
-	TCHAR* distValue = _tcsdup(distText);
-
-	symbol = PEGAT_NOSYMBOL;
-	// Set color same as line
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
-
-	// Apply shadow and text size
-	int shadow = TRUE;
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
-	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-
-	// Clean up allocated string
-	delete[] distValue;
-
-	// Force a repaint to ensure annotations appear immediately
-	PEreinitialize(m_hPEl);
-	PEresetimage(m_hPEl, 0, 0);
-}*/
