@@ -17,7 +17,7 @@
 #include "IconButton.h"
 #include "SignalTower.h"
 #include "OperationDlg.h"
-
+#include "AnalysisNewDlg.h"
 
 
 class CWLIDoc;
@@ -29,6 +29,7 @@ class MeasurementDlg;
 class AnalysisDlg;
 class ResultDlg;
 class COperationDlg;
+class CAnalysisNewDlg;
 
 class CWLIView : public CResizableFormView {
 	CStripDlg* pStrip = nullptr;
@@ -41,6 +42,7 @@ class CWLIView : public CResizableFormView {
 	CAcqDlg* acqDlg = nullptr;
 	ResultDlg* rsltDlg = nullptr;
 	COperationDlg* operationDlg = nullptr;
+	CAnalysisNewDlg* analysisNewDlg = nullptr;
 
 	void Refresh() {
 		// show image and plot

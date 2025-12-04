@@ -61,11 +61,13 @@ void COperationDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER1, m_zValueSlider);
 	DDX_Control(pDX, IDC_SLIDER2, m_brightnessSlider);
 	DDX_Control(pDX, IDC_SLIDER3, m_exposureSlider);
+	DDX_Control(pDX, IDC_RADIO_FINE, m_FineRadioButton);
+	DDX_Control(pDX, IDC_RADIO_FAST, m_fastRadioButton);
 }
 
 
 BEGIN_MESSAGE_MAP(COperationDlg, CResizableDialog)
-	ON_WM_CTLCOLOR()
+	//ON_WM_CTLCOLOR()
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_PROGRESS1, &COperationDlg::OnNMCustomdrawProgress1)
 	ON_STN_CLICKED(IDC_LENS_CARD_PANEL, &COperationDlg::OnStnClickedLensCardPanel)
 END_MESSAGE_MAP()
@@ -77,7 +79,7 @@ BOOL COperationDlg::OnInitDialog() {
 
 
 
-	m_brushBack.CreateSolidBrush(RGB(244, 247, 249)); //235, 236, 237 dialog background color 
+	//m_brushBack.CreateSolidBrush(RGB(244, 247, 249)); //235, 236, 237 dialog background color 
 
 	m_stageMotionPanelCard.SetTitle(_T("Stage Motion"));
 	autoFocusCardPanel.SetTitle(_T("Auto Focus"));
@@ -152,14 +154,14 @@ void COperationDlg::setButtonIcon(int size) {
 
 
 
-HBRUSH COperationDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	if (nCtlColor == CTLCOLOR_DLG)
-	{
-		return m_brushBack;
-	}
-	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
-}
+//HBRUSH COperationDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+//{
+//	if (nCtlColor == CTLCOLOR_DLG)
+//	{
+//		return m_brushBack;
+//	}
+//	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+//}
 
 
 

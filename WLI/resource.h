@@ -77,6 +77,8 @@
 #define IDI_ICON26                      415
 #define IDI_ICON27                      416
 #define IDI_ICON28                      417
+#define IDD_DIALOG22                    418
+#define IDD_ANALYSIS_DLG_NEW            418
 #define IDC_BUTTON1                     1000
 #define IDC_BUTTON2                     1001
 #define IDC_BUTTON3                     1002
@@ -458,7 +460,9 @@
 #define IDC_APPLY_FILTER                1237
 #define IDC_BRIGHTNESS                  1237
 #define IDC_HIGH                        1238
+#define IDC_RADIO_FINE                  1238
 #define IDC_LOW                         1239
+#define IDC_RADIO_FAST                  1239
 #define IDC_APPLY_THRESHOLD             1240
 #define IDC_GB_STEPHEIGHT               1241
 #define IDC_2D_VIEW                     1242
@@ -534,9 +538,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        418
+#define _APS_NEXT_RESOURCE_VALUE        420
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1238
+#define _APS_NEXT_CONTROL_VALUE         1240
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

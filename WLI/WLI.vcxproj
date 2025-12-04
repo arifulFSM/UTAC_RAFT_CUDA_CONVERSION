@@ -396,6 +396,7 @@
     <ClInclude Include="000_rev.h" />
     <ClInclude Include="AcqDlg.h" />
     <ClInclude Include="AnalysisDlg.h" />
+    <ClInclude Include="AnalysisNewDlg.h" />
     <ClInclude Include="AutoFocus.h" />
     <ClInclude Include="AutoPacketSizeConfiguration.h" />
     <ClInclude Include="AutoTilt.h" />
@@ -415,6 +416,7 @@
     <ClInclude Include="ColorDefine.h" />
     <ClInclude Include="ColorSliderCtrl.h" />
     <ClInclude Include="Coor.h" />
+    <ClInclude Include="CustomRadioButton.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="DataList.h" />
     <ClInclude Include="Dev.h" />
@@ -525,6 +527,7 @@
     <ClCompile Include="..\SRC\XTabCtrl.cpp" />
     <ClCompile Include="AcqDlg.cpp" />
     <ClCompile Include="AnalysisDlg.cpp" />
+    <ClCompile Include="AnalysisNewDlg.cpp" />
     <ClCompile Include="AutoFocus.cpp" />
     <ClCompile Include="AutoTilt.cpp" />
     <ClCompile Include="BaslerCamDev.cpp" />
@@ -542,6 +545,7 @@
     <ClCompile Include="ColorButton.cpp" />
     <ClCompile Include="ColorSliderCtrl.cpp" />
     <ClCompile Include="Coor.cpp" />
+    <ClCompile Include="CustomRadioButton.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="DataList.cpp" />
     <ClCompile Include="Dev.cpp" />

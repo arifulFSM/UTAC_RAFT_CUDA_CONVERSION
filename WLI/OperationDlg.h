@@ -7,6 +7,7 @@
 #include "StyleStatic.h"
 #include "ObjectiveLensCtrl.h"
 #include "ColorSliderCtrl.h"
+#include "CustomRadioButton.h"
 // COperationDlg dialog
 
 class COperationDlg : public CResizableDialog
@@ -30,8 +31,8 @@ public:
 
 protected:
 
-	CBrush m_brushBack;
-	HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	//CBrush m_brushBack;
+	//HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 
 
@@ -77,4 +78,6 @@ public:
 	CColorSliderCtrl m_zValueSlider;
 	CColorSliderCtrl m_brightnessSlider;
 	CColorSliderCtrl m_exposureSlider;
+	CCustomRadioButton m_FineRadioButton;
+	CCustomRadioButton m_fastRadioButton;
 };

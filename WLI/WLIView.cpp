@@ -138,6 +138,12 @@ void CWLIView::OnInitialUpdate() {
 		operationDlg->Create(IDD_OPERATION_DLG, &cTab);
 		cTab.AddTab(operationDlg, CString("Operation").GetBuffer(), nTab++);
 	}
+	analysisNewDlg = new CAnalysisNewDlg();
+	if (analysisNewDlg) {
+		analysisNewDlg->Create(IDD_ANALYSIS_DLG_NEW, &cTab);
+		cTab.AddTab(analysisNewDlg, CString("Analysis").GetBuffer(), nTab++);
+	}
+
 
 	//cTab.SetCurSel(5);
 
