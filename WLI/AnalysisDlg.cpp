@@ -3166,8 +3166,8 @@ void AnalysisDlg::DisplayDistanceBetweenLines()
 
 	// Text Position: Vertical center of the line, slightly right of the ruler
 	double textY = (bottomY + topY) / 2.0;
-	//double textX = rulerX + (xRange * 0.25); // Small offset from the line
-	double textX = rulerX + 55; // Small offset from the line
+	double textX = rulerX + (xRange * 0.25); // Small offset from the line
+	//double textX = rulerX + 55; // Small offset from the line
 
 	CString distText;
 	distText.Format(_T("%.2f um"), distance);
