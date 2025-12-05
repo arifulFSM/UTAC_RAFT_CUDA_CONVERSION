@@ -3308,7 +3308,7 @@ void AnalysisDlg::DisplayDistanceBetweenLines() // distance
 	// Styling
 	int shadow = TRUE;
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
-	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 200);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
 
 	delete[] distValue;
 
@@ -3581,7 +3581,7 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	double textY = connectY + (maxY - minY) * 0.08;
 
 	CString widthText;
-	widthText.Format(_T("Width: %.2f um"), width);
+	widthText.Format(_T("%.2f um"), width);
 	TCHAR* widthValue = _tcsdup(widthText);
 
 	symbol = PEGAT_NOSYMBOL;
