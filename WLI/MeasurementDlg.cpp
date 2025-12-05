@@ -1097,7 +1097,7 @@ LRESULT MeasurementDlg::OnTabSelected(WPARAM wP, LPARAM lP) {
 		bTabSelected = TRUE;
 	}
 
-	camRun();
+	//camRun(); //20251205 COMMENTED
 
 	return 0;
 }

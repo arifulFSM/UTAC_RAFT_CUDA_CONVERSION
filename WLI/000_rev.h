@@ -11,4 +11,5 @@
 20251127/ Arif / Load the csv data directly after measurement. 
 20251201 / Arif / Interpolation to fill the NaN values. 
 20251202 / Arif / Roughness calculation for Height data calcualted in GPU..
+20251205 / Arif / Integrate Camera view in the new UI.
 */

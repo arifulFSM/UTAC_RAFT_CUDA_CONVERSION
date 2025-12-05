@@ -476,6 +476,7 @@
 #define IDC_LAMDA_HIGH                  1247
 #define IDC_MICRO_METER                 1248
 #define IDC_MICROMETER2                 1249
+#define IDC_CAMERA_FORM                 1250
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -550,7 +551,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        421
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1250
+#define _APS_NEXT_CONTROL_VALUE         1251
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
