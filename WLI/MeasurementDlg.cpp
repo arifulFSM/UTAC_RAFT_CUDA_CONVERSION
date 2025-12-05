@@ -13,6 +13,7 @@
 #include <MotionControlDlg.h> //Morsalinn
 #include <chrono> // Morsalinn
 #include "MTH/LSF3D.h"//20250916
+#include <kernel.h>//20251201
 
 // MeasurementDlg dialog
 
@@ -837,10 +838,9 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 	filter.ApplyDespikeRowColWise(ImCV);//20250916
 	//filter.ApplyDespikeRowColWise(ImCV);//20250916
 
-	//HeightData.clear();
 	float piezoRange = (pRcp->MERange / 4.0);
 	HeightDataCV.clear();
-	for (int y = 0; y < ht - 1; y++) {
+	for (int y = ht-2; y >=0; y--) {
 		float* row = ImCV.ptr<float>(y);
 		for (int x = 0; x < wd - 1; x++) {
 			/*if (row[x]<-(piezoRange - 10) || row[x]>(piezoRange - 10)) {
@@ -850,9 +850,9 @@ void MeasurementDlg::getHeightDataCV(int idx) {
 		}
 	}
 
-	//filter.removeOutliers(HeightDataCV, wd, ht);
+	filter.iterativeAverageFill(50, HeightDataCV, ht-1, wd-1);
 
-	for (int y = ht - 2; y >= 0; y--) {
+	for (int y = 0; y < ht-1; y++) {
 		for (int x = 0; x < wd - 1; x++) {
 			myfile << HeightDataCV[y * (wd - 1) + x] << ',';
 		}
@@ -901,6 +901,85 @@ void MeasurementDlg::getHeightData(int idx) {
 	}
 	myfile.close();
 }
+
+
+//20251202 [START]=======================================
+void MeasurementDlg::calcRoughnessCUDA() {
+	RSTATS Stats;
+	if (HeightDataCV.size() > 0) {
+		ApplyFFTCUDA();
+		CalculateRoughnessStatsCUDA(&Stats);
+		m_fRrms1 = Stats.fStDev;
+		m_fRa1 = Stats.fRa;
+		m_fRmax1 = Stats.fMax - Stats.fMin;
+	}
+}
+
+void MeasurementDlg::ApplyFFTCUDA() {
+	fft_lib fft;
+	double* pfSignal = new double[m_nFFT + 5];
+	memset(pfSignal, 0, m_nFFT * sizeof(double));
+	int i, j;
+	int row = ht - 1;
+	int col = wd - 1;
+	for (i = 0; i < row; i++) {
+		for (j = 0; j < col; j++)
+			pfSignal[j] = HeightDataCV[i * col + j];
+		SpreadArray(pfSignal, col, m_nFFT);
+
+		fft.realft2(pfSignal, m_nFFT, 1);
+		for (j = 0; j < m_nFFT; j++) {
+			if (j <= m_nFFTcutoff)
+				pfSignal[j] = 0;
+		}
+		fft.realft2(pfSignal, m_nFFT, -1);
+		SpreadArray(pfSignal, m_nFFT, col);
+		for (j = 0; j < col; j++)
+			HeightDataCV[i * col + j] = pfSignal[j];
+	}
+	for (i = 0; i < col; i++) {
+		for (j = 0; j < row; j++)
+			pfSignal[j] = HeightDataCV[j * col + i];
+		SpreadArray(pfSignal, row, m_nFFT);
+		fft.realft2(pfSignal, m_nFFT, 1);
+		for (j = 0; j < m_nFFT; j++) {
+			if (j <= m_nFFTcutoff)
+				pfSignal[j] = 0;
+		}
+		fft.realft2(pfSignal, m_nFFT, -1);
+		SpreadArray(pfSignal, m_nFFT, row);
+		for (j = 0; j < row; j++)
+			HeightDataCV[j * col + i] = pfSignal[j];
+	}
+	if (pfSignal)
+		delete[] pfSignal;
+}
+
+void MeasurementDlg::CalculateRoughnessStatsCUDA(RSTATS* pStats) {
+	int i, N = HeightDataCV.size();
+	pStats->fMin = 1e20;
+	pStats->fMax = -1e20;
+	pStats->fAver = 0;
+	pStats->fRa = 0;
+	pStats->fStDev = 0;
+	for (i = 0; i < N; i++) {
+		pStats->fAver += HeightDataCV[i];
+		if (HeightDataCV[i] < pStats->fMin)
+			pStats->fMin = HeightDataCV[i];
+		if (HeightDataCV[i] > pStats->fMax)
+			pStats->fMax = HeightDataCV[i];
+	}
+	pStats->fAver /= N;
+	for (i = 0; i < N; i++) {
+		pStats->fStDev += (HeightDataCV[i] - pStats->fAver) * (HeightDataCV[i] - pStats->fAver);
+		pStats->fRa += fabs(HeightDataCV[i] - pStats->fAver);
+	}
+	pStats->fStDev = sqrt(pStats->fStDev / N);
+	pStats->fRa /= N;
+}
+
+
+//[END]========================================================
 
 void MeasurementDlg::calcRoughness() {
 	RSTATS Stats;
@@ -1057,8 +1136,8 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 	//DataAcquisition();
 	//getHeightData(1);
 	//DataAcquisitionSimuCV();
-	//for (int i = 0; i < 10; i++)
-	//{
+	/*for (int i = 0; i < 5; i++)
+	{*/
 		DWORD tick1=GetTickCount();
 		pWLIView->pMSet->FringAdjustAF(pRcp->AFCalibZ, pRcp->AFTiltZ, pRcp->AFRange, pRcp->AFStepSize);
 		DataAcquisitionCUDA();
@@ -1066,9 +1145,12 @@ void MeasurementDlg::OnBnClickedButtonGen2d3d()
 		getHeightDataCV(1);
 		DWORD tick3 = GetTickCount();
 
-		TRACE("tick1:%lf \t tick2: %lf \t tick3:%lf", double(tick1/1000.0), double(tick2/ 1000.0), double(tick3/ 1000.0));
+		//TRACE("tick1:%lf \t tick2: %lf \t tick3:%lf", double(tick1/1000.0), double(tick2/ 1000.0), double(tick3/ 1000.0));
+		calcRoughnessCUDA();
+		pResult->InsertResult(0, 0, m_fRa1, m_fRrms1, m_fRmax1);//x=0,y=0 [Recipe point, forced zero since no recipe point is selected here]
+		bMeasured = TRUE;
 	//}
-		CString* pResultPath = new CString(ResultPath);
+	CString* pResultPath = new CString(ResultPath);
 	::PostMessageW(hWndParent, UM_ANALYSIS_DLG, (WPARAM)pResultPath, 0);
 	//delete pResultPath;
 }

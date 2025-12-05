@@ -67,7 +67,7 @@ public:
 	int profileCnt, profileCntDist, pointDistCnt;
 	float height1Val, height2Val;//for two point height diff
 	std::vector<std::pair<float, float> > heightTwoPt;
-	int m_xStep, m_yStep;
+	float m_xStep, m_yStep;
 	bool flagDepth;
 
 	// 20251118
@@ -81,16 +81,16 @@ public:
 	BOOL isDistMarked;
 
 
-	//[alexander line profile 
-	float m_fProfileMark[6];
-	float m_fProfileHeight;
-	int m_nProfileWidth;
-	bool m_bBestfit;
-	float m_fk;
-	float m_fb;
-	float m_fLevel1;
-	float m_fLevel2;
-	int nProfileType;
+	////[alexander line profile 
+	//float m_fProfileMark[6];
+	//float m_fProfileHeight;
+	//int m_nProfileWidth;
+	//bool m_bBestfit;
+	//float m_fk;
+	//float m_fb;
+	//float m_fLevel1;
+	//float m_fLevel2;
+	//int nProfileType;
 	long nProfCnt;
 	float* pProfile;
 	float* pProfileXData, * pProfileYData;
@@ -99,8 +99,6 @@ public:
 	int nLeftBorder, nRightBorder;
 	BOOL isCtrlPressed;
 
-	void AdditionalCalculations(/*std::vector<std::vector<float>>& data*/);
-	void ShowProfile(int nLeftBorder, int nRightBorder);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	//]
@@ -134,7 +132,6 @@ public:
 	afx_msg void OnBnClickedRadio2points();
 	void drawLineOn2D(float x1, float y1, float x2, float y2, DWORD color, int annotationCnt/*, LPARAM lParam*/);
 	void applyDespike(float* pProfileYData, int sz);//20250916
-	void applyDespikeVec(std::vector<std::vector<float>>& data);
 	afx_msg LRESULT onUmAnalysisDlg(WPARAM wParam, LPARAM lParam);//20251127
 	void showDirect2D3D(CString path);//20251127
 	void readDataFromFile(CString fileName);//20251127
@@ -155,4 +152,24 @@ public:
 	void DrawPreviewLineOn2D(int x1, int y1, int x2, int y2);
 	void UpdateLineProfileGraph_Recreate(int nX1, int nY1, int nX2, int nY2);
 	// 20251124 ------------------
+	
+	//20251201 ============================
+	Cfilters filter;
+	std::vector<std::vector<float>>RBFData;
+	//=====================================
+	// 20251202 / Fahim / Line Profile update
+	// Line drawing state
+	int m_lineDrawingState;  // 0=none, 1=drawing line1, 2=drawing line2, 3=both complete
+	double m_line1X1, m_line1Y1, m_line1X2, m_line1Y2;  // First line coordinates
+	double m_line2X1, m_line2Y1, m_line2X2, m_line2Y2;  // Second line coordinates
+	BOOL m_isDrawingCurrentLine;  // TRUE while dragging
+	double m_currentLineStartX, m_currentLineStartY;  // Temp storage during drag
+
+	void StartLineDrawing();
+	void DrawLineAnnotation(double x1, double y1, double x2, double y2, int startIdx, int endIdx, DWORD color);
+	void DrawLineAnnotations();
+	void ClearLineAnnotations();
+	double CalculateLineMedianX(double x1, double x2);
+	void DisplayDistanceBetweenLines();
+	//======================================
 };

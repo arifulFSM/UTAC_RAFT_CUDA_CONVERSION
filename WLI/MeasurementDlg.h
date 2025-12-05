@@ -72,6 +72,9 @@ public:
 	void SpreadArray(double* p, int N1, int N2);
 	void ApplyFFT();
 	void calcRoughness();
+	void calcRoughnessCUDA();//20251202
+	void ApplyFFTCUDA();//20251202
+	void CalculateRoughnessStatsCUDA(RSTATS* pStats);//20251202
 	int m_nFFT = 16384;
 	int m_nFFTcutoff = 3;
 	float m_fRrms1 = 0.0;
@@ -97,4 +100,5 @@ public:
 	Histogram His5;// 20250916
 	afx_msg void OnBnClickedButtonGen2d3d();//20250916
 	CString ResultPath;//20251127
+	
 };
