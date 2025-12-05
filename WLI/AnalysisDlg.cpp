@@ -29,6 +29,7 @@ using namespace std;
 
 //IMPLEMENT_DYNAMIC(CSetupProp17Dlg, CDialogEx)
 
+
 //[ alexander
 COLORREF m_bgColor = RGB(255, 255, 255);
 COLORREF m_lnColor = RGB(0, 128, 255);
@@ -659,30 +660,30 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				//	TRACE(_T(">>> Lines are Vertical (%.1f°). Displaying WIDTH.\n"), avgAngle);
 				//}
 				// // 1. Calculate angles for both lines individually
-				double angle1 = GetSegmentAngle(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2);
-				double angle2 = GetSegmentAngle(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2);
+				// 20251204 ========================================================
 
-				TRACE(_T("Line 1 Angle: %.2f | Line 2 Angle: %.2f\n"), angle1, angle2);
+				// 20251205 ===================
+				double angle1 = GetPixelAngle(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2);
+				double angle2 = GetPixelAngle(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2);
 
-				// 2. Apply the "Strict Horizontal" Rule
-				// Requirement: "If both lines less than 45 then it will be horizontal"
+				TRACE(_T("Pixel Angle 1: %.2f | Pixel Angle 2: %.2f\n"), angle1, angle2);
+
+				// CONDITION: 
+				// If BOTH lines look flat (less than 45 degrees on screen), 
+				// we assume the user drew a "Step" and wants Vertical Distance (Height).
 				if (angle1 < 45.0 && angle2 < 45.0)
 				{
-					// --- HORIZONTAL MODE ---
-					// Both lines are flat-ish. 
-					// User wants to measure the Step Height (Vertical Distance).
+					// Horizontal Mode -> Measure Height/Depth
 					DisplayDistanceBetweenLines();
 					TRACE(_T(">>> Result: HORIZONTAL Mode (Height/Distance)\n"));
 				}
 				else
 				{
-					// --- VERTICAL MODE ---
-					// At least one line is steep/vertical.
-					// User wants to measure the Width (Horizontal Distance).
+					// Vertical Mode -> Measure Width
 					DisplayWidthBetweenLines();
 					TRACE(_T(">>> Result: VERTICAL Mode (Width)\n"));
 				}
-				// 20251204 ========================================================
+				// 20251205 ===================
 
 				PEreinitialize(m_hPEl);
 				PEresetimage(m_hPEl, 0, 0);
@@ -3134,7 +3135,7 @@ void AnalysisDlg::DrawLineAnnotations()
 void AnalysisDlg::ClearLineAnnotations()
 {
 	// Clear annotations by setting them to a point (effectively invisible)
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i <= 10; i++) {
 		int symbol = PEGAT_NOSYMBOL;
 		double zero = 0.0;
 		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, i, &symbol);
@@ -3440,6 +3441,51 @@ double AnalysisDlg::GetSegmentAngle(double x1, double y1, double x2, double y2)
 	return angleDeg;
 }
 
+// 20251205
+// Helper: Calculate angle based on actual SCREEN PIXELS
+double AnalysisDlg::GetPixelAngle(double x1, double y1, double x2, double y2)
+{
+	// Variables to hold Pixel coordinates (Outputs of conversion)
+	int px1 = 0, py1 = 0;
+	int px2 = 0, py2 = 0;
+
+	// Variables for Graph coordinates (Inputs to conversion)
+	double fx1 = x1;
+	double fy1 = y1;
+	double fx2 = x2;
+	double fy2 = y2;
+
+	int nAxis = 0; // Dummy variable required by the API
+
+	// --- CONVERT GRAPH DATA TO SCREEN PIXELS ---
+	// API: PEconvpixeltograph(hwnd, &axis, &px, &py, &fx, &fy, rightAxis, topAxis, bViceVersa)
+	// Setting bViceVersa (last arg) to TRUE makes it convert FROM graph TO pixel.
+
+	PEconvpixeltograph(m_hPEl, &nAxis, &px1, &py1, &fx1, &fy1, FALSE, FALSE, TRUE);
+	PEconvpixeltograph(m_hPEl, &nAxis, &px2, &py2, &fx2, &fy2, FALSE, FALSE, TRUE);
+
+	// --- CALCULATE ANGLE ---
+	// Now we have the raw screen pixels. Calculate delta.
+	double pixelDx = fabs((double)(px2 - px1));
+	double pixelDy = fabs((double)(py2 - py1));
+
+	// Prevent division by zero
+	if (pixelDx == 0.0 && pixelDy == 0.0) return 0.0;
+
+	const double PI = 3.14159265359;
+	double angleRad = atan2(pixelDy, pixelDx);
+	double angleDeg = angleRad * 180.0 / PI;
+
+	CString strMessage;
+	strMessage.Format(_T("Pixel Angle: %.2f"), angleDeg);
+	AfxMessageBox(strMessage);
+
+	// Debugging
+	// TRACE(_T("Data(%.1f,%.1f) -> Pixel(%d,%d) -> Angle: %.2f\n"), x1, y1, px1, py1, angleDeg);
+
+	return angleDeg;
+}
+
 // 20251204
 // Determine if a line is horizontal (within 30 degrees of horizontal)
 BOOL AnalysisDlg::IsLineHorizontal(double angle)
@@ -3447,7 +3493,7 @@ BOOL AnalysisDlg::IsLineHorizontal(double angle)
 
 	// If the angle is less than 45 degrees, consider it horizontal.
 	// 0 deg = perfectly horizontal, 90 deg = perfectly vertical.
-	return (angle < 55.0) ? TRUE : FALSE;
+	return (angle < 45.0) ? TRUE : FALSE;
 }
 
 // 20251204
@@ -3476,7 +3522,7 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	DWORD color = PERGB(255, 255, 255, 0); // Yellow
 
 	// Horizontal line start
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
@@ -3485,7 +3531,7 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	// Horizontal line end
 	annotationIdx++;
 	symbol = PEGAT_LINECONTINUE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
@@ -3500,6 +3546,24 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
+	// Line draw again for rifgt arrow
+	annotationIdx++;
+	symbol = PEGAT_THINSOLIDLINE;
+	// Horizontal line start
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	annotationIdx++;
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
 	// Right arrow
 	annotationIdx++;
 	symbol = PEGAT_ARROWSOLID_LARGE;
@@ -3508,6 +3572,8 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	
 
 	// Width text (centered above)
 	annotationIdx++;
@@ -3533,4 +3599,9 @@ void AnalysisDlg::DisplayWidthBetweenLines()
 	delete[] widthValue;
 
 	TRACE(_T("WIDTH (Horizontal): %.2f um\n"), width);
+
+	// Force Graph Update (Optional but recommended to see changes immediately)
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+
 }
