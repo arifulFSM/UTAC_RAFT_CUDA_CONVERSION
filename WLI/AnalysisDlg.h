@@ -172,7 +172,6 @@ public:
 	void ClearLineAnnotations();
 	double CalculateLineMedianX(double x1, double x2);
 	void DisplayDistanceBetweenLines();
-	void DisplayDistanceBetweenLinesWidth();
 	//======================================
 	// 20251204 / Fahim / Angle measurement distance and width
 	BOOL IsLineHorizontal(double angle); 
