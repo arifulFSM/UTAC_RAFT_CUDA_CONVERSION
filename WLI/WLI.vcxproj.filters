@@ -759,6 +759,7 @@
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\home.bmp" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\z down.bmp" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\z up.bmp" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\nodes.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SRC\hightime.inl" />

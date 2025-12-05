@@ -651,6 +651,7 @@
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__10_-removebg-preview.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__11_-removebg-preview.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__12_-removebg-preview.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\nodes.ico" />
     <Image Include="..\..\test.jpg" />
     <Image Include="..\IMG\bitmap\home.bmp" />
     <Image Include="..\IMG\bitmap\z down.bmp" />
