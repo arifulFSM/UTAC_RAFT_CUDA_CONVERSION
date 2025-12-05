@@ -3318,129 +3318,6 @@ void AnalysisDlg::DisplayDistanceBetweenLines() // distance
 }
 
 
-// 20251204
-// Calculate the angle between two lines using their median points
-/*double AnalysisDlg::CalculateLineAngle()
-{
-	//double deltaX = x2 - x1;
-	//double deltaY = y2 - y1;
-
-	//// atan2 returns angle in radians, convert to degrees
-	//double angleRadians = atan2(deltaY, deltaX);
-	//double angleDegrees = angleRadians * 180.0 / 3.14159265359;
-
-	// Calculate median (center) point of Line 1
-	double line1MedianX = (m_line1X1 + m_line1X2) / 2.0;
-	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
-
-	// Calculate median (center) point of Line 2
-	double line2MedianX = (m_line2X1 + m_line2X2) / 2.0;
-	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
-
-	// Calculate angle between the two median points
-	double deltaX = line2MedianX - line1MedianX;
-	double deltaY = line2MedianY - line1MedianY;
-
-	// atan2 returns angle in radians, convert to degrees
-	double angleRadians = atan2(deltaY, deltaX);
-	double angleDegrees = angleRadians * 180.0 / 3.14159265359;
-
-	TRACE(_T("Angle in Degrees: %.2f \n"), angleDegrees);
-	TRACE(_T("Angle in Radians: %.2f \n"), angleRadians);
-
-	// Normalize to 0-180 range (ignore direction)
-	angleDegrees = fabs(angleDegrees);
-	if (angleDegrees > 90.0) {
-		angleDegrees = 180.0 - angleDegrees;
-	}
-
-	return angleDegrees;
-}*/
-
-double AnalysisDlg::CalculateLineAngle()
-{
-	const double PI = 3.14159265359;
-
-	// --- Calculate Angle of Line 1 ---
-	// We use abs() because we only care about the steepness, not the direction
-	double dy1 = fabs(m_line1Y2 - m_line1Y1);
-	double dx1 = fabs(m_line1X2 - m_line1X1);
-	double angle1 = atan2(dy1, dx1) * 180.0 / PI;
-
-	// --- Calculate Angle of Line 2 ---
-	double dy2 = fabs(m_line2Y2 - m_line2Y1);
-	double dx2 = fabs(m_line2X2 - m_line2X1);
-	double angle2 = atan2(dy2, dx2) * 180.0 / PI;
-
-	// Average the two angles
-	double avgAngle = (angle1 + angle2) / 2.0;
-
-	TRACE(_T("Line 1 Angle: %.2f, Line 2 Angle: %.2f, Avg: %.2f\n"), angle1, angle2, avgAngle);
-
-	return avgAngle;
-}
-
-// Helper function to calculate the angle of a single line segment
-// Returns 0.0 to 90.0 degrees
-double AnalysisDlg::GetSegmentAngle(double x1, double y1, double x2, double y2)
-{
-	const double PI = 3.14159265359;
-
-	// --- 1. Get Visible Axis Ranges ---
-	// m_hPEl is a Graph (Pego), so X-axis is 'Points' (Integers) and Y-axis is 'Data' (Doubles).
-
-	// Get X-Axis Range (Indices)
-	double nXMin = 0.0, nXMax = 0.0;
-	// Use PEnget for integers
-	PEvget(m_hPEl, PEP_fMANUALMINX, &nXMin); // ID: 2100
-	PEvget(m_hPEl, PEP_fMANUALMAXY, &nXMax); // ID: 2101
-
-	// Get Y-Axis Range (Data)
-	double yMin = 0.0, yMax = 0.0;
-	// Use PEvget for doubles
-	PEvget(m_hPEl, PEP_fMANUALMINY, &yMin);     // ID: 2122
-	PEvget(m_hPEl, PEP_fMANUALMAXY, &yMax);     // ID: 2123
-
-	// Calculate Spans (Prevent division by zero)
-	double xSpan = (double)(nXMax - nXMin);
-	if (xSpan <= 0.0) xSpan = 1.0; // Avoid crash if only 1 point visible
-
-	double ySpan = fabs(yMax - yMin);
-	if (ySpan <= 0.0) ySpan = 1.0; // Avoid crash if flat line data
-
-	// --- 2. Normalize Deltas to Screen Percentage (0.0 to 1.0) ---
-	double rawDx = fabs(x2 - x1); // x1, x2 are Point Indices
-	double rawDy = fabs(y2 - y1); // y1, y2 are Data Values
-
-	double normDx = rawDx / xSpan; // % of screen width covered
-	double normDy = rawDy / ySpan; // % of screen height covered
-
-	// --- 3. Account for Window Aspect Ratio ---
-	// If the graph is wide (e.g. 1000px width, 500px height), 
-	// 10% vertical is visually "steeper" than 10% horizontal.
-	RECT rect;
-	::GetClientRect(m_hPEl, &rect);
-	double pixelWidth = (double)(rect.right - rect.left);
-	double pixelHeight = (double)(rect.bottom - rect.top);
-
-	if (pixelHeight <= 0.0) pixelHeight = 1.0;
-
-	double aspectRatio = pixelWidth / pixelHeight;
-
-	// Adjust Y contribution by aspect ratio to get "True Visual Slope"
-	double visualDy = normDy * aspectRatio;
-	double visualDx = normDx;
-
-	// --- 4. Calculate Angle ---
-	double angleRad = atan2(visualDy, visualDx);
-	double angleDeg = angleRad * 180.0 / PI;
-
-	// Debugging trace
-	// TRACE(_T("Visual Angle: %.2f (NormDx: %.3f, NormDy: %.3f)\n"), angleDeg, normDx, normDy);
-
-	return angleDeg;
-}
-
 // 20251205
 // Helper: Calculate angle based on actual SCREEN PIXELS
 double AnalysisDlg::GetPixelAngle(double x1, double y1, double x2, double y2)
@@ -3476,9 +3353,9 @@ double AnalysisDlg::GetPixelAngle(double x1, double y1, double x2, double y2)
 	double angleRad = atan2(pixelDy, pixelDx);
 	double angleDeg = angleRad * 180.0 / PI;
 
-	CString strMessage;
+	/*CString strMessage;
 	strMessage.Format(_T("Pixel Angle: %.2f"), angleDeg);
-	AfxMessageBox(strMessage);
+	AfxMessageBox(strMessage);*/
 
 	// Debugging
 	// TRACE(_T("Data(%.1f,%.1f) -> Pixel(%d,%d) -> Angle: %.2f\n"), x1, y1, px1, py1, angleDeg);
