@@ -117,6 +117,8 @@
     <ClCompile Include="StyleStatic.cpp" />
     <ClCompile Include="ObjectiveLensCtrl.cpp" />
     <ClCompile Include="ColorSliderCtrl.cpp" />
+    <ClCompile Include="CustomRadioButton.cpp" />
+    <ClCompile Include="AnalysisNewDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CAM\CamDev.h" />
@@ -252,6 +254,8 @@
     <ClInclude Include="StyleStatic.h" />
     <ClInclude Include="ObjectiveLensCtrl.h" />
     <ClInclude Include="ColorSliderCtrl.h" />
+    <ClInclude Include="CustomRadioButton.h" />
+    <ClInclude Include="AnalysisNewDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WLI.cpp">
@@ -755,6 +759,7 @@
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\home.bmp" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\z down.bmp" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\bitmap\z up.bmp" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\nodes.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SRC\hightime.inl" />

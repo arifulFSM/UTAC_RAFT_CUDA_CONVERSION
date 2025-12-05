@@ -69,6 +69,13 @@ protected:
 
 	virtual CWnd* GetResizableWnd();
 
+
+	//styling 
+	CBrush m_brushBack;
+	HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
+
+
 protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO FAR* lpMMI);

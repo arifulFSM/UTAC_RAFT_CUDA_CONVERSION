@@ -54,6 +54,7 @@ BEGIN_MESSAGE_MAP(CResizableDialog, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 int CResizableDialog::OnCreate(LPCREATESTRUCT lpCreateStruct) {
@@ -85,6 +86,15 @@ BOOL CResizableDialog::OnInitDialog() {
 	SetMinTrackSize(rc.Size());
 	UpdateGripPos();
 	m_bInitDone = TRUE;
+
+
+
+	m_brushBack.CreateSolidBrush(RGB(244, 247, 249)); //235, 236, 237 dialog background color 
+
+
+
+
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 }
 
@@ -128,7 +138,19 @@ CWnd* CResizableDialog::GetResizableWnd() {
 	return this;
 }
 
+
 BOOL CResizableDialog::OnEraseBkgnd(CDC* pDC) {
 	ClipChildren(pDC);
 	return CDialogEx::OnEraseBkgnd(pDC);
+}
+
+
+
+HBRUSH CResizableDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (nCtlColor == CTLCOLOR_DLG)
+	{
+		return m_brushBack;
+	}
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
