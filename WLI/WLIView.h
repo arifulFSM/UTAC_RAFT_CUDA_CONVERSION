@@ -125,6 +125,7 @@ public:
 	//20250112 - Mahmudul Haque
 	CSignalTower m_signalTower;
 	CIconButton cameraMotionButton;
+	CIconButton loadDataButton;
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

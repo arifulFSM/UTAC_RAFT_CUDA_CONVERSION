@@ -27,14 +27,14 @@ CAnalysisNewDlg::~CAnalysisNewDlg()
 void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_BUTTON_2_POINTS, m_toolButton1);
-	DDX_Control(pDX, IDC_BUTTON_HORIZONTAL, m_toolButton2);
-	DDX_Control(pDX, IDC_BUTTON_VERTICAL, m_toolButton3);
-	DDX_Control(pDX, IDC_BUTTON_LINE, m_toolButton4);
-	DDX_Control(pDX, IDC_BUTTON_PARALLEL, m_toolButton5);
-	DDX_Control(pDX, IDC_BUTTON_PERPENDICULAR, m_toolButton6);
-	DDX_Control(pDX, IDC_BUTTON_BOX, m_toolButton7);
-	DDX_Control(pDX, IDC_BUTTON_CIRCLE, m_toolButton8);
+	DDX_Control(pDX, IDC_BUTTON_2_POINTS, m_toolButton2Points);
+	DDX_Control(pDX, IDC_BUTTON_HORIZONTAL, m_toolButtonHorizontalLine);
+	DDX_Control(pDX, IDC_BUTTON_VERTICAL, m_toolButtonVerticalLine);
+	DDX_Control(pDX, IDC_BUTTON_LINE, m_toolButtonLine);
+	DDX_Control(pDX, IDC_BUTTON_PARALLEL, m_toolButtonParallel);
+	DDX_Control(pDX, IDC_BUTTON_PERPENDICULAR, m_toolButtonPerpendicular);
+	DDX_Control(pDX, IDC_BUTTON_BOX, m_toolButtonBox);
+	DDX_Control(pDX, IDC_BUTTON_CIRCLE, m_toolButtonCircle);
 	DDX_Control(pDX, IDC_PROFILE_CARD_PANEL, m_profileToolCardPanel);
 	DDX_Control(pDX, IDC_LINE_ROUGHNESS_CARD_PANEL, m_lineRoughnessCardPanel);
 	DDX_Control(pDX, IDC_MEASUREMENT_TYPE_TEXT, m_measureTypeText);
@@ -70,16 +70,17 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	m_profileToolCardPanel.SetTitle(_T("Profile Tool"));
 	m_lineRoughnessCardPanel.SetTitle(_T("Line Roughness Setting"));
 	
-	OnToolButtonClicked(IDC_BUTTON1);
+	OnToolButtonClicked(IDC_BUTTON_2_POINTS);
 
-	m_toolButton1.SetIconByID(IDI_ICON29, 28);
-	m_toolButton2.SetIconByID(IDI_ICON29, 28);
-	m_toolButton3.SetIconByID(IDI_ICON29, 28);
-	m_toolButton4.SetIconByID(IDI_ICON29, 28);
-	m_toolButton5.SetIconByID(IDI_ICON29, 28);
-	m_toolButton6.SetIconByID(IDI_ICON29, 28);
-	m_toolButton7.SetIconByID(IDI_ICON29, 28);
-	m_toolButton8.SetIconByID(IDI_ICON29, 28);
+
+	m_toolButton2Points.SetIconByID(IDI_ICON36, 28);
+	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON30, 28);
+	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, 28);
+	m_toolButtonLine.SetIconByID(IDI_ICON32, 28);
+	m_toolButtonParallel.SetIconByID(IDI_ICON33, 28);
+	m_toolButtonPerpendicular.SetIconByID(IDI_ICON34, 28);
+	m_toolButtonBox.SetIconByID(IDI_ICON35, 28);
+	m_toolButtonCircle.SetIconByID(IDI_ICON31, 28);
 
 
 

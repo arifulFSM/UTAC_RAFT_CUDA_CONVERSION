@@ -35,14 +35,14 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	CIconButton m_toolButton1;
-	CIconButton m_toolButton2;
-	CIconButton m_toolButton3;
-	CIconButton m_toolButton4;
-	CIconButton m_toolButton5;
-	CIconButton m_toolButton6;
-	CIconButton m_toolButton7;
-	CIconButton m_toolButton8;
+	CIconButton m_toolButton2Points;
+	CIconButton m_toolButtonHorizontalLine;
+	CIconButton m_toolButtonVerticalLine;
+	CIconButton m_toolButtonLine;
+	CIconButton m_toolButtonParallel;
+	CIconButton m_toolButtonPerpendicular;
+	CIconButton m_toolButtonBox;
+	CIconButton m_toolButtonCircle;
 
 
 private:

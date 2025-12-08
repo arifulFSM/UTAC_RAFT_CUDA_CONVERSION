@@ -79,6 +79,14 @@
 #define IDI_ICON28                      417
 #define IDD_ANALYSIS_DLG_NEW            418
 #define IDI_ICON29                      420
+#define IDI_ICON30                      421
+#define IDI_ICON31                      422
+#define IDI_ICON32                      423
+#define IDI_ICON33                      424
+#define IDI_ICON34                      425
+#define IDI_ICON35                      426
+#define IDI_ICON36                      427
+#define IDI_ICON37                      428
 #define IDC_BUTTON1                     1000
 #define IDC_BUTTON2                     1001
 #define IDC_BUTTON3                     1002
@@ -425,6 +433,7 @@
 #define IDC_TIME_STAMP                  1218
 #define IDC_ABSDIST                     1219
 #define IDC_STAGE_MOTION_PANEL          1219
+#define IDC_BUTTON_SETTING2             1219
 #define IDC_RADIO_MINMAX                1220
 #define IDC_AUTOFOCUS_CARD              1220
 #define IDC_RADIO_2POINTS               1221
@@ -583,7 +592,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        421
+#define _APS_NEXT_RESOURCE_VALUE        429
 #define _APS_NEXT_COMMAND_VALUE         32838
 #define _APS_NEXT_CONTROL_VALUE         1279
 #define _APS_NEXT_SYMED_VALUE           310

@@ -75,6 +75,7 @@ void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_BUTTON_LOGIN, loginButton);
 	DDX_Control(pDX, IDC_SIGNAL_TOWER, m_signalTower);
 	DDX_Control(pDX, IDC_BUTTON_MOTION, cameraMotionButton);
+	DDX_Control(pDX, IDC_BUTTON_LOAD_DATA, loadDataButton);
 }
 
 CWLIView* CWLIView::GetView() {
@@ -417,6 +418,7 @@ void CWLIView::setButtonIcon(int size)
 {
 	loadButton.SetIconByID(IDI_ICON1,size);
 	saveButton.SetIconByID(IDI_ICON5, size);
+	loadDataButton.SetIconByID(IDI_ICON1, size);
 	settingButton.SetIconByID(IDI_ICON6, size);
 	loginButton.SetIconByID(IDI_ICON2, size);
 	cameraMotionButton.SetIconByID(IDI_ICON7, size);
