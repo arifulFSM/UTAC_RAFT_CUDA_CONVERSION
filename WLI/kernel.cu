@@ -141,7 +141,7 @@ __global__ void CollectZCHKernel(
 	//PhasePV5(d_pPHS1, d_pVIS1, chGray, st, ed, inc, inc2);// device function
 	float N, D;
 	float sn = 1.9999831f;
-	float visibilityThreshold = 500, visibility;
+	float visibilityThreshold = 700, visibility;
 	bool visibilityHigh= false;
 	for (int i = st; i < ed; i++) {
 		N = sn * (chGray[i - inc] - chGray[i + inc]);

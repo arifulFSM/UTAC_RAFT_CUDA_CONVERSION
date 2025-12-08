@@ -25,6 +25,7 @@ using namespace std;
 #pragma comment(lib,"PEGRP64G.lib")
 
 //10212024 / ARIFUL ISLAM
+// 20251124 / Mohammad Fahim Hossain / Implemented Real-Time Line Profile graph
 
 //IMPLEMENT_DYNAMIC(CSetupProp17Dlg, CDialogEx)
 
@@ -63,14 +64,13 @@ AnalysisDlg::AnalysisDlg(CWnd* pParent /*=nullptr*/)
 	, m_previewY1(0)              // ADD THIS
 	, m_previewX2(0)              // ADD THIS
 	, m_previewY2(0)              // ADD THIS
+	, m_lineDrawingState(0)       // 20251202 -------
+	, m_isDrawingCurrentLine(FALSE)
+	, m_line1X1(0), m_line1Y1(0), m_line1X2(0), m_line1Y2(0)
+	, m_line2X1(0), m_line2Y1(0), m_line2X2(0), m_line2Y2(0)
+	, m_currentLineStartX(0), m_currentLineStartY(0) // 20251202 -------
 {
 
-	m_fProfileHeight = 0.0;
-	m_fLevel1 = 0.15;
-	m_fLevel2 = 0.15;
-	m_fk = 0.0;
-	m_fb = 0.0;
-	nProfileType = 0;
 	nProfCnt = 0;
 	pProfile = NULL;
 	pProfileXData = NULL;
@@ -87,13 +87,13 @@ AnalysisDlg::AnalysisDlg(CWnd* pParent /*=nullptr*/)
 
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
-	CString inifile = CString(DosUtil.GetLocalSysFile().c_str());
+	CString inifile = CString(DosUtil.GetLocalCfgFile().c_str());
 	//m_xStep = DosUtil.ReadINI("Plot", "XStep", m_xStep, inifile);
 	//m_xStep = 10;
 	//m_yStep = DosUtil.ReadINI("Plot", "YStep", m_yStep, inifile);
 	//m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), static_cast<int>(m_xStep), inifile);
-	m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), m_xStep, static_cast<LPCTSTR>(inifile));
-	m_yStep = DosUtil.ReadINI(_T("Plot"), _T("YStep"), m_yStep, static_cast<LPCTSTR>(inifile));
+	m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), m_xStep, inifile);
+	m_yStep = DosUtil.ReadINI(_T("Plot"), _T("YStep"), m_yStep, inifile);
 
 }
 
@@ -510,37 +510,158 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 		PEszset(m_hPE3, PEP_szTRACKINGTEXT, buffer);
 	}
 
+	// 20251202 
 	if (lParam == (LPARAM)m_hPEl) {
-
-
 		double dX, dY;
 		PEvget(m_hPEl, PEP_fCURSORVALUEX, &dX);
 		PEvget(m_hPEl, PEP_fCURSORVALUEY, &dY);
 
-		HOTSPOTDATA hsd;
-		PEvget(m_hPEl, PEP_structHOTSPOTDATA, &hsd);
-		//KEYDOWNDATA hsd;
-		if (HIWORD(wParam) == PEWN_LBUTTONUP && hsd.nHotSpotType == PEHS_DATAPOINT) {
-			mouseClickCount++;
-			if (mouseClickCount & 1) {// odd click	
-				PEvgetcellEx(m_hPEl, PEP_faXDATA, hsd.w1, hsd.w2, &thresh1);
-				x1 = static_cast<float>(dX);
-				y1 = static_cast<float>(dY);
+		WORD wNotifyCode = HIWORD(wParam);
+
+		// MOUSE MOVE - Real-time line preview
+		if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT) {
+			// Show preview only when we're waiting for the second point of a line
+			if (m_lineDrawingState == 1) {
+				// Preview Line 1
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, dX, dY,
+					0, 1, PERGB(255, 255, 0, 0)); // Solid Red; For Light red = PERGB(255, 255, 0, 0)
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
 			}
-			else {
-				x2 = static_cast<float>(dX);
-				y2 = static_cast<float>(dY);
-				PEvgetcellEx(m_hPEl, PEP_faXDATA, hsd.w1, hsd.w2, &thresh2);
+			else if (m_lineDrawingState == 3) {
+				// Preview Line 2 (show Line 1 + preview of Line 2)
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
+					0, 1, PERGB(255, 255, 0, 0)); // Solid red Line 1
+				DrawLineAnnotation(m_line2X1, m_line2Y1, dX, dY,
+					2, 3, PERGB(255, 255, 0, 0)); 
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
 			}
-			if (mouseClickCount > 1) {
-				lowThresh = min(x1, x2);
-				highThresh = max(x1, x2);
-				lowY = min(y1, y2);
-				highY = max(y1, y2);
-				lineProfile();
+
+			return TRUE;
+		}
+
+		// LEFT BUTTON UP - Capture points
+		if (wNotifyCode == PEWN_LBUTTONUP) {
+
+			// If we already completed both lines, clicking again clears everything
+			if (m_lineDrawingState == 4) {
+				// Clear and restart
+				m_lineDrawingState = 0;
+				ClearLineAnnotations();
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+				// Don't return - let it fall through to capture this click as the new Line 1 start
 			}
+
+			// State machine for collecting 4 clicks (2 points per line)
+			if (m_lineDrawingState == 0) {
+				// First click - start of line 1
+				m_line1X1 = dX;
+				m_line1Y1 = dY;
+				m_lineDrawingState = 1;
+
+				// Visual feedback - just a dot
+				ClearLineAnnotations();
+				int symbol = PEGAT_DOTSOLID;
+				DWORD color = PERGB(255, 255, 0, 0);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 0, &m_line1X1);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 0, &m_line1Y1);
+				PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, 0, &symbol);
+				PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, 0, &color);
+				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 0, (void*)TEXT(""));
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+			else if (m_lineDrawingState == 1) {
+				// Second click - end of line 1
+				m_line1X2 = dX;
+				m_line1Y2 = dY;
+				m_lineDrawingState = 2;
+
+				// Draw complete line 1
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
+					0, 1, PERGB(255, 255, 0, 0));
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+			else if (m_lineDrawingState == 2) {
+				// Third click - start of line 2
+				m_line2X1 = dX;
+				m_line2Y1 = dY;
+				m_lineDrawingState = 3;
+
+				// Draw line 1 + dot for line 2 start
+				ClearLineAnnotations();
+				DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
+					0, 1, PERGB(255, 255, 0, 0));
+
+				int symbol = PEGAT_DOTSOLID;
+				DWORD color = PERGB(255, 255, 0, 0);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, 2, &m_line2X1);
+				PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, 2, &m_line2Y1);
+				PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, 2, &symbol);
+				PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, 2, &color);
+				PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, 2, (void*)TEXT(""));
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+			else if (m_lineDrawingState == 3) {
+				// Fourth click - end of line 2, complete!
+				m_line2X2 = dX;
+				m_line2Y2 = dY;
+				m_lineDrawingState = 4; // Mark as complete
+
+				// Draw both lines
+				ClearLineAnnotations();
+				DrawLineAnnotations();
+
+				// Calculate and display distance
+				DisplayDistanceBetweenLines();
+
+				PEreinitialize(m_hPEl);
+				PEresetimage(m_hPEl, 0, 0);
+				::InvalidateRect(m_hPEl, NULL, FALSE);
+				::UpdateWindow(m_hPEl);
+			}
+
+			return TRUE;
+		}
+
+		// Handle Right Click (reset/clear lines)
+		if (wNotifyCode == PEWN_RBUTTONUP) {
+			m_lineDrawingState = 0;
+			m_isDrawingCurrentLine = FALSE;
+			ClearLineAnnotations();
+			PEreinitialize(m_hPEl);
+			PEresetimage(m_hPEl, 0, 0);
+			::InvalidateRect(m_hPEl, NULL, FALSE);
+			::UpdateWindow(m_hPEl);
+			return TRUE;
 		}
 	}
+	// 20251202
+
 	// 20252411
 	return true;
 	//return CResizableDialog::OnCommand(wParam, lParam);
@@ -729,48 +850,6 @@ void AnalysisDlg::lineProfile(std::vector<float>profile) {
 }
 
 //20250916
-void AnalysisDlg::applyDespike(float* pProfileYData, int sz) {
-	int windowSize = 10;
-	int half = windowSize / 2;
-
-	for (int i = half; i < sz - half; ++i) {
-		std::vector<float> win;
-		win.reserve(windowSize);
-		for (int j = -half; j <= half; ++j) {
-			win.push_back(pProfileYData[i + j]);
-		}
-
-		std::vector<float>tmp = win;
-		std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
-		float median = tmp[half];
-
-		pProfileYData[i] = median;
-	}
-}
-
-void AnalysisDlg::applyDespikeVec(std::vector<std::vector<float>>& data) {
-	int windowSize = 10;
-	int half = windowSize / 2;
-	int rows = data[0].size();
-	int cols = data.size();
-
-	for (int y = 1; y < rows-1; ++y) {
-		for (int x = 1; x < cols-1; ++x) {
-			float val = data[x][y];
-			float kernel[9];
-			int k = 0;
-			for (int j = -1; j <= 1; j++) {
-				for (int i = -1; i <= 1; i++) {
-					kernel[k++] = data[x + i][y + j];
-				}
-			}
-			std::nth_element(kernel, kernel + 4, kernel + 9);
-			float median = kernel[4];
-
-			data[x][y] = median;
-		}
-	}
-}
 
 void AnalysisDlg::lineProfile()
 {
@@ -805,7 +884,9 @@ void AnalysisDlg::lineProfile()
 	// This will allow you to move cursor by clicking data point //
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	// Reducing HOTSPOT size ensures the user must click ON the line.
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 
 	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
 	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
@@ -844,12 +925,11 @@ void AnalysisDlg::lineProfile()
 	nTotalCnt = static_cast<long>((long)sqrt((nX2 - nX1 + 1) * (nX2 - nX1 + 1)
 		+ (nY2 - nY1 + 1) * (nY2 - nY1 + 1)));
 	// build a profile
-	float* pProfileXData, * pProfileYData;
 	vector<float>dataVal;
 	float mxVal = -1e9, mnVal = 1e9;
 	//float fMin = 1e20, fMax = -1e20;
-	pProfileXData = new float[nTotalCnt];
-	pProfileYData = new float[nTotalCnt];
+	double* pProfileXData = new double[nTotalCnt];
+	float* pProfileYData = new float[nTotalCnt];   
 
 	PEnset(m_hPEl, PEP_nSUBSETS, 1);//nTotalCnt
 	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
@@ -864,6 +944,8 @@ void AnalysisDlg::lineProfile()
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
 	double scale = Dr / Di;
 
+	int cnt = 0;
+
 	for (i = 0; i < nTotalCnt; i++) {
 		pProfileYData[i] = 0;
 		k = 0;
@@ -877,6 +959,7 @@ void AnalysisDlg::lineProfile()
 			{
 				pProfileYData[i] += profile[Row][Col];
 				k++;
+				cnt++;
 			}
 		}
 		if (k > 1)
@@ -891,20 +974,19 @@ void AnalysisDlg::lineProfile()
 			mnVal = pProfileYData[i];
 		}
 		dataVal.push_back(pProfileYData[i]);
-		float xval = (static_cast<float>(i)) * scale;
+		double xval = (static_cast<double>(i)) * scale;
+		//20251201
+		pProfileXData[i] = xval;  // <-- Set actual X coordinate
+		//20251201
 		CString xAxisVal;
 		xAxisVal.Format(_T("%0.2lf"), xval);
-		//TCHAR* xAxis;
-		//xAxis = _tcsdup(xAxisVal);
-		//PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, TEXT(xAxis));
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
-	//file.close();
-	//PEvset(m_hPEl, PEP_faXDATA, pProfileXData, nTotalCnt);
+
+	filter.applyDespike1DVec(pProfileYData,cnt);
+	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
-
-
 
 	// Manually Control Y Axis //
 	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
@@ -967,7 +1049,7 @@ void AnalysisDlg::lineProfile()
 	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
 	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
 
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, TRUE);
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, FALSE);
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
 
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
@@ -981,7 +1063,9 @@ void AnalysisDlg::lineProfile()
 		int nAIF = PEAIF_IN_FRONT;
 		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
 		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
-		double fXLoc[] = { lowThresh,highThresh };
+		// 20251201
+		double fXLoc[] = { static_cast<double>(lowThresh), static_cast<double>(highThresh) };
+		// 20251201
 
 		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
 		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
@@ -1101,7 +1185,21 @@ void AnalysisDlg::lineProfile()
 		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
 		//==========================================
 	}
+	// Reset line drawing state for new profile
+	m_lineDrawingState = 0;
+	m_isDrawingCurrentLine = FALSE;
 
+	// Enable mouse events for line drawing
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, FALSE); // Disable data point snapping
+	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+
+	// Show instruction in subtitle
+	TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
+	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);
 
 
 }
@@ -1378,7 +1476,8 @@ void AnalysisDlg::Create2D() {
 					heightDiff = (abs(heightTwoPt[profile - 1].first - heightTwoPt[profile - 1].second));
 					/*if (isMM)height.Format("Height diff= %0.2lf mm", heightDiff);
 					else height.Format("Height diff= %0.2lf um", heightDiff * 1000.0F);*/
-					height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("HDtp:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
 
 				}
 				else
@@ -1420,7 +1519,8 @@ void AnalysisDlg::Create2D() {
 					heightDiff = (abs(mxHeight - mnHeight));
 					//CString height;
 					/*if (isMM)height.Format("Height diff= %0.2lf mm", heightDiff);
-					else*/ height.Format(_T("HD:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					else*/ //height.Format(_T("HD:%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+					//height.Format(_T("%0.2lf um"/* X = % d Y = % d */), heightDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
 				}
 
 				TCHAR* heightDiffVal;
@@ -1615,7 +1715,7 @@ void AnalysisDlg::Create2D() {
 				annotationCnt++;
 				x1d = (static_cast<double>(x1)) * m_xStep;
 				y1d = (static_cast<double>(y1)) * m_yStep;
-				symbol = PEGAT_THICKSOLIDLINE;
+				symbol = PEGAT_THINSOLIDLINE;
 				col2 = PERGB(255, 255, 255, 255);
 				PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
 				PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
@@ -2014,8 +2114,14 @@ void AnalysisDlg::Create3D() {
 	PEnset(m_hPE3, PEP_nLEGENDLOCATION, PELL_LEFT);
 
 	//color bar and contour
-	PEnset(m_hPE3, PEP_nCONTOURCOLORBLENDS, 4); //8 // this must be set before COLORSET, COLORSET ALWAYS LAST
+	PEnset(m_hPE3, PEP_nCONTOURCOLORBLENDS, 8); //8 // this must be set before COLORSET, COLORSET ALWAYS LAST
 	PEnset(m_hPE3, PEP_nCONTOURCOLORSET, PECCS_GREEN_YELLOW_RED);//PECCS_BLUE_GREEN_RED //PECCS_BLUE_GREEN_YELLOW_RED
+
+	// 20251202
+	PEnset(m_hPE3, PEP_nCONTOURCOLORALPHA, 255);
+	PEnset(m_hPE2, PEP_dwGRAPHBACKCOLOR, 5);
+
+
 	PEnset(m_hPE3, PEP_nSHOWCONTOUR, PESC_NONE);//PESC_BOTTOMLINES
 	PEnset(m_hPE3, PEP_nCONTOURLEGENDPRECISION, 1);//set the precision of the legend
 
@@ -2267,308 +2373,6 @@ afx_msg LRESULT AnalysisDlg::OnThresholdApply(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-void AnalysisDlg::ShowProfile(int nLeftBorder, int nRightBorder) {
-	CDC* dc = NULL;
-	CBitmap bmp;
-	CDC dcMem;
-	CPen pen;
-	CPen pen2;
-	CPen pen3;
-	HBITMAP oldBmp = NULL;
-	HPEN oldPen = NULL;
-	POINT* m_points;
-	size_t		m_pointsCnt;
-
-	RECT wndRect, rect;
-	this->GetWindowRect(&wndRect);
-	GetDlgItem(IDC_LINEPROFILE_VIEW)->GetWindowRect(&rect);
-	rect.left -= wndRect.left;
-	rect.top -= wndRect.top;
-	rect.right -= wndRect.left;
-	rect.bottom -= wndRect.top;
-
-	RECT rc;
-	rc.left = 0;
-	rc.top = 0;
-	rc.right = 500;
-	rc.bottom = 360;
-
-	dc = GetDC();
-	dcMem.CreateCompatibleDC(dc);
-
-	bmp.CreateCompatibleBitmap(dc, rc.right - rc.left + 1, rc.bottom - rc.top + 1);
-	oldBmp = (HBITMAP)dcMem.SelectObject(bmp);
-
-	dcMem.FillSolidRect(rc.left, rc.top, rc.right, rc.bottom, m_bgColor);
-
-	pen3.CreatePen(PS_DASH, 1, m_grColor);
-	oldPen = (HPEN)dcMem.SelectObject(pen3);
-	int i;
-	for (i = 1; i <= 3; i++)
-	{
-		dcMem.MoveTo(0, rc.top + (int)(0.25 * i * (rc.bottom - rc.top + 1)));
-		dcMem.LineTo(rc.right, rc.top + (int)(0.25 * i * (rc.bottom - rc.top + 1)));
-	}
-	for (i = 1; i <= 3; i++)
-	{
-		dcMem.MoveTo(rc.left + (int)(0.25 * i * (rc.right - rc.left + 1)), 0);
-		dcMem.LineTo(rc.left + (int)(0.25 * i * (rc.right - rc.left + 1)), rc.bottom);
-	}
-	///
-	pen2.CreatePen(PS_SOLID, 1, m_grColor2);
-	oldPen = (HPEN)dcMem.SelectObject(pen2);
-	if (m_fLevel1 > 0)
-	{
-		dcMem.MoveTo(0, rc.bottom - (int)(m_fLevel1 * (rc.bottom - rc.top + 1)));
-		dcMem.LineTo((int)rc.right, rc.bottom - (int)(m_fLevel1 * (rc.bottom - rc.top + 1)));
-	}
-	if (m_fLevel2 > 0)
-	{
-		dcMem.MoveTo(0, rc.top + (int)(m_fLevel2 * (rc.bottom - rc.top + 1)));
-		dcMem.LineTo(rc.right, rc.top + (int)(m_fLevel2 * (rc.bottom - rc.top + 1)));
-	}
-
-	for (i = 1; i < 5; i++)
-	{
-		if ((m_fProfileMark[i] > 0) && (m_fProfileMark[i] < 1))
-		{
-			dcMem.MoveTo(rc.left + (int)(m_fProfileMark[i] * (rc.right - rc.left + 1)), rc.top);
-			dcMem.LineTo(rc.left + (int)(m_fProfileMark[i] * (rc.right - rc.left + 1)), rc.bottom);
-		}
-	}
-	///
-	pen.CreatePen(PS_SOLID, 1, m_lnColor);
-	oldPen = (HPEN)dcMem.SelectObject(pen);
-	/*	m_points = new POINT[nTotalCnt];
-		for (i = 0; i < nTotalCnt; i++)
-		{
-			m_points[i].x = rc.left + (rc.right - rc.left + 1) * pProfileXData[i] / nTotalCnt;
-			m_points[i].y = rc.bottom - (pProfileYData[i] - fMin) * (rc.bottom - rc.top) / (fMax - fMin);
-		}*/
-	m_points = new POINT[nRightBorder - nLeftBorder];
-	for (i = 0; i < nRightBorder - nLeftBorder; i++)
-	{
-		m_points[i].x = rc.left + (rc.right - rc.left + 1) * pProfileXData[i + nLeftBorder] / (nRightBorder - nLeftBorder);
-		m_points[i].y = rc.bottom - (pProfileYData[i + nLeftBorder] - fMin) * (rc.bottom - rc.top) / (fMax - fMin);
-	}
-	if (m_points)
-		//		dcMem.Polyline(m_points, nTotalCnt);
-		dcMem.Polyline(m_points, nRightBorder - nLeftBorder);
-
-	if (oldPen) dcMem.SelectObject(oldPen);
-	wchar_t str[20];
-	for (i = 1; i <= 3; i++)
-	{
-		swprintf(str, 6, L"%.3f", (fMax - 0.25 * i * (fMax - fMin)));
-		CString text(str);
-		dcMem.TextOut(0, rc.top + (int)(0.25 * i * (rc.bottom - rc.top + 1)) - 8, text);
-	}
-	for (i = 1; i <= 3; i++)
-	{
-		//		swprintf(str, 4, L"%.0f", (0.25 * i * nTotalCnt));
-		swprintf(str, 4, L"%.0f", nLeftBorder + (0.25 * i * (nRightBorder - nLeftBorder)));
-		CString text(str);
-		dcMem.TextOut(rc.left + (int)(0.25 * i * (rc.right - rc.left + 1)) - 20, rc.bottom - 16, text);
-	}
-	//			
-	if (oldPen) dcMem.SelectObject(oldPen);
-
-	dc->BitBlt(rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1, &dcMem, 0, 0, SRCCOPY);
-
-	if (oldBmp) dcMem.SelectObject(oldBmp);
-
-	dcMem.DeleteDC();
-	pen.DeleteObject();
-	//		pen2.DeleteObject();
-	pen3.DeleteObject();
-	bmp.DeleteObject();
-	ReleaseDC(dc);
-	oldBmp = NULL;
-	oldPen = NULL;
-
-	dc = NULL;
-}
-
-void AnalysisDlg::AdditionalCalculations() {
-	UpdateData(TRUE);
-	std::vector<std::vector<float>>profile;
-	profile.clear();
-	profile = filterData;// analysisdlgobject->data;
-	if (profile.size() <= 0)
-		return;
-	RECT wndRect, rect;
-	this->GetWindowRect(&wndRect);
-	GetDlgItem(IDC_LINEPROFILE_VIEW)->GetWindowRect(&rect);
-	rect.left -= wndRect.left;
-	rect.top -= wndRect.top;
-	rect.right -= wndRect.left;
-	rect.bottom -= wndRect.top;
-
-	RECT rc;
-	rc.left = 0;
-	rc.top = 0;
-	rc.right = 500;
-	rc.bottom = 360;
-
-	// Pass Data //
-	long  i = 0, j, k;
-	long Row, Col;
-	int rowNumber = static_cast<int>(profile.size());
-	int colNumber = static_cast<int>(profile[0].size());
-	int dataLength = rowNumber * colNumber;
-
-	int nX1 = m_lineProfileX1;
-	int nX2 = m_lineProfileX2;
-	int nY1 = m_lineProfileY1;
-	int nY2 = m_lineProfileY2;
-	int nWidth = 10;
-
-	nTotalCnt = static_cast<long>((long)sqrt((nX2 - nX1 + 1) * (nX2 - nX1 + 1)
-		+ (nY2 - nY1 + 1) * (nY2 - nY1 + 1)));
-	nLeftBorder = 0;
-	nRightBorder = nTotalCnt - 1;
-
-	if (pProfileXData)
-	{
-		delete[] pProfileXData;
-		pProfileXData = NULL;
-	}
-	if (pProfileYData)
-	{
-		delete[] pProfileYData;
-		pProfileYData = NULL;
-	}
-	fMin = 1e20; fMax = -1e20;
-	pProfileXData = new float[nTotalCnt];
-	pProfileYData = new float[nTotalCnt];
-
-	for (i = 0; i < nTotalCnt; i++) {
-		pProfileYData[i] = 0;
-		k = 0;
-		for (j = -nWidth / 2; j < -nWidth / 2 + nWidth; j++)
-		{
-			Row = (int)(nY1 + 1.0 * (nY2 - nY1) * i / nTotalCnt
-				+ 1.0 * j * (nX2 - nX1) / nTotalCnt);
-			Col = (int)(nX1 + 1.0 * (nX2 - nX1) * i / nTotalCnt
-				- 1.0 * j * (nY2 - nY1) / nTotalCnt);
-			if ((Row >= 0) && (Row < rowNumber) && (Col >= 0) && (Col < colNumber))
-			{
-				pProfileYData[i] += profile[Row][Col];
-				k++;
-			}
-		}
-		if (k > 1)
-			pProfileYData[i] /= k;
-		if (pProfileYData[i] < fMin)
-			fMin = pProfileYData[i];
-		if (pProfileYData[i] > fMax)
-			fMax = pProfileYData[i];
-		pProfileXData[i] = i;
-	}
-
-	nProfCnt = nTotalCnt;
-	if (pProfile)
-		delete[] pProfile;
-	pProfile = new float[nProfCnt];
-	memcpy((float*)pProfile, (float*)pProfileYData, nTotalCnt * sizeof(float));
-
-	float fLevel1 = fMin + (fMax - fMin) * 0.15;
-	float fLevel2 = fMax - (fMax - fMin) * 0.15;
-	int i1, i2, i3, i4, i5, i6;
-	i = 0;
-	m_fProfileMark[0] = 0;
-	i1 = 0;
-
-	while ((pProfileYData[i] < fLevel1) && (i < nTotalCnt)) { i++; }
-	m_fProfileMark[1] = 1.0 * i / nTotalCnt;
-	i2 = i;
-	while ((pProfileYData[i] < fLevel2) && (i < nTotalCnt)) { i++; }
-	m_fProfileMark[2] = 1.0 * i / nTotalCnt;
-	i3 = i;
-	while ((pProfileYData[i] > fLevel2) && (i < nTotalCnt)) { i++; }
-	m_fProfileMark[3] = 1.0 * i / nTotalCnt;
-	i4 = i;
-	while ((pProfileYData[i] > fLevel1) && (i < nTotalCnt)) { i++; }
-	m_fProfileMark[4] = 1.0 * i / nTotalCnt;
-	i5 = i;
-
-	m_fProfileMark[5] = 1;
-	i6 = nTotalCnt;
-
-	if (m_bBestfit)
-	{
-		float S1 = 0, Sx = 0, Sy = 0, Sxx = 0, Sxy = 0;
-		for (i = i1; i < i2; i++)
-		{
-			S1 += 1;
-			Sx += pProfileXData[i];
-			Sy += pProfileYData[i];
-			Sxx += pProfileXData[i] * pProfileXData[i];
-			Sxy += pProfileXData[i] * pProfileYData[i];
-		}
-		for (i = i5; i < i6; i++)
-		{
-			S1 += 1;
-			Sx += pProfileXData[i];
-			Sy += pProfileYData[i];
-			Sxx += pProfileXData[i] * pProfileXData[i];
-			Sxy += pProfileXData[i] * pProfileYData[i];
-		}
-		float det = Sxx * S1 - Sx * Sx;
-		float detk = Sxy * S1 - Sy * Sx;
-		float detb = Sxx * Sy - Sx * Sxy;
-		if (det == 0)
-		{
-			m_fk = 0;
-			m_fb = 0;
-		}
-		else
-		{
-			m_fk = detk / det;
-			m_fb = detb / det;
-			fMin = 1e20;
-			fMax = -1e20;
-			for (i = 0; i < nTotalCnt; i++)
-			{
-				pProfileYData[i] -= (m_fk * pProfileXData[i] + m_fb);
-				if (pProfileYData[i] < fMin)
-					fMin = pProfileYData[i];
-				if (pProfileYData[i] > fMax)
-					fMax = pProfileYData[i];
-			}
-		}
-	}
-	else
-	{
-		m_fk = m_fb = 0.0;
-	}
-
-	float fSum1 = 0, fSum2 = 0;
-	k = 0;
-	for (i = i3; i < i4; i++)
-	{
-		fSum1 += pProfileYData[i];
-		k++;
-	}
-	if (k > 1)
-		fSum1 /= k;
-	k = 0;
-	for (i = i1; i < i2; i++)
-	{
-		fSum2 += pProfileYData[i];
-		k++;
-	}
-	for (i = i5; i < i6; i++)
-	{
-		fSum2 += pProfileYData[i];
-		k++;
-	}
-	if (k > 1)
-		fSum2 /= k;
-	m_fProfileHeight = fSum1 - fSum2;
-
-	ShowProfile(0, nTotalCnt - 1);
-}
 
 void AnalysisDlg::showCharts() {
 
@@ -2746,9 +2550,9 @@ void AnalysisDlg::readDataFromFile(CString fileName){
 		while (std::getline(lineStream, value, ',')) {
 			float val;
 			val = static_cast<float>(stof(value));
-			if (isnan(static_cast<double>(val))) {
+			/*if (isnan(static_cast<double>(val))) {
 				val = PEMSC_NONE;
-			}
+			}*/
 			vec.push_back(val);
 			mxVal = max(mxVal, val);
 			if (val < mnVal) {
@@ -3116,7 +2920,6 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 	PEvset(m_hPEl, PEP_fMANUALMAXY, &dMax, 1);
 
 
-
 	// 5. Redraw efficiently
 	PEreinitialize(m_hPEl);  // Recalculates internal structures
 	PEresetimage(m_hPEl, 0, 0);  // Redraws to cached bitmap
@@ -3127,3 +2930,302 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 	::UpdateWindow(m_hPEl);
 
 }
+
+void AnalysisDlg::DrawLineAnnotation(double x1, double y1, double x2, double y2,
+	int startIdx, int endIdx, DWORD color)
+{
+	int symbol = PEGAT_MEDIUMSOLIDLINE;
+	
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, startIdx, &x1);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, startIdx, &y1);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, startIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, startIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, startIdx, (void*)TEXT(""));
+
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, endIdx, &x2);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, endIdx, &y2);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, endIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, endIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, endIdx, (void*)TEXT(""));
+}
+
+void AnalysisDlg::DrawLineAnnotations()
+{
+	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
+
+	// Draw first line (red) - state 2 or higher
+	if (m_lineDrawingState >= 2) {
+		DrawLineAnnotation(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2,
+			0, 1, PERGB(255, 255, 0, 0));
+	}
+
+	// Draw second line (red) - state 4 (complete)
+	if (m_lineDrawingState == 4) {
+		DrawLineAnnotation(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2,
+			2, 3, PERGB(255, 255, 0, 0));
+	}
+}
+
+void AnalysisDlg::ClearLineAnnotations()
+{
+	// Clear annotations by setting them to a point (effectively invisible)
+	for (int i = 0; i < 10; i++) {
+		int symbol = PEGAT_NOSYMBOL;
+		double zero = 0.0;
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, i, &symbol);
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, i, &zero);
+		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, i, &zero);
+	}
+}
+
+double AnalysisDlg::CalculateLineMedianX(double x1, double x2)
+{
+	return (x1 + x2) / 2.0;
+}
+
+/*void AnalysisDlg::DisplayDistanceBetweenLines()
+{
+	// Calculate median X positions
+	double line1MedianX = CalculateLineMedianX(m_line1X1, m_line1X2);
+	double line2MedianX = CalculateLineMedianX(m_line2X1, m_line2X2);
+
+	// Calculate distance (absolute difference)
+	double distance = fabs(line2MedianX - line1MedianX);
+
+	// Determine which line is left/right for proper annotation placement
+	double leftX = min(line1MedianX, line2MedianX);
+	double rightX = max(line1MedianX, line2MedianX);
+
+	// Get Y range for positioning the connecting line
+	double maxY = max(max(m_line1Y1, m_line1Y2), max(m_line2Y1, m_line2Y2));
+	double minY = min(min(m_line1Y1, m_line1Y2), min(m_line2Y1, m_line2Y2));
+	double connectY = maxY + (maxY - minY) * 0.15; // Above the lines
+
+	// Annotation index for distance display (starting from 4 to avoid line annotations)
+	int annotationIdx = 4;
+
+	// Draw horizontal connecting line between medians
+	int symbol = PEGAT_THICKSOLIDLINE;
+	DWORD color = PERGB(255, 255, 255, 0); // Yellow
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	annotationIdx++;
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// Add distance text at midpoint
+	annotationIdx++;
+	double textX = (leftX + rightX) / 2.0;
+	double textY = connectY + (maxY - minY) * 0.08;
+
+	CString distText;
+	distText.Format(_T("Distance: %.2f um"), distance);
+	TCHAR* distValue = _tcsdup(distText);
+
+	symbol = PEGAT_NOSYMBOL;
+	color = PERGB(255, 255, 255, 0);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	int shadow = TRUE;
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+
+	delete[] distValue;
+
+	// Output to debug or status bar (remove AfxMessageBox for smoother UX)
+	TRACE(_T("Line 1 Median X: %.2f um | Line 2 Median X: %.2f um | Distance: %.2f um\n"),
+		line1MedianX, line2MedianX, distance);
+}*/
+
+void AnalysisDlg::DisplayDistanceBetweenLines()
+{
+	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
+	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
+	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
+
+	// 2. Calculate vertical distance (absolute difference)
+	double distance = fabs(line2MedianY - line1MedianY);
+
+	// 3. Determine geometric points for the vertical ruler
+	// Top and Bottom Y coordinates
+	double bottomY = min(line1MedianY, line2MedianY);
+	double topY = max(line1MedianY, line2MedianY);
+
+	// Determine X range to position the ruler to the right of the data
+	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
+	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
+	double xRange = maxX - minX;
+	if (xRange == 0) xRange = 1.0; // Prevent zero logic if lines are vertical
+
+	// Place the ruler 10% to the right of the right-most data point
+	double rulerX = maxX + (xRange * 0.10);
+
+	// 4. Setup Annotations
+	int annotationIdx = 4; // Start index
+	int symbol;
+	DWORD color = PERGB(255, 255, 255, 255); // WHITE
+
+	// --- Draw Vertical Line (Start Point) ---
+	//symbol = PEGAT_THICKSOLIDLINE;
+	symbol = PEGAT_THINSOLIDLINE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// --- Draw Vertical Line (End Point) ---
+	annotationIdx++;
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// Added for arrow
+	// --- Annotation 3: OVERLAY Bottom Arrow Symbol ---
+	// This point is placed right on top of the starting point (bottomY) to add the arrow.
+	annotationIdx++;
+	symbol = PEGAT_ARROWSOLID_LARGE; // South-facing arrow at the bottom
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// --- Annotation 4: OVERLAY Top Arrow Symbol ---
+	// This point is placed right on top of the ending point (topY) to add the arrow.
+	annotationIdx++;
+	symbol = PEGAT_ARROWSOLID_LARGE; // North-facing arrow at the top
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+	// Ended
+
+	// --- Draw Distance Text (To the side) ---
+	annotationIdx++;
+
+	// Text Position: Vertical center of the line, slightly right of the ruler
+	double textY = (bottomY + topY) / 2.0;
+	double textX = rulerX + (xRange * 0.25); // Small offset from the line
+	//double textX = rulerX + 55; // Small offset from the line
+
+	CString distText;
+	distText.Format(_T("%.2f um"), distance);
+	TCHAR* distValue = _tcsdup(distText);
+
+	symbol = PEGAT_NOSYMBOL; // Just text
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	// Styling
+	int shadow = TRUE;
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 200);
+
+	delete[] distValue;
+
+	// Force Graph Update (Optional but recommended to see changes immediately)
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+}
+
+
+/*void AnalysisDlg::DisplayDistanceBetweenLines() // vertical
+{
+	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
+	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
+	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
+
+	// 2. Calculate distance (absolute difference between Y medians)
+	double distance = fabs(line2MedianY - line1MedianY);
+
+	// 3. Determine bottom/top Y for vertical line drawing
+	double bottomY = min(line1MedianY, line2MedianY);
+	double topY = max(line1MedianY, line2MedianY);
+
+	// 4. Determine X position for the annotation line
+	// We find the right-most X point of the existing lines and add a margin
+	// so the ruler appears to the right of the data.
+	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
+	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
+
+	// Position the line 10% of the width to the right of the max X
+	double connectX = maxX + (maxX - minX) * 0.1;
+
+	// Annotation index setup (starting from 4)
+	int annotationIdx = 4;
+	int symbol;
+	DWORD color = PERGB(255, 255, 255, 0); // Yellow
+
+	// --- Draw Vertical Connecting Line ---
+
+	// Point 1: Bottom of the vertical line
+	symbol = PEGAT_THICKSOLIDLINE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// Point 2: Top of the vertical line (Line Continue)
+	annotationIdx++;
+	symbol = PEGAT_LINECONTINUE;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// --- Add Distance Text ---
+
+	annotationIdx++;
+
+	// Position text at the Y-midpoint, slightly to the right of the vertical line
+	double textY = (bottomY + topY) / 2.0;
+	double textX = connectX + (maxX - minX) * 0.02; // Small offset to right
+
+	CString distText;
+	// Note: Assuming 'um' is the unit. Adjusted format for vertical context.
+	distText.Format(_T("Distance: %.2f um"), distance);
+	TCHAR* distValue = _tcsdup(distText);
+
+	symbol = PEGAT_NOSYMBOL;
+	// Set color same as line
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	// Apply shadow and text size
+	int shadow = TRUE;
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+
+	// Clean up allocated string
+	delete[] distValue;
+
+	// Force a repaint to ensure annotations appear immediately
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+}*/
