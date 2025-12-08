@@ -28,21 +28,21 @@ void COperationDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_STAGE_MOTION_PANEL, m_stageMotionPanelCard);
-	DDX_Control(pDX, IDC_BUTTON1, topLeftButton);
-	DDX_Control(pDX, IDC_BUTTON2, upButton);
-	DDX_Control(pDX, IDC_BUTTON3, topRightButton);
-	DDX_Control(pDX, IDC_BUTTON4, leftButton);
-	DDX_Control(pDX, IDC_BUTTON8, homeButton);
-	DDX_Control(pDX, IDC_BUTTON5, rightButton);
-	DDX_Control(pDX, IDC_BUTTON6, bottomLeftButton);
-	DDX_Control(pDX, IDC_BUTTON101, downButton);
-	DDX_Control(pDX, IDC_BUTTON9, bottomRightButton);
-	DDX_Control(pDX, IDC_BUTTON71, zUpButton);
-	DDX_Control(pDX, IDC_BUTTON10, zDownButton);
+	DDX_Control(pDX, IDC_BUTTON_TOP_LEFT, topLeftButton);
+	DDX_Control(pDX, IDC_BUTTON_UP, upButton);
+	DDX_Control(pDX, IDC_BUTTON_TOP_RIGHT, topRightButton);
+	DDX_Control(pDX, IDC_BUTTON_LEFT, leftButton);
+	DDX_Control(pDX, IDC_BUTTON_HOME, homeButton);
+	DDX_Control(pDX, IDC_BUTTON_RIGHT, rightButton);
+	DDX_Control(pDX, IDC_BUTTON_BOTTOM_LEFT, bottomLeftButton);
+	DDX_Control(pDX, IDC_BUTTON_DOWN, downButton);
+	DDX_Control(pDX, IDC_BUTTON_BOTTOM_RIGHT, bottomRightButton);
+	DDX_Control(pDX, IDC_BUTTON_Z_UP, zUpButton);
+	DDX_Control(pDX, IDC_BUTTON_Z_DOWN, zDownButton);
 	DDX_Control(pDX, IDC_AUTOFOCUS_CARD, autoFocusCardPanel);
 	DDX_Control(pDX, IDC_MEASUREMENT_EXECUTION_PANEL, measurementExecutionPanel);
-	DDX_Control(pDX, IDC_BUTTON14, m_measureButton);
-	DDX_Control(pDX, IDC_BUTTON15, m_stopMeasureButton);
+	DDX_Control(pDX, IDC_BUTTON_MEASURE, m_measureButton);
+	DDX_Control(pDX, IDC_BUTTON_STOP, m_stopMeasureButton);
 	DDX_Control(pDX, IDC_LOADED_WAFER_RECIPE_FILE_NAME, m_loadedWaferRecipeName);
 	DDX_Control(pDX, IDC_CURRENT_Z, m_currentZ);
 	DDX_Control(pDX, IDC_LOW_Z, m_lowZ);
@@ -50,7 +50,7 @@ void COperationDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CURRENT_Z_VALUE, m_currentZValue);
 	DDX_Control(pDX, IDC_LOW_Z_VALUE, m_lowZValue);
 	DDX_Control(pDX, IDC_HIGH_Z_VALUE, m_highZValue);
-	DDX_Control(pDX, IDC_BUTTON13, m_runAFButton);
+	DDX_Control(pDX, IDC_BUTTON_RUN_AF, m_runAFButton);
 	DDX_Control(pDX, IDC_ACTIVE_RECIPE_TITLE, m_activeRecipe);
 	DDX_Control(pDX, IDC_SPEED, m_speedTitle);
 	DDX_Control(pDX, IDC_LENS_SELECTION, m_lensCtrl);
@@ -58,9 +58,9 @@ void COperationDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BRIGHTNESS, m_brightness);
 	DDX_Control(pDX, IDC_EXPOSURE, m_exposure);
 	DDX_Control(pDX, IDC_PROGRESS_PERCENTAGE, m_progress_percentage);
-	DDX_Control(pDX, IDC_SLIDER1, m_zValueSlider);
-	DDX_Control(pDX, IDC_SLIDER2, m_brightnessSlider);
-	DDX_Control(pDX, IDC_SLIDER3, m_exposureSlider);
+	DDX_Control(pDX, IDC_SLIDER_Z_AXIS_CONTROL, m_zValueSlider);
+	DDX_Control(pDX, IDC_SLIDER_BRIGHTNESS, m_brightnessSlider);
+	DDX_Control(pDX, IDC_SLIDER_EXPOSURE, m_exposureSlider);
 	DDX_Control(pDX, IDC_RADIO_FINE, m_FineRadioButton);
 	DDX_Control(pDX, IDC_RADIO_FAST, m_fastRadioButton);
 }

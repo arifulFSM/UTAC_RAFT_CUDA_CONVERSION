@@ -27,14 +27,14 @@ CAnalysisNewDlg::~CAnalysisNewDlg()
 void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_BUTTON1, m_toolButton1);
-	DDX_Control(pDX, IDC_BUTTON2, m_toolButton2);
-	DDX_Control(pDX, IDC_BUTTON3, m_toolButton3);
-	DDX_Control(pDX, IDC_BUTTON4, m_toolButton4);
-	DDX_Control(pDX, IDC_BUTTON8, m_toolButton5);
-	DDX_Control(pDX, IDC_BUTTON5, m_toolButton6);
-	DDX_Control(pDX, IDC_BUTTON6, m_toolButton7);
-	DDX_Control(pDX, IDC_BUTTON7, m_toolButton8);
+	DDX_Control(pDX, IDC_BUTTON_2_POINTS, m_toolButton1);
+	DDX_Control(pDX, IDC_BUTTON_HORIZONTAL, m_toolButton2);
+	DDX_Control(pDX, IDC_BUTTON_VERTICAL, m_toolButton3);
+	DDX_Control(pDX, IDC_BUTTON_LINE, m_toolButton4);
+	DDX_Control(pDX, IDC_BUTTON_PARALLEL, m_toolButton5);
+	DDX_Control(pDX, IDC_BUTTON_PERPENDICULAR, m_toolButton6);
+	DDX_Control(pDX, IDC_BUTTON_BOX, m_toolButton7);
+	DDX_Control(pDX, IDC_BUTTON_CIRCLE, m_toolButton8);
 	DDX_Control(pDX, IDC_PROFILE_CARD_PANEL, m_profileToolCardPanel);
 	DDX_Control(pDX, IDC_LINE_ROUGHNESS_CARD_PANEL, m_lineRoughnessCardPanel);
 	DDX_Control(pDX, IDC_MEASUREMENT_TYPE_TEXT, m_measureTypeText);
@@ -50,14 +50,14 @@ void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CAnalysisNewDlg, CResizableDialog)
-	ON_COMMAND_EX(IDC_BUTTON1, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON2, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON3, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON4, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON5, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON6, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON7, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON8, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_2_POINTS, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_HORIZONTAL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_VERTICAL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_LINE, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_PARALLEL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_PERPENDICULAR, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_BOX, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_CIRCLE, OnToolButtonClicked)
 	ON_STN_CLICKED(IDC_PROFILE_CARD_PANEL, &CAnalysisNewDlg::OnStnClickedProfileCardPanel)
 END_MESSAGE_MAP()
 
@@ -135,35 +135,35 @@ BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 	// 5. Handle Tool Logic
 	switch (nID)
 	{
-	case IDC_BUTTON1:
+	case IDC_BUTTON_2_POINTS:
 		//AfxMessageBox(_T("button 1 clicked"));
 		break;
 
-	case IDC_BUTTON2:
+	case IDC_BUTTON_HORIZONTAL:
 		//AfxMessageBox(_T("button 2 clicked"));
 		break;
 
-	case IDC_BUTTON3:
+	case IDC_BUTTON_VERTICAL:
 		//AfxMessageBox(_T("button 3 clicked"));
 		break;
 
-	case IDC_BUTTON4:
+	case IDC_BUTTON_LINE:
 		//AfxMessageBox(_T("button 4 clicked"));
 		break;
 
-	case IDC_BUTTON5:
+	case IDC_BUTTON_PARALLEL:
 		//AfxMessageBox(_T("button 5 clicked"));
 		break;
 
-	case IDC_BUTTON6:
+	case IDC_BUTTON_PERPENDICULAR:
 		//AfxMessageBox(_T("button 6 clicked"));
 		break;
 
-	case IDC_BUTTON7:
+	case IDC_BUTTON_BOX:
 		//AfxMessageBox(_T("button 7 clicked"));
 		break;
 
-	case IDC_BUTTON8:
+	case IDC_BUTTON_CIRCLE:
 		//AfxMessageBox(_T("button 8 clicked"));
 		break;
 
