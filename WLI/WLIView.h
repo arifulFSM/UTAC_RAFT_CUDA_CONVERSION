@@ -6,6 +6,7 @@
 #include "BaslerCameraDlg.h" //12222022
 #include "RecipeDlg.h" //07252023
 #include "RoughnessDlg.h"
+#include "WaferMap.h"
 
 //#include "StripDlg.h"
 //#include "HeightDlg.h"
@@ -105,7 +106,15 @@ protected:
 	afx_msg LRESULT OnUmHeightCalced(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUmHeightCalc(WPARAM wParam, LPARAM lParam); // 05302023 - Mortuja
 	afx_msg LRESULT OnRoughnessDlg(WPARAM wParam, LPARAM lParam);
+
+
+	CRecipeRAFT* pRcp;
+
 public:
+
+	
+
+
 	afx_msg void OnBaslerCamera();
 	afx_msg void OnRecipeCreaterecipe();
 	afx_msg LRESULT OnUmResultDlg(WPARAM wParam, LPARAM lParam);
@@ -126,6 +135,14 @@ public:
 	CSignalTower m_signalTower;
 	CIconButton cameraMotionButton;
 	CIconButton loadDataButton;
+	CStyleStatic m_cameraPosition;
+	CStyleStatic m_xTitle;
+	CStyleStatic m_yTitle;
+	CStyleStatic m_zTitle;
+	CStyleStatic m_cameraXValue;
+	CStyleStatic m_cameraYValue;
+	CStyleStatic m_cameraZValue;
+	CWaferMap m_cWaferMap;
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

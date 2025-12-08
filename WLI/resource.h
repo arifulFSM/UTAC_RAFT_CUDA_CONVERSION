@@ -79,14 +79,14 @@
 #define IDI_ICON28                      417
 #define IDD_ANALYSIS_DLG_NEW            418
 #define IDI_ICON29                      420
-#define IDI_ICON30                      421
-#define IDI_ICON31                      422
-#define IDI_ICON32                      423
-#define IDI_ICON33                      424
-#define IDI_ICON34                      425
-#define IDI_ICON35                      426
-#define IDI_ICON36                      427
-#define IDI_ICON37                      428
+#define IDI_ICON30                      437
+#define IDI_ICON31                      438
+#define IDI_ICON32                      439
+#define IDI_ICON33                      440
+#define IDI_ICON34                      441
+#define IDI_ICON35                      442
+#define IDI_ICON36                      443
+#define IDI_ICON37                      444
 #define IDC_BUTTON1                     1000
 #define IDC_BUTTON2                     1001
 #define IDC_BUTTON3                     1002
@@ -433,7 +433,6 @@
 #define IDC_TIME_STAMP                  1218
 #define IDC_ABSDIST                     1219
 #define IDC_STAGE_MOTION_PANEL          1219
-#define IDC_BUTTON_SETTING2             1219
 #define IDC_RADIO_MINMAX                1220
 #define IDC_AUTOFOCUS_CARD              1220
 #define IDC_RADIO_2POINTS               1221
@@ -520,6 +519,14 @@
 #define IDC_BUTTON_CIRCLE               1276
 #define IDC_CHECK_END_EFFECT_CORRECTION 1277
 #define IDC_CHECK_DOUBLE_GAUSSIAN_FILTER 1278
+#define IDC_LIST2                       1279
+#define IDC_POSITION                    1280
+#define IDC_X_TITLE                     1281
+#define IDC_Y_TITLE                     1282
+#define IDC_Z_TITLE                     1283
+#define IDC_CAMERA_X_VALUE              1284
+#define IDC_CAMERA_Y_VALUE              1285
+#define IDC_CAMERA_Z_VALUE              1286
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -592,9 +599,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        429
+#define _APS_NEXT_RESOURCE_VALUE        445
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1279
+#define _APS_NEXT_CONTROL_VALUE         1287
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

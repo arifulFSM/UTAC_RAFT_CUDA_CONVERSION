@@ -119,6 +119,8 @@
     <ClCompile Include="ColorSliderCtrl.cpp" />
     <ClCompile Include="CustomRadioButton.cpp" />
     <ClCompile Include="AnalysisNewDlg.cpp" />
+    <ClCompile Include="MyHeaderCtrl.cpp" />
+    <ClCompile Include="MyListCtrl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CAM\CamDev.h" />
@@ -256,6 +258,8 @@
     <ClInclude Include="ColorSliderCtrl.h" />
     <ClInclude Include="CustomRadioButton.h" />
     <ClInclude Include="AnalysisNewDlg.h" />
+    <ClInclude Include="MyHeaderCtrl.h" />
+    <ClInclude Include="MyListCtrl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WLI.cpp">
@@ -768,6 +772,11 @@
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\square.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\two point line.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\vertical.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\2 points.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\box.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\horizontal.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\2points.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\perp.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SRC\hightime.inl" />

@@ -8,6 +8,7 @@
 #include "ObjectiveLensCtrl.h"
 #include "ColorSliderCtrl.h"
 #include "CustomRadioButton.h"
+#include "MyListCtrl.h"
 // CAnalysisNewDlg dialog
 
 class CAnalysisNewDlg : public CResizableDialog
@@ -30,6 +31,8 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	BOOL OnInitDialog();
+
+	void PopulateList();
 
 	BOOL OnToolButtonClicked(UINT nID);
 
@@ -60,4 +63,7 @@ public:
 	CStyleStatic m_lamdaHigh;
 	CStyleStatic m_microMeter;
 	CStyleStatic m_microMeter2;
+
+	CMyListCtrl m_listCtrl;
+	afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
 };

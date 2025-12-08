@@ -221,6 +221,7 @@ LRESULT RecipeDlg::OnTabSelected(WPARAM wP, LPARAM lP) {
 	return 0;
 }
 
+
 LRESULT RecipeDlg::OnTabDeselected(WPARAM wP, LPARAM lP) {
 	if (bTabSelected) {
 		bTabSelected = FALSE;

@@ -46,6 +46,7 @@ void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LAMDA_HIGH, m_lamdaHigh);
 	DDX_Control(pDX, IDC_MICRO_METER, m_microMeter);
 	DDX_Control(pDX, IDC_MICROMETER2, m_microMeter2);
+	DDX_Control(pDX, IDC_LIST1, m_listCtrl);
 }
 
 
@@ -73,19 +74,77 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	OnToolButtonClicked(IDC_BUTTON_2_POINTS);
 
 
-	m_toolButton2Points.SetIconByID(IDI_ICON36, 28);
-	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON30, 28);
-	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, 28);
-	m_toolButtonLine.SetIconByID(IDI_ICON32, 28);
-	m_toolButtonParallel.SetIconByID(IDI_ICON33, 28);
-	m_toolButtonPerpendicular.SetIconByID(IDI_ICON34, 28);
-	m_toolButtonBox.SetIconByID(IDI_ICON35, 28);
-	m_toolButtonCircle.SetIconByID(IDI_ICON31, 28);
+	m_toolButton2Points.SetIconByID(IDI_ICON30, 35);
+	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON33, 35);
+	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, 35);
+	m_toolButtonLine.SetIconByID(IDI_ICON34, 35);
+	m_toolButtonParallel.SetIconByID(IDI_ICON35, 35);
+	m_toolButtonPerpendicular.SetIconByID(IDI_ICON36, 35);
+	m_toolButtonBox.SetIconByID(IDI_ICON31, 35);
+	m_toolButtonCircle.SetIconByID(IDI_ICON32, 35);
 
+
+
+	PopulateList();
 
 
 	return TRUE;
 }
+
+
+
+
+void CAnalysisNewDlg::PopulateList()
+{
+
+	m_listCtrl.ModifyStyle(LVS_TYPEMASK, LVS_REPORT);
+
+	// Now you can set extended styles (Grid lines, etc.)
+	m_listCtrl.SetExtendedStyle(m_listCtrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	//m_table_ctrl.DeleteAllItems(); // Clear old data if refreshing
+	m_listCtrl.InsertColumn(0, _T("ID"), LVCFMT_LEFT, 30);    // Column 0
+	m_listCtrl.InsertColumn(1, _T("Rq"), LVCFMT_LEFT, 70);  // Column 1
+	m_listCtrl.InsertColumn(2, _T("Ra"), LVCFMT_LEFT, 70);   // Column 2
+	m_listCtrl.InsertColumn(3, _T("Ry"), LVCFMT_LEFT, 70); // Column 3
+	// --- SIMULATED DATABASE DATA ---
+	struct Employee {
+		CString id;
+		CString Rq;
+		CString Ra;
+		CString Ry;
+	};
+
+	Employee data[] = {
+		{ _T("1"), _T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("2"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("3"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("4"), _T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("5"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("6"),_T("0.25"), _T("0.25"), _T("0.25") }
+	};
+	// -------------------------------
+
+	// Loop through your data
+	for (int i = 0; i < 6; i++)
+	{
+		// 1. Insert the Row (and set Column 0 text)
+		// InsertItem returns the index of the new row
+		int nIndex = m_listCtrl.InsertItem(i, data[i].id);
+
+		// 2. Set text for specific columns in that row
+		m_listCtrl.SetItemText(nIndex, 1, data[i].Rq);   // Column 1
+		m_listCtrl.SetItemText(nIndex, 2, data[i].Ra);   // Column 2
+		m_listCtrl.SetItemText(nIndex, 3, data[i].Ry); // Column 3
+
+		// Optional: Set row data (useful for retrieving DB ID later)
+		// m_ListCtrl.SetItemData(nIndex, (DWORD_PTR)real_database_id);
+	}
+}
+
+
+
+
 
 // Adjust these RGB values to match your UI design
 const COLORREF CLR_NORMAL_BACK = RGB(255, 255, 255); // Standard Grey/White
@@ -185,3 +244,5 @@ void CAnalysisNewDlg::OnStnClickedProfileCardPanel()
 {
 	// TODO: Add your control notification handler code here
 }
+
+

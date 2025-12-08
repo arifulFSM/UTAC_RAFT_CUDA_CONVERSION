@@ -448,6 +448,8 @@
     <ClInclude Include="MParam.h" />
     <ClInclude Include="MPList.h" />
     <ClInclude Include="MPoint.h" />
+    <ClInclude Include="MyHeaderCtrl.h" />
+    <ClInclude Include="MyListCtrl.h" />
     <ClInclude Include="ObjectiveLensCtrl.h" />
     <ClInclude Include="OperationDlg.h" />
     <ClInclude Include="Pattern.h" />
@@ -573,6 +575,8 @@
     <ClCompile Include="MotPropDlg.cpp" />
     <ClCompile Include="MPList.cpp" />
     <ClCompile Include="MPoint.cpp" />
+    <ClCompile Include="MyHeaderCtrl.cpp" />
+    <ClCompile Include="MyListCtrl.cpp" />
     <ClCompile Include="ObjectiveLensCtrl.cpp" />
     <ClCompile Include="OperationDlg.cpp" />
     <ClCompile Include="Pattern.cpp" />
@@ -651,11 +655,16 @@
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__10_-removebg-preview.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__11_-removebg-preview.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\icons\Z__12_-removebg-preview.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\2 points.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\2points.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\align.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\box.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\circle.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\horizontal.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\line.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\nodes.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\parallel.ico" />
+    <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\perp.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\perpendicular.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\square.ico" />
     <Image Include="..\..\..\..\..\WLIN\RESOURCES\profile-tool\two point line.ico" />
