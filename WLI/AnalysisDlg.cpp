@@ -1294,8 +1294,8 @@ void AnalysisDlg::lineProfile()
 	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
 
 	// Show instruction in subtitle
-	TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
-	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);
+	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
+	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
 
 
 }
