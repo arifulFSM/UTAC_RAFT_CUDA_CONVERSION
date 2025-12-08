@@ -3003,7 +3003,8 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 {
 	// Safety: Ensure control exists
 	if (!m_hPEl || !::IsWindow(m_hPEl)) {
-		CreateTemporaryLineProfileWindow();
+		//CreateTemporaryLineProfileWindow();
+		lineProfile();
 		return;
 	}
 
