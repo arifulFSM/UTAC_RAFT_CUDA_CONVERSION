@@ -281,9 +281,7 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 
 	// 20252411 -------------------- 
-	// ---------------------------------------------------------
 	// HANDLE 2D PLOT EVENTS (m_hPE2)
-	// ---------------------------------------------------------
 	if (lParam == (LPARAM)m_hPE2) {
 
 
@@ -330,6 +328,11 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				// Throttle updates to every 30ms (33 FPS)
 				static DWORD lastUpdateTime = 0;
 				DWORD currentTime = GetTickCount();
+
+				// 20251208 ------
+				// if new line selected previous line profile annotations are cleared
+				ClearLineAnnotations();
+				// 20251208 ------
 
 				if (currentTime - lastUpdateTime > 100) {
 					lastUpdateTime = currentTime;
@@ -455,13 +458,15 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				profileCnt++;
 				// ----------------------------------
 
+
+				// 20251208 ------
 				// Redraw everything
-				Create2D();
+				//Create2D();
 
 				// Logic for Area vs Line profile
 				/*if (isArea) areaProfile();
 				else */
-				lineProfile();
+				//lineProfile();
 
 				// AdditionalCalculations();
 			}
@@ -3003,7 +3008,9 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 {
 	// Safety: Ensure control exists
 	if (!m_hPEl || !::IsWindow(m_hPEl)) {
-		CreateTemporaryLineProfileWindow();
+		// 20251208 ------
+		//CreateTemporaryLineProfileWindow();
+		lineProfile();
 		return;
 	}
 
