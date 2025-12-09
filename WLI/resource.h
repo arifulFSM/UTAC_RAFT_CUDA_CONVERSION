@@ -79,6 +79,14 @@
 #define IDI_ICON28                      417
 #define IDD_ANALYSIS_DLG_NEW            418
 #define IDI_ICON29                      420
+#define IDI_ICON30                      437
+#define IDI_ICON31                      438
+#define IDI_ICON32                      439
+#define IDI_ICON33                      440
+#define IDI_ICON34                      441
+#define IDI_ICON35                      442
+#define IDI_ICON36                      443
+#define IDI_ICON37                      444
 #define IDC_BUTTON1                     1000
 #define IDC_BUTTON2                     1001
 #define IDC_BUTTON3                     1002
@@ -93,6 +101,7 @@
 #define IDC_FRINGE                      1007
 #define IDC_BUTTON7                     1007
 #define IDC_BUTTON101                   1007
+#define IDC_BUTTON_DOWN                 1007
 #define IDC_GROUP                       1008
 #define IDC_BUTTON9                     1008
 #define IDC_REPORT                      1008
@@ -428,6 +437,7 @@
 #define IDC_AUTOFOCUS_CARD              1220
 #define IDC_RADIO_2POINTS               1221
 #define IDC_SLIDER1                     1221
+#define IDC_SLIDER_Z_AXIS_CONTROL       1221
 #define IDC_NO_SMOOTH                   1222
 #define IDC_SMOOTH3                     1223
 #define IDC_MEASUREMENT_EXECUTION_PANEL 1223
@@ -452,8 +462,10 @@
 #define IDC_LENS_CARD_PANEL             1233
 #define IDC_SML                         1234
 #define IDC_SLIDER2                     1234
+#define IDC_SLIDER_BRIGHTNESS           1234
 #define IDC_LSF                         1235
 #define IDC_SLIDER3                     1235
+#define IDC_SLIDER_EXPOSURE             1235
 #define IDC_DESPIKE                     1236
 #define IDC_ACTIVE_RECIPE_TITLE2        1236
 #define IDC_PROGRESS_PERCENTAGE         1236
@@ -467,8 +479,10 @@
 #define IDC_PROFILE_CARD_PANEL          1240
 #define IDC_GB_STEPHEIGHT               1241
 #define IDC_COMBO1                      1241
+#define IDC_COMBO_SIGMA_S               1241
 #define IDC_2D_VIEW                     1242
 #define IDC_COMBO2                      1242
+#define IDC_COMBO_SIGMA_C               1242
 #define IDC_LINE_ROUGHNESS_CARD_PANEL   1243
 #define IDC_MEASUREMENT_TYPE_TEXT       1244
 #define IDC_CUTOFF_FILTERS              1245
@@ -476,6 +490,43 @@
 #define IDC_LAMDA_HIGH                  1247
 #define IDC_MICRO_METER                 1248
 #define IDC_MICROMETER2                 1249
+#define IDC_BUTTON_TOP_LEFT             1250
+#define IDC_BUTTON_UP                   1251
+#define IDC_BUTTON_TOP_RIGHT            1252
+#define IDC_BUTTON_LEFT                 1253
+#define IDC_BUTTON_HOME                 1254
+#define IDC_BUTTON_RIGHT                1255
+#define IDC_BUTTON_BOTTOM_LEFT          1256
+#define IDC_BUTTON_BOTTOM_RIGHT         1257
+#define IDC_BUTTON_Z_UP                 1258
+#define IDC_BUTTON_Z_DOWN               1259
+#define IDC_BUTTON_SET_LOW              1260
+#define IDC_BUTTON_SET_HIGH             1261
+#define IDC_BUTTON_RUN_AF               1262
+#define IDC_BUTTON_MEASURE              1263
+#define IDC_BUTTON_STOP                 1264
+#define IDC_2D_VIEW_PANEL               1265
+#define IDC_3D_VIEW_PANEL               1266
+#define IDC_GRAPH_1                     1267
+#define IDC_GRAPH2                      1268
+#define IDC_BUTTON_2_POINTS             1269
+#define IDC_BUTTON_HORIZONTAL           1270
+#define IDC_BUTTON_VERTICAL             1271
+#define IDC_BUTTON_LINE                 1272
+#define IDC_BUTTON_PARALLEL             1273
+#define IDC_BUTTON_PERPENDICULAR        1274
+#define IDC_BUTTON_BOX                  1275
+#define IDC_BUTTON_CIRCLE               1276
+#define IDC_CHECK_END_EFFECT_CORRECTION 1277
+#define IDC_CHECK_DOUBLE_GAUSSIAN_FILTER 1278
+#define IDC_LIST2                       1279
+#define IDC_POSITION                    1280
+#define IDC_X_TITLE                     1281
+#define IDC_Y_TITLE                     1282
+#define IDC_Z_TITLE                     1283
+#define IDC_CAMERA_X_VALUE              1284
+#define IDC_CAMERA_Y_VALUE              1285
+#define IDC_CAMERA_Z_VALUE              1286
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -548,9 +599,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        421
+#define _APS_NEXT_RESOURCE_VALUE        445
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1250
+#define _APS_NEXT_CONTROL_VALUE         1287
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

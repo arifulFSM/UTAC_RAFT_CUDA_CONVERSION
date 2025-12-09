@@ -8,6 +8,7 @@
 #include "ObjectiveLensCtrl.h"
 #include "ColorSliderCtrl.h"
 #include "CustomRadioButton.h"
+#include "MyListCtrl.h"
 // CAnalysisNewDlg dialog
 
 class CAnalysisNewDlg : public CResizableDialog
@@ -31,18 +32,20 @@ protected:
 
 	BOOL OnInitDialog();
 
+	void PopulateList();
+
 	BOOL OnToolButtonClicked(UINT nID);
 
 	DECLARE_MESSAGE_MAP()
 public:
-	CIconButton m_toolButton1;
-	CIconButton m_toolButton2;
-	CIconButton m_toolButton3;
-	CIconButton m_toolButton4;
-	CIconButton m_toolButton5;
-	CIconButton m_toolButton6;
-	CIconButton m_toolButton7;
-	CIconButton m_toolButton8;
+	CIconButton m_toolButton2Points;
+	CIconButton m_toolButtonHorizontalLine;
+	CIconButton m_toolButtonVerticalLine;
+	CIconButton m_toolButtonLine;
+	CIconButton m_toolButtonParallel;
+	CIconButton m_toolButtonPerpendicular;
+	CIconButton m_toolButtonBox;
+	CIconButton m_toolButtonCircle;
 
 
 private:
@@ -60,4 +63,7 @@ public:
 	CStyleStatic m_lamdaHigh;
 	CStyleStatic m_microMeter;
 	CStyleStatic m_microMeter2;
+
+	CMyListCtrl m_listCtrl;
+	afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
 };

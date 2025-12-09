@@ -27,14 +27,14 @@ CAnalysisNewDlg::~CAnalysisNewDlg()
 void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_BUTTON1, m_toolButton1);
-	DDX_Control(pDX, IDC_BUTTON2, m_toolButton2);
-	DDX_Control(pDX, IDC_BUTTON3, m_toolButton3);
-	DDX_Control(pDX, IDC_BUTTON4, m_toolButton4);
-	DDX_Control(pDX, IDC_BUTTON8, m_toolButton5);
-	DDX_Control(pDX, IDC_BUTTON5, m_toolButton6);
-	DDX_Control(pDX, IDC_BUTTON6, m_toolButton7);
-	DDX_Control(pDX, IDC_BUTTON7, m_toolButton8);
+	DDX_Control(pDX, IDC_BUTTON_2_POINTS, m_toolButton2Points);
+	DDX_Control(pDX, IDC_BUTTON_HORIZONTAL, m_toolButtonHorizontalLine);
+	DDX_Control(pDX, IDC_BUTTON_VERTICAL, m_toolButtonVerticalLine);
+	DDX_Control(pDX, IDC_BUTTON_LINE, m_toolButtonLine);
+	DDX_Control(pDX, IDC_BUTTON_PARALLEL, m_toolButtonParallel);
+	DDX_Control(pDX, IDC_BUTTON_PERPENDICULAR, m_toolButtonPerpendicular);
+	DDX_Control(pDX, IDC_BUTTON_BOX, m_toolButtonBox);
+	DDX_Control(pDX, IDC_BUTTON_CIRCLE, m_toolButtonCircle);
 	DDX_Control(pDX, IDC_PROFILE_CARD_PANEL, m_profileToolCardPanel);
 	DDX_Control(pDX, IDC_LINE_ROUGHNESS_CARD_PANEL, m_lineRoughnessCardPanel);
 	DDX_Control(pDX, IDC_MEASUREMENT_TYPE_TEXT, m_measureTypeText);
@@ -46,18 +46,19 @@ void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LAMDA_HIGH, m_lamdaHigh);
 	DDX_Control(pDX, IDC_MICRO_METER, m_microMeter);
 	DDX_Control(pDX, IDC_MICROMETER2, m_microMeter2);
+	DDX_Control(pDX, IDC_LIST1, m_listCtrl);
 }
 
 
 BEGIN_MESSAGE_MAP(CAnalysisNewDlg, CResizableDialog)
-	ON_COMMAND_EX(IDC_BUTTON1, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON2, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON3, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON4, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON5, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON6, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON7, OnToolButtonClicked)
-	ON_COMMAND_EX(IDC_BUTTON8, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_2_POINTS, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_HORIZONTAL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_VERTICAL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_LINE, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_PARALLEL, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_PERPENDICULAR, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_BOX, OnToolButtonClicked)
+	ON_COMMAND_EX(IDC_BUTTON_CIRCLE, OnToolButtonClicked)
 	ON_STN_CLICKED(IDC_PROFILE_CARD_PANEL, &CAnalysisNewDlg::OnStnClickedProfileCardPanel)
 END_MESSAGE_MAP()
 
@@ -70,21 +71,80 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	m_profileToolCardPanel.SetTitle(_T("Profile Tool"));
 	m_lineRoughnessCardPanel.SetTitle(_T("Line Roughness Setting"));
 	
-	OnToolButtonClicked(IDC_BUTTON1);
+	OnToolButtonClicked(IDC_BUTTON_2_POINTS);
 
-	m_toolButton1.SetIconByID(IDI_ICON29, 28);
-	m_toolButton2.SetIconByID(IDI_ICON29, 28);
-	m_toolButton3.SetIconByID(IDI_ICON29, 28);
-	m_toolButton4.SetIconByID(IDI_ICON29, 28);
-	m_toolButton5.SetIconByID(IDI_ICON29, 28);
-	m_toolButton6.SetIconByID(IDI_ICON29, 28);
-	m_toolButton7.SetIconByID(IDI_ICON29, 28);
-	m_toolButton8.SetIconByID(IDI_ICON29, 28);
 
+	m_toolButton2Points.SetIconByID(IDI_ICON30, 35);
+	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON33, 35);
+	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, 35);
+	m_toolButtonLine.SetIconByID(IDI_ICON34, 35);
+	m_toolButtonParallel.SetIconByID(IDI_ICON35, 35);
+	m_toolButtonPerpendicular.SetIconByID(IDI_ICON36, 35);
+	m_toolButtonBox.SetIconByID(IDI_ICON31, 35);
+	m_toolButtonCircle.SetIconByID(IDI_ICON32, 35);
+
+
+
+	PopulateList();
 
 
 	return TRUE;
 }
+
+
+
+
+void CAnalysisNewDlg::PopulateList()
+{
+
+	m_listCtrl.ModifyStyle(LVS_TYPEMASK, LVS_REPORT);
+
+	// Now you can set extended styles (Grid lines, etc.)
+	m_listCtrl.SetExtendedStyle(m_listCtrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	//m_table_ctrl.DeleteAllItems(); // Clear old data if refreshing
+	m_listCtrl.InsertColumn(0, _T("ID"), LVCFMT_LEFT, 30);    // Column 0
+	m_listCtrl.InsertColumn(1, _T("Rq"), LVCFMT_LEFT, 70);  // Column 1
+	m_listCtrl.InsertColumn(2, _T("Ra"), LVCFMT_LEFT, 70);   // Column 2
+	m_listCtrl.InsertColumn(3, _T("Ry"), LVCFMT_LEFT, 70); // Column 3
+	// --- SIMULATED DATABASE DATA ---
+	struct Employee {
+		CString id;
+		CString Rq;
+		CString Ra;
+		CString Ry;
+	};
+
+	Employee data[] = {
+		{ _T("1"), _T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("2"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("3"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("4"), _T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("5"),_T("0.25"), _T("0.25"), _T("0.25") },
+		{ _T("6"),_T("0.25"), _T("0.25"), _T("0.25") }
+	};
+	// -------------------------------
+
+	// Loop through your data
+	for (int i = 0; i < 6; i++)
+	{
+		// 1. Insert the Row (and set Column 0 text)
+		// InsertItem returns the index of the new row
+		int nIndex = m_listCtrl.InsertItem(i, data[i].id);
+
+		// 2. Set text for specific columns in that row
+		m_listCtrl.SetItemText(nIndex, 1, data[i].Rq);   // Column 1
+		m_listCtrl.SetItemText(nIndex, 2, data[i].Ra);   // Column 2
+		m_listCtrl.SetItemText(nIndex, 3, data[i].Ry); // Column 3
+
+		// Optional: Set row data (useful for retrieving DB ID later)
+		// m_ListCtrl.SetItemData(nIndex, (DWORD_PTR)real_database_id);
+	}
+}
+
+
+
+
 
 // Adjust these RGB values to match your UI design
 const COLORREF CLR_NORMAL_BACK = RGB(255, 255, 255); // Standard Grey/White
@@ -135,35 +195,35 @@ BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 	// 5. Handle Tool Logic
 	switch (nID)
 	{
-	case IDC_BUTTON1:
+	case IDC_BUTTON_2_POINTS:
 		//AfxMessageBox(_T("button 1 clicked"));
 		break;
 
-	case IDC_BUTTON2:
+	case IDC_BUTTON_HORIZONTAL:
 		//AfxMessageBox(_T("button 2 clicked"));
 		break;
 
-	case IDC_BUTTON3:
+	case IDC_BUTTON_VERTICAL:
 		//AfxMessageBox(_T("button 3 clicked"));
 		break;
 
-	case IDC_BUTTON4:
+	case IDC_BUTTON_LINE:
 		//AfxMessageBox(_T("button 4 clicked"));
 		break;
 
-	case IDC_BUTTON5:
+	case IDC_BUTTON_PARALLEL:
 		//AfxMessageBox(_T("button 5 clicked"));
 		break;
 
-	case IDC_BUTTON6:
+	case IDC_BUTTON_PERPENDICULAR:
 		//AfxMessageBox(_T("button 6 clicked"));
 		break;
 
-	case IDC_BUTTON7:
+	case IDC_BUTTON_BOX:
 		//AfxMessageBox(_T("button 7 clicked"));
 		break;
 
-	case IDC_BUTTON8:
+	case IDC_BUTTON_CIRCLE:
 		//AfxMessageBox(_T("button 8 clicked"));
 		break;
 
@@ -184,3 +244,5 @@ void CAnalysisNewDlg::OnStnClickedProfileCardPanel()
 {
 	// TODO: Add your control notification handler code here
 }
+
+

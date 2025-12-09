@@ -75,6 +75,15 @@ void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_BUTTON_LOGIN, loginButton);
 	DDX_Control(pDX, IDC_SIGNAL_TOWER, m_signalTower);
 	DDX_Control(pDX, IDC_BUTTON_MOTION, cameraMotionButton);
+	DDX_Control(pDX, IDC_BUTTON_LOAD_DATA, loadDataButton);
+	DDX_Control(pDX, IDC_POSITION, m_cameraPosition);
+	DDX_Control(pDX, IDC_X_TITLE, m_xTitle);
+	DDX_Control(pDX, IDC_Y_TITLE, m_yTitle);
+	DDX_Control(pDX, IDC_Z_TITLE, m_zTitle);
+	DDX_Control(pDX, IDC_CAMERA_X_VALUE, m_cameraXValue);
+	DDX_Control(pDX, IDC_CAMERA_Y_VALUE, m_cameraYValue);
+	DDX_Control(pDX, IDC_CAMERA_Z_VALUE, m_cameraZValue);
+	DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
 }
 
 CWLIView* CWLIView::GetView() {
@@ -100,6 +109,16 @@ void CWLIView::OnInitialUpdate() {
 
 	short nTab = 0;
 	pRAFTApp = new CRAFTApp;
+
+	pRcp = &pRAFTApp->RcpSetup;
+	m_cWaferMap.pRcp = pRcp;
+	m_cWaferMap.bSiteView = FALSE; // Show recipe points [6/25/2010 Yuen]
+	m_cWaferMap.pParent = this;
+	m_cWaferMap.Redraw();
+
+
+
+
 	rcpDlg = new RecipeDlg;
 	if (rcpDlg) {
 		rcpDlg->Create(IDD_RCP_DLG, &cTab);
@@ -146,6 +165,10 @@ void CWLIView::OnInitialUpdate() {
 
 
 	//cTab.SetCurSel(5);
+
+
+
+
 
 	//20250112 - Mahmudul Haque -------start ---------
 	AddResizedControl(IDC_FSM_LOGO, TOP_LEFT, TOP_LEFT);
@@ -417,6 +440,7 @@ void CWLIView::setButtonIcon(int size)
 {
 	loadButton.SetIconByID(IDI_ICON1,size);
 	saveButton.SetIconByID(IDI_ICON5, size);
+	loadDataButton.SetIconByID(IDI_ICON1, size);
 	settingButton.SetIconByID(IDI_ICON6, size);
 	loginButton.SetIconByID(IDI_ICON2, size);
 	cameraMotionButton.SetIconByID(IDI_ICON7, size);
