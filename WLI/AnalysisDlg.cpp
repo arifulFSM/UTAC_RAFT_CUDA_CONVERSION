@@ -984,7 +984,7 @@ void AnalysisDlg::lineProfile()
 
 	}
 
-	filter.applyDespike1DVec(pProfileYData,cnt);
+	//filter.applyDespike1DVec(pProfileYData,cnt);
 	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
 
@@ -2421,6 +2421,12 @@ void AnalysisDlg::readData() {
 			col = 0;
 			while (std::getline(lineStream, value, ',')) {
 				float val;
+				if (value == "") {
+					val = PEMSC_NONE;
+					vec.push_back(val);
+					col++;
+					continue;
+				}
 				val = static_cast<float>(stof(value));
 				if (isnan(static_cast<double>(val))) {
 					val = PEMSC_NONE;

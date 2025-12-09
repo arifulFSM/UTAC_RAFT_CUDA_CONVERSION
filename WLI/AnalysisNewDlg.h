@@ -23,9 +23,6 @@ public:
 	enum { IDD = IDD_ANALYSIS_DLG_NEW };
 #endif
 
-
-
-
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
