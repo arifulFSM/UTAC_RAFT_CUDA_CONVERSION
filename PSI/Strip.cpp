@@ -7,7 +7,7 @@
 #include "IM/fArchive.h"
 #include "MTH/Ang.h"
 #include "SRC/DOSUtil.h"
-//#include <kernel.h>
+#include <kernel.h>
 
 WLI::CStrip Strip;
 
@@ -1138,7 +1138,7 @@ bool WLI::CStrip::GenHMapV5CVCUDA(RCP::SRecipe& Rcp) {
 
 		//CUDA Kernel Call ========================
 
-		//PSO(CVImgs,CVIm16um, inc);
+		PSO(CVImgs,CVIm16um, inc);
 
 		break;
 	case RCP::PSI:

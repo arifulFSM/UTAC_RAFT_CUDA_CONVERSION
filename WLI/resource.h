@@ -527,6 +527,7 @@
 #define IDC_CAMERA_X_VALUE              1284
 #define IDC_CAMERA_Y_VALUE              1285
 #define IDC_CAMERA_Z_VALUE              1286
+#define IDC_CAMERA_FORM                 1250
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773

@@ -190,7 +190,7 @@ void CWLIView::OnInitialUpdate() {
 
 	setButtonIcon(48);
 
-
+	camRun();//20251205
 
 	UpdateTimeLabel();       // Show time immediately
 	SetTimer(1, 1000, NULL);
@@ -503,4 +503,16 @@ void CWLIView::OnTimer(UINT_PTR nIDEvent)
 		UpdateTimeLabel();
 	}
 	CResizableFormView::OnTimer(nIDEvent);
+}
+
+
+void CWLIView::camRun() {
+	CAM::SCtx Ctx;
+	CAM::CCamera* pCam = Dev.Cam.GetCamera(CAM::PRICAM);
+	if (pCam != NULL) {
+		Ctx.hWnd = m_cLiveVid.GetSafeHwnd();
+		m_cLiveVid.GetClientRect(Ctx.rc);
+		pCam->StopStream(Ctx, pCam->SCaM.ID);
+		pCam->StartStream(Ctx, pCam->SCaM.ID);
+	}
 }

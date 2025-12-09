@@ -143,6 +143,10 @@ public:
 	CStyleStatic m_cameraYValue;
 	CStyleStatic m_cameraZValue;
 	CWaferMap m_cWaferMap;
+
+	//20251205 
+	CStatic m_cLiveVid;
+	void camRun();
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp
