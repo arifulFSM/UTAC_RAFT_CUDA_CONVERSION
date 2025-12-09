@@ -84,6 +84,7 @@ void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_CAMERA_Y_VALUE, m_cameraYValue);
 	DDX_Control(pDX, IDC_CAMERA_Z_VALUE, m_cameraZValue);
 	DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
+	DDX_Control(pDX, IDC_CAMERA, m_cLiveVid);
 }
 
 CWLIView* CWLIView::GetView() {

@@ -70,6 +70,8 @@ public:
 public:
 	CWLIDoc* GetDocument() const;
 	static CWLIView* GetView();
+	void camRun();//20251205
+	CStatic m_cLiveVid;//20251205
 
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -143,10 +145,6 @@ public:
 	CStyleStatic m_cameraYValue;
 	CStyleStatic m_cameraZValue;
 	CWaferMap m_cWaferMap;
-
-	//20251205 
-	CStatic m_cLiveVid;
-	void camRun();
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp
