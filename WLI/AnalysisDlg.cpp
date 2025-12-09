@@ -469,6 +469,10 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				//lineProfile();
 
 				// AdditionalCalculations();
+
+				// 20251209 ------
+				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 			}
 
 			return TRUE; // Event handled
@@ -1301,6 +1305,15 @@ void AnalysisDlg::lineProfile()
 	// Show instruction in subtitle
 	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
 	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
+
+	// 20251209 ------------
+	// Enable Zooming //
+	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
+	float fZ = 2.00F; PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
+	// 20251209 ------------
 
 
 }
@@ -2802,7 +2815,7 @@ void AnalysisDlg::CreateTemporaryLineProfileWindow()
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
 
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
 	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
 	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
