@@ -3,6 +3,9 @@
 ## Visual Studio hidden folder (contains user-specific settings, cache, etc.)
 .vs/
 
+## WLI files
+WLI/WLI.APS
+
 ## User-specific files
 *.rsuser
 *.suo
