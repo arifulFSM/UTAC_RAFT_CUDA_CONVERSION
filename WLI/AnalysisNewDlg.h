@@ -217,4 +217,8 @@ public:
 	double CalculateLineMedianX(double x1, double x2);
 	void DisplayDistanceBetweenLines();
 	//======================================
+	// 20251204 / Fahim / Angle measurement distance and width
+	BOOL IsLineHorizontal(double angle);
+	void DisplayWidthBetweenLines();    // For HORIZONTAL lines 
+	double GetPixelAngle(double x1, double y1, double x2, double y2);
 };

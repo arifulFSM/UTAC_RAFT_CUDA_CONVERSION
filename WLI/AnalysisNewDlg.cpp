@@ -47,11 +47,11 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	, depthLine(FALSE)
 	, isDistMarked(FALSE)
 	, twoPointHeight(FALSE)
-	, m_bIsSelectingLine(FALSE)  // ADD THIS   
-	, m_previewX1(0)              // ADD THIS
-	, m_previewY1(0)              // ADD THIS
-	, m_previewX2(0)              // ADD THIS
-	, m_previewY2(0)              // ADD THIS
+	, m_bIsSelectingLine(FALSE)  
+	, m_previewX1(0)             
+	, m_previewY1(0)              
+	, m_previewX2(0)              
+	, m_previewY2(0)              
 	, m_lineDrawingState(0)       // 20251202 -------
 	, m_isDrawingCurrentLine(FALSE)
 	, m_line1X1(0), m_line1Y1(0), m_line1X2(0), m_line1Y2(0)
@@ -443,9 +443,7 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 
 	// 20252411 -------------------- 
-	// ---------------------------------------------------------
 	// HANDLE 2D PLOT EVENTS (m_hPE2)
-	// ---------------------------------------------------------
 	if (lParam == (LPARAM)m_hPE2) {
 
 
@@ -493,6 +491,11 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				static DWORD lastUpdateTime = 0;
 				DWORD currentTime = GetTickCount();
 
+				// 20251208 ------
+				// if new line selected previous line profile annotations are cleared
+				ClearLineAnnotations();
+				// 20251208 ------
+
 				if (currentTime - lastUpdateTime > 100) {
 					lastUpdateTime = currentTime;
 
@@ -517,10 +520,7 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 		// --- HANDLE LEFT BUTTON UP (CLICK EVENTS) ---
 		if (wNotifyCode == PEWN_LBUTTONUP) {
 
-			// =========================================================
 			// 1. HANDLE SPECIAL MODES (Ctrl Pressed or Distance Marker)
-			//    (Functionality from Old Code)
-			// =========================================================
 
 			// CASE A: Ctrl + Click (Check if point is on an existing line)
 			if (isCtrlPressed) {
@@ -553,11 +553,7 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				return TRUE; // Exit early
 			}
 
-
-			// =========================================================
 			// 2. STANDARD LINE PROFILING (First & Second Click)
-			//    (Functionality from Your New Code + Missing Data Capture)
-			// =========================================================
 
 			// FIRST CLICK: Start line selection
 			else if (!m_bIsSelectingLine) {
@@ -605,7 +601,6 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				m_lineProfileX2 = curCol;      // End
 				m_lineProfileY2 = curRow;
 
-				// --- OLD CODE LOGIC INTEGRATION ---
 				isDepth = TRUE;
 				depthLine = TRUE;
 				distLine = FALSE; // Reset distLine as per old code
@@ -625,15 +620,21 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				profileCnt++;
 				// ----------------------------------
 
+
+				// 20251208 ------
 				// Redraw everything
-				Create2D();
+				//Create2D();
 
 				// Logic for Area vs Line profile
 				/*if (isArea) areaProfile();
 				else */
-				lineProfile();
+				//lineProfile();
 
 				// AdditionalCalculations();
+
+				// 20251209 ------
+				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 			}
 
 			return TRUE; // Event handled
@@ -799,8 +800,29 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				ClearLineAnnotations();
 				DrawLineAnnotations();
 
-				// Calculate and display distance
-				DisplayDistanceBetweenLines();
+
+				// 20251205 ===================
+				double angle1 = GetPixelAngle(m_line1X1, m_line1Y1, m_line1X2, m_line1Y2);
+				double angle2 = GetPixelAngle(m_line2X1, m_line2Y1, m_line2X2, m_line2Y2);
+
+				TRACE(_T("Pixel Angle 1: %.2f | Pixel Angle 2: %.2f\n"), angle1, angle2);
+
+				// CONDITION: 
+				// If BOTH lines look flat (less than 45 degrees on screen), 
+				// we assume the user drew a "Step" and wants Vertical Distance (Height).
+				if (angle1 < 45.0 && angle2 < 45.0)
+				{
+					// Horizontal Mode -> Measure Height/Depth
+					DisplayDistanceBetweenLines();
+					TRACE(_T(">>> Result: HORIZONTAL Mode (Height/Distance)\n"));
+				}
+				else
+				{
+					// Vertical Mode -> Measure Width
+					DisplayWidthBetweenLines();
+					TRACE(_T(">>> Result: VERTICAL Mode (Width)\n"));
+				}
+				// 20251205 ===================
 
 				PEreinitialize(m_hPEl);
 				PEresetimage(m_hPEl, 0, 0);
@@ -1030,8 +1052,46 @@ void CAnalysisNewDlg::lineProfile()
 	// Reducing HOTSPOT size ensures the user must click ON the line.
 	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 
+	//old
+	//PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+	//PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+	// 20251203
 	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+
+	// --- [START] MODIFICATIONS FOR BETTER UI ---
+
+	// [MODIFIED] 1. Dark Theme Backgrounds
+	// PERGB(Alpha, Red, Green, Blue) -> Dark Slate Gray
+	DWORD darkGray = PERGB(255, 30, 30, 33);
+	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+
+	// [MODIFIED] 2. Grid Lines (Solid & Subtle)
+	// Use PEGS_THIN (0) for solid lines since PEGS_SOLID is missing
+	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+
+	// FIX 1: Use PEP_dwGRIDLINECOLOR instead of PEP_dwGRIDCOLOR
+	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+
+	// [MODIFIED] 3. Fonts (With Type Casting)
+	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+
+	// FIX 2: Cast TEXT() to (LPWSTR) to fix the "incompatible type" error
+	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+
+	// [MODIFIED] 4. Axis Colors (Light Gray for contrast)
+	DWORD axisColor = PERGB(255, 160, 160, 160);
+	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220)); // Off-White Text
+
+	// --- [END] MODIFICATIONS ---
+	// 20251203
 
 	////Axis scale
 	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
@@ -1086,8 +1146,6 @@ void CAnalysisNewDlg::lineProfile()
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
 	double scale = Dr / Di;
 
-	int cnt = 0;
-
 	for (i = 0; i < nTotalCnt; i++) {
 		pProfileYData[i] = 0;
 		k = 0;
@@ -1101,7 +1159,6 @@ void CAnalysisNewDlg::lineProfile()
 			{
 				pProfileYData[i] += profile[Row][Col];
 				k++;
-				cnt++;
 			}
 		}
 		if (k > 1)
@@ -1122,13 +1179,17 @@ void CAnalysisNewDlg::lineProfile()
 		//20251201
 		CString xAxisVal;
 		xAxisVal.Format(_T("%0.2lf"), xval);
+		//TCHAR* xAxis;
+		//xAxis = _tcsdup(xAxisVal);
+		//PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, TEXT(xAxis));
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
-
-	//filter.applyDespike1DVec(pProfileYData,cnt);
+	//file.close();
 	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
+
+
 
 	// Manually Control Y Axis //
 	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
@@ -1164,9 +1225,10 @@ void CAnalysisNewDlg::lineProfile()
 	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
 
 	// subset colors, line type, point type
-	DWORD dwArray[1] = { PERGB(255,5,249,253) };
-	int nLineTypes[] = { PELT_THICKSOLID };
-	int nPointTypes[] = { PEPT_DOTSOLID };
+	// 20251203
+	DWORD dwArray[1] = { PERGB(255,8,146,208) };
+	int nLineTypes[] = { PELT_MEDIUMSOLID };
+	int nPointTypes[] = { PEPT_PIXEL };
 
 	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
 	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
@@ -1340,8 +1402,17 @@ void CAnalysisNewDlg::lineProfile()
 	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
 
 	// Show instruction in subtitle
-	TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
-	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);
+	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
+	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
+
+	// 20251209 ------------
+	// Enable Zooming //
+	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
+	float fZ = 2.00F; PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
+	// 20251209 ------------
 
 
 }
@@ -2771,7 +2842,7 @@ void CAnalysisNewDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 	double dY2 = y2 * m_yStep;
 
 	int symbol = PEGAT_THICKSOLIDLINE;
-	DWORD color = PERGB(255, 5, 249, 253); // Same as line profile
+	DWORD color = PERGB(255, 255, 255, 255); // Same as line profile
 
 	// Segment 1: Start Point
 	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PREVIEW_LINE_START_IDX, &dX1);
@@ -3034,7 +3105,9 @@ void CAnalysisNewDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 {
 	// Safety: Ensure control exists
 	if (!m_hPEl || !::IsWindow(m_hPEl)) {
-		CreateTemporaryLineProfileWindow();
+		// 20251208 ------
+		//CreateTemporaryLineProfileWindow();
+		lineProfile();
 		return;
 	}
 
@@ -3134,7 +3207,7 @@ void CAnalysisNewDlg::DrawLineAnnotations()
 void CAnalysisNewDlg::ClearLineAnnotations()
 {
 	// Clear annotations by setting them to a point (effectively invisible)
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i <= 10; i++) {
 		int symbol = PEGAT_NOSYMBOL;
 		double zero = 0.0;
 		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, i, &symbol);
@@ -3214,97 +3287,182 @@ double CAnalysisNewDlg::CalculateLineMedianX(double x1, double x2)
 		line1MedianX, line2MedianX, distance);
 }*/
 
-void CAnalysisNewDlg::DisplayDistanceBetweenLines()
+void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
+
 {
+
 	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
+
 	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
 	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
-
 	// 2. Calculate vertical distance (absolute difference)
 	double distance = fabs(line2MedianY - line1MedianY);
 
 	// 3. Determine geometric points for the vertical ruler
 	// Top and Bottom Y coordinates
+
 	double bottomY = min(line1MedianY, line2MedianY);
 	double topY = max(line1MedianY, line2MedianY);
 
-	// Determine X range to position the ruler to the right of the data
-	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
-	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
-	double xRange = maxX - minX;
-	if (xRange == 0) xRange = 1.0; // Prevent zero logic if lines are vertical
+	// Find geometric X bounds of the lines
+	double minX_Data = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
+	double maxX_Data = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
 
-	// Place the ruler 10% to the right of the right-most data point
-	double rulerX = maxX + (xRange * 0.10);
+	// --- 2. PIXEL CONVERSION & BOUNDARY LOGIC ---
+
+	// Variables for PEconvpixeltograph
+
+	int nAxis = 0;
+	int pxMinX = 0, pxMaxX = 0, pxY = 0;
+	double fX, fY;
+
+	// Convert Data -> Pixel (ViceVersa = TRUE)
+	// We convert the Right-most X and Left-most X to pixels
+
+	fX = maxX_Data; fY = bottomY;
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxMaxX, &pxY, &fX, &fY, FALSE, FALSE, TRUE);
+	fX = minX_Data; fY = bottomY;
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxMinX, &pxY, &fX, &fY, FALSE, FALSE, TRUE);
+
+	// Get Screen Width
+
+	RECT rect;
+	::GetClientRect(m_hPEl, &rect);
+	int screenW = rect.right - rect.left;
+	// Constants in Pixels
+	const int RULER_GAP_PX = 30; // 30px gap between line and ruler
+	const int TEXT_GAP_PX = 50;  // 70px gap for text
+	const int MARGIN_PX = 10;    // Minimum screen margin
+	const int TOTAL_REQ_SPACE = RULER_GAP_PX + TEXT_GAP_PX + MARGIN_PX + 20;
+	// Placement Decision
+	bool bFitRight = (pxMaxX + TOTAL_REQ_SPACE) < screenW;
+	bool bFitLeft = (pxMinX - TOTAL_REQ_SPACE) > 0;
+	int pxRulerX, pxTextX;
+	if (bFitRight) {
+
+		// Normal: Draw on Right
+		pxRulerX = pxMaxX + RULER_GAP_PX;
+		pxTextX = pxRulerX + TEXT_GAP_PX;
+	}
+
+	else if (bFitLeft) {
+
+		// Flip: Draw on Left
+
+		pxRulerX = pxMinX - RULER_GAP_PX;
+
+		pxTextX = pxRulerX - TEXT_GAP_PX;
+
+	}
+
+	else {
+
+		// Full Width: Draw INSIDE (Center)
+
+		pxRulerX = (pxMinX + pxMaxX) / 2;
+
+		// Place text slightly to the right of the center ruler
+
+		pxTextX = pxRulerX + 40;
+
+	}
+
+	// --- 3. CONVERT BACK TO GRAPH UNITS ---
+
+	double graphRulerX, graphTextX, dummyY;
+
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxRulerX, &pxY, &graphRulerX, &dummyY, FALSE, FALSE, FALSE);
+
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxTextX, &pxY, &graphTextX, &dummyY, FALSE, FALSE, FALSE);
+
 
 	// 4. Setup Annotations
+
 	int annotationIdx = 4; // Start index
+
 	int symbol;
-	DWORD color = PERGB(255, 255, 255, 255); // WHITE
+
+	DWORD color = PERGB(255, 255, 255, 0); // YELLOW
 
 	// --- Draw Vertical Line (Start Point) ---
+
 	//symbol = PEGAT_THICKSOLIDLINE;
+
 	symbol = PEGAT_THINSOLIDLINE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphRulerX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
 	// --- Draw Vertical Line (End Point) ---
-	annotationIdx++;
-	symbol = PEGAT_LINECONTINUE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
-	// Added for arrow
-	// --- Annotation 3: OVERLAY Bottom Arrow Symbol ---
-	// This point is placed right on top of the starting point (bottomY) to add the arrow.
 	annotationIdx++;
-	symbol = PEGAT_ARROWSOLID_LARGE; // South-facing arrow at the bottom
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+
+	symbol = PEGAT_LINECONTINUE;
+
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphRulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
 	// --- Annotation 4: OVERLAY Top Arrow Symbol ---
+
 	// This point is placed right on top of the ending point (topY) to add the arrow.
+
 	annotationIdx++;
-	symbol = PEGAT_ARROWSOLID_LARGE; // North-facing arrow at the top
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rulerX);
+
+	symbol = PEGAT_ARROW_N; // North-facing arrow at the top
+
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphRulerX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+
+	// This point is placed right on top of the starting point (bottomY) to add the arrow.
+
+	annotationIdx++;
+
+	symbol = PEGAT_ARROW_S; // South-facing arrow at the bottom
+
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphRulerX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+
 	// Ended
 
 	// --- Draw Distance Text (To the side) ---
+
 	annotationIdx++;
 
 	// Text Position: Vertical center of the line, slightly right of the ruler
-	double textY = (bottomY + topY) / 2.0;
-	double textX = rulerX + (xRange * 0.25); // Small offset from the line
-	//double textX = rulerX + 55; // Small offset from the line
 
+	double textY = (bottomY + topY) / 2.0;
+	//double textX = rulerX + (xRange * 0.25); // Small offset from the line
+	//double textX = rulerX + 55; // Small offset from the line
 	CString distText;
 	distText.Format(_T("%.2f um"), distance);
 	TCHAR* distValue = _tcsdup(distText);
-
 	symbol = PEGAT_NOSYMBOL; // Just text
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphTextX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
 
 	// Styling
+
 	int shadow = TRUE;
+
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
-	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 200);
+	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
 
 	delete[] distValue;
 
@@ -3313,83 +3471,202 @@ void CAnalysisNewDlg::DisplayDistanceBetweenLines()
 	PEresetimage(m_hPEl, 0, 0);
 }
 
-
-/*void AnalysisDlg::DisplayDistanceBetweenLines() // vertical
+// 20251205 / Fahim
+// Helper: Calculate angle based on actual SCREEN PIXELS
+double CAnalysisNewDlg::GetPixelAngle(double x1, double y1, double x2, double y2)
 {
-	// 1. Calculate Median Y positions (Average of Y1 and Y2 for each line)
-	double line1MedianY = (m_line1Y1 + m_line1Y2) / 2.0;
-	double line2MedianY = (m_line2Y1 + m_line2Y2) / 2.0;
+	// Variables to hold Pixel coordinates (Outputs of conversion)
+	int px1 = 0, py1 = 0;
+	int px2 = 0, py2 = 0;
 
-	// 2. Calculate distance (absolute difference between Y medians)
-	double distance = fabs(line2MedianY - line1MedianY);
+	// Variables for Graph coordinates (Inputs to conversion)
+	double fx1 = x1;
+	double fy1 = y1;
+	double fx2 = x2;
+	double fy2 = y2;
 
-	// 3. Determine bottom/top Y for vertical line drawing
-	double bottomY = min(line1MedianY, line2MedianY);
-	double topY = max(line1MedianY, line2MedianY);
+	int nAxis = 0; // Dummy variable required by the API
 
-	// 4. Determine X position for the annotation line
-	// We find the right-most X point of the existing lines and add a margin
-	// so the ruler appears to the right of the data.
-	double maxX = max(max(m_line1X1, m_line1X2), max(m_line2X1, m_line2X2));
-	double minX = min(min(m_line1X1, m_line1X2), min(m_line2X1, m_line2X2));
+	// --- CONVERT GRAPH DATA TO SCREEN PIXELS ---
+	// API: PEconvpixeltograph(hwnd, &axis, &px, &py, &fx, &fy, rightAxis, topAxis, bViceVersa)
+	// Setting bViceVersa (last arg) to TRUE makes it convert FROM graph TO pixel.
 
-	// Position the line 10% of the width to the right of the max X
-	double connectX = maxX + (maxX - minX) * 0.1;
+	PEconvpixeltograph(m_hPEl, &nAxis, &px1, &py1, &fx1, &fy1, FALSE, FALSE, TRUE);
+	PEconvpixeltograph(m_hPEl, &nAxis, &px2, &py2, &fx2, &fy2, FALSE, FALSE, TRUE);
 
-	// Annotation index setup (starting from 4)
+	// --- CALCULATE ANGLE ---
+	// Now we have the raw screen pixels. Calculate delta.
+	double pixelDx = fabs((double)(px2 - px1));
+	double pixelDy = fabs((double)(py2 - py1));
+
+	// Prevent division by zero
+	if (pixelDx == 0.0 && pixelDy == 0.0) return 0.0;
+
+	const double PI = 3.14159265359;
+	double angleRad = atan2(pixelDy, pixelDx);
+	double angleDeg = angleRad * 180.0 / PI;
+
+	/*CString strMessage;
+	strMessage.Format(_T("Pixel Angle: %.2f"), angleDeg);
+	AfxMessageBox(strMessage);*/
+
+	// Debugging
+	// TRACE(_T("Data(%.1f,%.1f) -> Pixel(%d,%d) -> Angle: %.2f\n"), x1, y1, px1, py1, angleDeg);
+
+	return angleDeg;
+}
+
+// 20251204
+// Determine if a line is horizontal (within 30 degrees of horizontal)
+BOOL CAnalysisNewDlg::IsLineHorizontal(double angle)
+{
+
+	// If the angle is less than 45 degrees, consider it horizontal.
+	// 0 deg = perfectly horizontal, 90 deg = perfectly vertical.
+	return (angle < 45.0) ? TRUE : FALSE;
+}
+
+// 20251204
+// Display Width Between Lines (For Horizontal Lines)
+void CAnalysisNewDlg::DisplayWidthBetweenLines()
+{
+	// --- 1. DATA CALCULATIONS ---
+	double line1MedianX = CalculateLineMedianX(m_line1X1, m_line1X2);
+	double line2MedianX = CalculateLineMedianX(m_line2X1, m_line2X2);
+	double width = fabs(line2MedianX - line1MedianX);
+
+	double leftX = min(line1MedianX, line2MedianX);
+	double rightX = max(line1MedianX, line2MedianX);
+
+	double maxY_Data = max(max(m_line1Y1, m_line1Y2), max(m_line2Y1, m_line2Y2));
+	double minY_Data = min(min(m_line1Y1, m_line1Y2), min(m_line2Y1, m_line2Y2));
+
+	// --- 2. PIXEL CONVERSION & BOUNDARY LOGIC ---
+
+	// Variables for PEconvpixeltograph
+	int nAxis = 0;
+	int pxTopY = 0, pxBottomY = 0, pxX = 0;
+	double fX, fY;
+
+	// Convert Data -> Pixel (ViceVersa = TRUE)
+	// Note: In Windows Pixels, 0 is Top. So 'maxY_Data' (High value) results in a SMALL pixel Y.
+	fX = leftX; fY = maxY_Data;
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxX, &pxTopY, &fX, &fY, FALSE, FALSE, TRUE);
+
+	fX = leftX; fY = minY_Data;
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxX, &pxBottomY, &fX, &fY, FALSE, FALSE, TRUE);
+
+	// Get Screen Height
+	RECT rect;
+	::GetClientRect(m_hPEl, &rect);
+	int screenH = rect.bottom - rect.top;
+
+	// Constants in Pixels
+	const int RULER_GAP_PX = 30;
+	const int TEXT_GAP_PX = 20;
+	const int MARGIN_PX = 10;
+	const int TOTAL_REQ_SPACE = RULER_GAP_PX + TEXT_GAP_PX + MARGIN_PX + 50;
+
+	// Placement Decision
+	// Check Top: (TopY - Space) > 0 ?
+	bool bFitTop = (pxTopY - TOTAL_REQ_SPACE) > 0;
+	// Check Bottom: (BottomY + Space) < ScreenHeight ?
+	bool bFitBottom = (pxBottomY + TOTAL_REQ_SPACE) < screenH;
+
+	int pxRulerY, pxTextY;
+
+	if (bFitTop) {
+		// Normal: Draw Above
+		pxRulerY = pxTopY - RULER_GAP_PX;
+		pxTextY = pxRulerY - TEXT_GAP_PX;
+	}
+	else if (bFitBottom) {
+		// Flip: Draw Below
+		pxRulerY = pxBottomY + RULER_GAP_PX;
+		pxTextY = pxRulerY + TEXT_GAP_PX;
+	}
+	else {
+		// Full Height: Draw INSIDE (Center)
+		pxRulerY = (pxTopY + pxBottomY) / 2;
+		// Place text slightly above the ruler line
+		pxTextY = pxRulerY - 30;
+	}
+
+	// --- 3. CONVERT BACK TO GRAPH UNITS ---
+
+	double graphRulerY, graphTextY, dummyX;
+
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxX, &pxRulerY, &dummyX, &graphRulerY, FALSE, FALSE, FALSE);
+	PEconvpixeltograph(m_hPEl, &nAxis, &pxX, &pxTextY, &dummyX, &graphTextY, FALSE, FALSE, FALSE);
+
+
+
+	// --- 4. DRAW ANNOTATIONS ---
 	int annotationIdx = 4;
-	int symbol;
+	int symbol = PEGAT_THINSOLIDLINE;
 	DWORD color = PERGB(255, 255, 255, 0); // Yellow
 
-	// --- Draw Vertical Connecting Line ---
-
-	// Point 1: Bottom of the vertical line
-	symbol = PEGAT_THICKSOLIDLINE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &bottomY);
+	// Horizontal Line (Start)
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &graphRulerY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
-	// Point 2: Top of the vertical line (Line Continue)
+	// Horizontal Line (End)
 	annotationIdx++;
 	symbol = PEGAT_LINECONTINUE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &connectX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &topY);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &graphRulerY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
-	// --- Add Distance Text ---
-
+	// Left Arrow
 	annotationIdx++;
-
-	// Position text at the Y-midpoint, slightly to the right of the vertical line
-	double textY = (bottomY + topY) / 2.0;
-	double textX = connectX + (maxX - minX) * 0.02; // Small offset to right
-
-	CString distText;
-	// Note: Assuming 'um' is the unit. Adjusted format for vertical context.
-	distText.Format(_T("Distance: %.2f um"), distance);
-	TCHAR* distValue = _tcsdup(distText);
-
-	symbol = PEGAT_NOSYMBOL;
-	// Set color same as line
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	symbol = PEGAT_ARROW_W;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &graphRulerY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
 
-	// Apply shadow and text size
+
+	// Right Arrow
+	annotationIdx++;
+	symbol = PEGAT_ARROW_E;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &graphRulerY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
+
+	// Width Text
+	annotationIdx++;
+	double textX = (leftX + rightX) / 2.0;
+
+	CString widthText;
+	widthText.Format(_T("%.2f um"), width);
+	TCHAR* widthValue = _tcsdup(widthText);
+
+	symbol = PEGAT_NOSYMBOL;
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
+	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &graphTextY);
+	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, widthValue);
+
 	int shadow = TRUE;
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
 	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
 
-	// Clean up allocated string
-	delete[] distValue;
+	delete[] widthValue;
 
-	// Force a repaint to ensure annotations appear immediately
+	TRACE(_T("WIDTH (Horizontal): %.2f um\n"), width);
+
 	PEreinitialize(m_hPEl);
 	PEresetimage(m_hPEl, 0, 0);
-}*/
+
+}
+
+
