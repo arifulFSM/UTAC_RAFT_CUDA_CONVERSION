@@ -2235,7 +2235,6 @@ void AnalysisDlg::Create3D() {
 	PEnset(m_hPE3, PEP_nCONTOURCOLORALPHA, 255);
 	PEnset(m_hPE2, PEP_dwGRAPHBACKCOLOR, 5);
 
-
 	PEnset(m_hPE3, PEP_nSHOWCONTOUR, PESC_NONE);//PESC_BOTTOMLINES
 	PEnset(m_hPE3, PEP_nCONTOURLEGENDPRECISION, 1);//set the precision of the legend
 
