@@ -22,7 +22,7 @@
 using namespace std;
 
 // AnalysisDlg dialog
-#pragma comment(lib,"PEGRP64G.lib")
+//#pragma comment(lib,"PEGRP64G.lib")
 
 //10212024 / ARIFUL ISLAM
 // 20251124 / Mohammad Fahim Hossain / Implemented Real-Time Line Profile graph
@@ -126,7 +126,7 @@ BEGIN_MESSAGE_MAP(AnalysisDlg, CResizableDialog)
 	ON_BN_CLICKED(IDC_ABSDIST, &AnalysisDlg::OnBnClickedAbsdist)
 	ON_BN_CLICKED(IDC_RADIO_MINMAX, &AnalysisDlg::OnBnClickedRadioMinmax)
 	ON_BN_CLICKED(IDC_RADIO_2POINTS, &AnalysisDlg::OnBnClickedRadio2points)
-	ON_MESSAGE(UM_ANALYSIS_DLG,&AnalysisDlg::onUmAnalysisDlg)
+	//ON_MESSAGE(UM_ANALYSIS_DLG,&AnalysisDlg::onUmAnalysisDlg)
 END_MESSAGE_MAP()
 
 // AnalysisDlg message handlers
@@ -2373,7 +2373,6 @@ afx_msg LRESULT AnalysisDlg::OnThresholdApply(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-
 void AnalysisDlg::showCharts() {
 
 	if (data.size()) {
@@ -2454,7 +2453,6 @@ void AnalysisDlg::readData() {
 	}
 }
 
-
 void AnalysisDlg::OnBnClickedDrawChart()
 {
 	readData();
@@ -2473,7 +2471,6 @@ void AnalysisDlg::OnBnClickedDrawChart()
 
 	}
 }
-
 
 void AnalysisDlg::OnBnClickedFilterOptions()
 {
@@ -2577,8 +2574,6 @@ void AnalysisDlg::readDataFromFile(CString fileName){
 		avgVal = (mxVal + mnVal) / 2.0;
 	}
 }
-
-
 void AnalysisDlg::showDirect2D3D(CString path) {
 	readDataFromFile(path);
 	if (data.size() > 0) {
@@ -2596,9 +2591,6 @@ void AnalysisDlg::showDirect2D3D(CString path) {
 
 	}
 }
-
-
-
 // 20251124
 void AnalysisDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 {

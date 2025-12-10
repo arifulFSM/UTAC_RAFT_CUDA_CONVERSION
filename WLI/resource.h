@@ -491,6 +491,7 @@
 #define IDC_MICRO_METER                 1248
 #define IDC_MICROMETER2                 1249
 #define IDC_BUTTON_TOP_LEFT             1250
+#define IDC_CAMERA_FORM                 1250
 #define IDC_BUTTON_UP                   1251
 #define IDC_BUTTON_TOP_RIGHT            1252
 #define IDC_BUTTON_LEFT                 1253
@@ -527,7 +528,7 @@
 #define IDC_CAMERA_X_VALUE              1284
 #define IDC_CAMERA_Y_VALUE              1285
 #define IDC_CAMERA_Z_VALUE              1286
-#define IDC_CAMERA_FORM                 1250
+#define IDC_LINEPROFILE_VIEW_PANEL      1287
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -602,7 +603,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        445
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1287
+#define _APS_NEXT_CONTROL_VALUE         1288
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

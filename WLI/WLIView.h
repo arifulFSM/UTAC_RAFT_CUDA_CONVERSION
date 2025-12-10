@@ -147,6 +147,7 @@ public:
 	//20251205 
 	CStatic m_cLiveVid;
 	void camRun();
+	afx_msg void OnBnClickedButtonLoadData();
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

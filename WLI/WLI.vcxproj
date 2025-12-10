@@ -160,7 +160,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)CAM\;$(SolutionDir)MOTOR\;$(PYLON_DEV_DIR)lib\x64;C:\Program Files\Basler\pylon 7\Development\lib\x64;C:\opencv\build\x64\vc16\lib</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)$(ProjectName)_LT.exe</OutputFile>
-      <AdditionalDependencies>cuda.lib;cudart.lib;opencv_world490d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cuda.lib;cudart.lib;opencv_world490d.lib;PEGRP64G.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

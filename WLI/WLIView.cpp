@@ -13,6 +13,7 @@
 #include "HeightDlg.h"
 #include "HeightPlot.h" // 05302023 - Mortuja
 #include "MeasurementDlg.h"
+#include "AnalysisNewDlg.h"
 #include "AnalysisDlg.h"
 
 #include "WLIDoc.h"
@@ -52,6 +53,7 @@ BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_COMMAND(ID_RECIPE_CREATERECIPE, &CWLIView::OnRecipeCreaterecipe)
 	ON_MESSAGE(UM_RESULT_DLG, &CWLIView::OnUmResultDlg)
 	ON_MESSAGE(UM_ANALYSIS_DLG, &CWLIView::OnUmAnalysisDlg)
+	ON_BN_CLICKED(IDC_BUTTON_LOAD_DATA, &CWLIView::OnBnClickedButtonLoadData)
 END_MESSAGE_MAP()
 
 CWLIView::CWLIView() noexcept
@@ -136,11 +138,18 @@ void CWLIView::OnInitialUpdate() {
 		rsltDlg->Create(IDD_DLG_RESULT, &cTab);
 		cTab.AddTab(rsltDlg, CString("Result").GetBuffer(), nTab++);
 	}
-	analysisDlg = new AnalysisDlg;
+
+	analysisNewDlg = new CAnalysisNewDlg;
+	if (analysisNewDlg) {
+		analysisNewDlg->Create(IDD_ANALYSIS_DLG_NEW, &cTab);
+		cTab.AddTab(analysisNewDlg, CString("Analysis").GetBuffer(), nTab++);
+	}
+
+	/* analysisDlg = new AnalysisDlg;
 	if (analysisDlg) {
 		analysisDlg->Create(IDD_ANALYSIS_DLG, &cTab);
 		cTab.AddTab(analysisDlg, CString("Analysis").GetBuffer(), nTab++);
-	}
+	}*/
 	pStrip = new CStripDlg;
 	if (pStrip) {
 		pStrip->hWndParent = GetSafeHwnd();
@@ -158,12 +167,7 @@ void CWLIView::OnInitialUpdate() {
 		operationDlg->Create(IDD_OPERATION_DLG, &cTab);
 		cTab.AddTab(operationDlg, CString("Operation").GetBuffer(), nTab++);
 	}
-	analysisNewDlg = new CAnalysisNewDlg();
-	if (analysisNewDlg) {
-		analysisNewDlg->Create(IDD_ANALYSIS_DLG_NEW, &cTab);
-		cTab.AddTab(analysisNewDlg, CString("Analysis").GetBuffer(), nTab++);
-	}
-
+	
 
 	//cTab.SetCurSel(5);
 
@@ -516,4 +520,9 @@ void CWLIView::camRun() {
 		pCam->StopStream(Ctx, pCam->SCaM.ID);
 		pCam->StartStream(Ctx, pCam->SCaM.ID);
 	}
+}
+void CWLIView::OnBnClickedButtonLoadData()
+{
+	analysisNewDlg->loadData();
+
 }
