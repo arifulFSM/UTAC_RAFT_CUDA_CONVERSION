@@ -7,9 +7,10 @@ public:
     CIconButton();
     virtual ~CIconButton();
 
-    // Setup the icon from resource ID with specific Width and Height.
-    // Pass 0,0 to use the system default size.
-    void SetIconByID(UINT nIconID,int size);
+    // Setup the icon from resource ID.
+    // size: The target pixel size (e.g., 24, 32, 48).
+    //       If 0 is passed, it fits automatically within the button height.
+    void SetIconByID(UINT nIconID, int size);
 
     // Customization functions
     void SetHoverColor(COLORREF clrHover);
@@ -29,8 +30,10 @@ protected:
     COLORREF m_clrHover;
     COLORREF m_clrBack;
 
+    // GDI+ Token for initialization
+    ULONG_PTR m_gdiplusToken;
+
     // We need to keep track of the icon handle to destroy it properly 
-    // because we are loading it manually via LoadImage.
     HICON    m_hIconCreated;
 
     DECLARE_MESSAGE_MAP()

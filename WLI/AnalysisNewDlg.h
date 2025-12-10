@@ -29,6 +29,8 @@ protected:
 
 	BOOL OnInitDialog();
 
+	void setButtonIcon(int size);
+
 	void PopulateList();
 
 	BOOL OnToolButtonClicked(UINT nID);

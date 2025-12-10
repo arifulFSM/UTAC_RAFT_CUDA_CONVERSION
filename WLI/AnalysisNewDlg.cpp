@@ -74,21 +74,26 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	OnToolButtonClicked(IDC_BUTTON_2_POINTS);
 
 
-	m_toolButton2Points.SetIconByID(IDI_ICON30, 35);
-	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON33, 35);
-	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, 35);
-	m_toolButtonLine.SetIconByID(IDI_ICON34, 35);
-	m_toolButtonParallel.SetIconByID(IDI_ICON35, 35);
-	m_toolButtonPerpendicular.SetIconByID(IDI_ICON36, 35);
-	m_toolButtonBox.SetIconByID(IDI_ICON31, 35);
-	m_toolButtonCircle.SetIconByID(IDI_ICON32, 35);
-
-
+	setButtonIcon(35);
 
 	PopulateList();
 
 
 	return TRUE;
+}
+
+
+void CAnalysisNewDlg::setButtonIcon(int size) {
+
+	m_toolButton2Points.SetIconByID(IDI_ICON30, size);
+	m_toolButtonHorizontalLine.SetIconByID(IDI_ICON33, size);
+	m_toolButtonVerticalLine.SetIconByID(IDI_ICON37, size);
+	m_toolButtonLine.SetIconByID(IDI_ICON34, size);
+	m_toolButtonParallel.SetIconByID(IDI_ICON35, size);
+	m_toolButtonPerpendicular.SetIconByID(IDI_ICON36, size);
+	m_toolButtonBox.SetIconByID(IDI_ICON31, size);
+	m_toolButtonCircle.SetIconByID(IDI_ICON32, size);
+
 }
 
 
