@@ -1128,7 +1128,7 @@ void AnalysisDlg::lineProfile()
 	// subset colors, line type, point type
 	// 20251203
 	DWORD dwArray[1] = { PERGB(255,8,146,208) };
-	int nLineTypes[] = { PELT_THICKSOLID };
+	int nLineTypes[] = { PELT_MEDIUMSOLID };
 	int nPointTypes[] = { PEPT_DOTSOLID };
 
 	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
@@ -2103,22 +2103,36 @@ void AnalysisDlg::Create3D() {
 	m_hPE3 = PEcreate(PECONTROL_3D, WS_VISIBLE, &itemRect, m_hWnd, 1001);
 
 	// Enable smoother rotation and zooming //
-	PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 6);
+	/*PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 6);
 	PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
-	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 3);
+	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 3);*/
+
+	PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 0);
+	PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 0);
+	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 0);
 
 
 	// Zoom faster //
-	float fZF = 10000.0F;
+	//float fZF = 10000.0F;
+	float fZF = 4.0F;
 	PEvset(m_hPE3, PEP_fMOUSEWHEELZOOMFACTOR3D, &fZF, 1);
 	PEvset(m_hPE3, PEP_fPINCHZOOMFACTOR3D, &fZF, 1);
+
+	// 20251210 ---------------------
+	//PEnset(m_hPE3, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	//PEnset(m_hPE3, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	//PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+	//PEnset(m_hPE3, PEP_bGRIDBANDS, FALSE);
+	//float fZ3D = 2.00F; PEvset(m_hPE3, PEP_fMOUSEWHEELZOOMFACTOR, &fZ3D, 1);
+	// 20251210 ---------------------
 
 	// Enable DegreePrompting, to view rotation, zoom, light location to aid
 	// in determining different default values for such properties //
 	PEnset(m_hPE3, PEP_bDEGREEPROMPTING, TRUE);
 	PEnset(m_hPE3, PEP_nROTATIONSPEED, 68);
 	PEnset(m_hPE3, PEP_nROTATIONINCREMENT, PERI_INCBY1);
-	PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_FULLDETAIL);
+	//PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_FULLDETAIL);
+	PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_WIREFRAME);
 	PEnset(m_hPE3, PEP_nROTATIONMENU, PEMC_GRAYED);
 	PEnset(m_hPE3, PEP_nDEGREEOFROTATION, 180);
 
