@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MyListCtrl.h"
-
+#include <uxtheme.h>            // Required for SetWindowTheme
+#pragma comment(lib, "uxtheme.lib") // Link the library automatically
 
 BEGIN_MESSAGE_MAP(CMyListCtrl, CListCtrl)
     ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CMyListCtrl::OnCustomDraw)
@@ -8,73 +9,94 @@ END_MESSAGE_MAP()
 
 void CMyListCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    NMLVCUSTOMDRAW* pLVCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+    // --- PART A: Initialize the Header (The Fix) ---
+    // We check this every time. If m_headerCtrl is not yet attached, we attach it now.
+    if (m_headerCtrl.GetSafeHwnd() == NULL)
+    {
+        CHeaderCtrl* pHeader = GetHeaderCtrl();
+        if (pHeader && pHeader->GetSafeHwnd())
+        {
+            // 1. Disable Windows Themes for the header 
+            // (This fixes the "White Background" issue)
+            ::SetWindowTheme(pHeader->GetSafeHwnd(), L"", L"");
 
+            // 2. Subclass the header to our CMyHeaderCtrl
+            m_headerCtrl.SubclassWindow(pHeader->GetSafeHwnd());
+
+            // 3. Force a redraw of the header immediately
+            m_headerCtrl.Invalidate();
+        }
+    }
+
+    // --- PART B: Draw the List Rows (Your existing Zebra code) ---
+    NMLVCUSTOMDRAW* pLVCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
     *pResult = CDRF_DODEFAULT;
 
     switch (pLVCD->nmcd.dwDrawStage)
     {
     case CDDS_PREPAINT:
-        // Tell Windows we want to receive notification for every item
         *pResult = CDRF_NOTIFYITEMDRAW;
         break;
 
     case CDDS_ITEMPREPAINT:
-        // Tell Windows we want to receive notification for every sub-item (cell)
         *pResult = CDRF_NOTIFYSUBITEMDRAW;
         break;
 
     case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
     {
         int nRow = (int)pLVCD->nmcd.dwItemSpec;
-        int nCol = pLVCD->iSubItem;
 
-        // --- LOGIC TO CHANGE COLORS ---
+        // Zebra Striping logic
+        if (nRow % 2 == 0) pLVCD->clrTextBk = RGB(200, 230, 247);
+        else pLVCD->clrTextBk = RGB(162, 214, 245);
 
-        // Example 1: Zebra Striping (Alternate Row Colors)
-        if (nRow % 2 == 0) {
-            pLVCD->clrTextBk = RGB(200, 230, 247); // Light Gray Background  200, 230, 247
-        }
-        else {
-            pLVCD->clrTextBk = RGB(162, 214, 245); // White Background  162, 214, 245
-        }
-
-        // Example 2: Change Specific Column Style (e.g., Column 1 is Red Text)
-        if (nCol == 1) {
-            pLVCD->clrText = RGB(0, 0, 0);
-        }
-        else {
-            pLVCD->clrText = RGB(0, 0, 0);
-        }
-
-        // Example 3: Change Font Style (Bold)
-        // Note: You need to manage the CFont object lifetime elsewhere (e.g., member variable)
-        // SelectObject(pLVCD->nmcd.hdc, m_boldFont.GetSafeHandle());
-
-        *pResult = CDRF_NEWFONT; // Tell Windows we changed the font/colors
+        *pResult = CDRF_NEWFONT;
     }
     break;
     }
-
 }
-
-
 
 
 void CMyListCtrl::PreSubclassWindow()
 {
     CListCtrl::PreSubclassWindow();
 
-    // Get the existing header
-    CHeaderCtrl* pHeader = GetHeaderCtrl();
+    SetExtendedStyle(GetExtendedStyle() | LVS_EX_DOUBLEBUFFER);
 
-    if (pHeader)
+    // 1. CRITICAL FIX: Prevent the list from painting over the header during resize
+    ModifyStyle(0, WS_CLIPCHILDREN);
+}
+
+// Add this function manually if you haven't yet
+BOOL CMyListCtrl::OnEraseBkgnd(CDC* pDC)
+{
+    // Return TRUE. This stops the white "flash" before the blue rows are drawn.
+    // Since we are using Double Buffering (below), we don't need default erasing.
+    return TRUE;
+}
+
+
+BOOL CMyListCtrl::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+    NMHDR* pNMHDR = (NMHDR*)lParam;
+
+    // Check if the notification is coming from the Header Control
+    if (pNMHDR)
     {
-        // Subclass it with our custom class
-        m_HeaderCtrl.SubclassWindow(pHeader->GetSafeHwnd());
+        // HDN_TRACK indicates the user is currently dragging/resizing a column
+        // We handle both ANSI (A) and Unicode (W) versions to be safe
+        if (pNMHDR->code == HDN_TRACKW || pNMHDR->code == HDN_TRACKA ||
+            pNMHDR->code == HDN_ITEMCHANGINGW || pNMHDR->code == HDN_ITEMCHANGINGA)
+        {
+            // FORCE A FULL REPAINT
+            // "FALSE" means: "Don't just repaint the data, erase the background too."
+            // This prevents the 'smearing' artifact completely.
+            Invalidate(FALSE);
 
-        // IMPORTANT: Disable Windows Themes for the header 
-        // so our custom colors actually show up.
-       // ::SetWindowTheme(m_HeaderCtrl.GetSafeHwnd(), L"", L"");
+            // Force the window to update immediately, not later
+            UpdateWindow();
+        }
     }
+
+    return CListCtrl::OnNotify(wParam, lParam, pResult);
 }

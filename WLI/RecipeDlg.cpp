@@ -43,7 +43,7 @@ BOOL RecipeDlg::OnInitDialog() {
 
 	const wchar_t* dwCjName[] =
 	{
-		L"#", L"Position"
+		L" #", L" Position"
 	};
 	int nSize[] = { 32, 200 };
 	LV_COLUMN nListColumn;
@@ -59,6 +59,8 @@ BOOL RecipeDlg::OnInitDialog() {
 
 	pWLIView->ShowMoSetup(0);
 	//camRun(); //20251205 COMMENTED
+
+	
 
 	return TRUE;
 }

@@ -5,6 +5,7 @@
 #include "Dev.h"
 #include "MeasProgressDlg.h"
 #include "WaferMap.h"
+#include "MyListCtrl.h"
 
 // RecipeDlg dialog
 
@@ -49,9 +50,11 @@ public:
 	//afx_msg void OnBnClickedBtnNewRcp();
 	//afx_msg void OnNMDblclkListShowRcpPoint(NMHDR* pNMHDR, LRESULT* pResult);
 	MeasProgressDlg* measDlg = nullptr;
+
 	CWaferMap m_cWaferMap;
 	void Renumber();
-	CListCtrl	m_cPoint;
+	CMyListCtrl	m_cPoint;
+
 	afx_msg void OnBnClickedSaveRecipe();
 	afx_msg void OnBnClickedLoadRecipe();
 	void RecipeToLocal();

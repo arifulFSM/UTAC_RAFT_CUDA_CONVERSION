@@ -7,6 +7,9 @@
 #include "afxdialogex.h"
 
 
+//20250112 - Mahmudul Haque -------- Analysis Tab New UI Design
+
+
 // CAnalysisNewDlg dialog
 
 IMPLEMENT_DYNAMIC(CAnalysisNewDlg, CResizableDialog)

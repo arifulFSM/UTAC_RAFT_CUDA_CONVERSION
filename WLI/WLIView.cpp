@@ -25,6 +25,9 @@
 #define new DEBUG_NEW
 #endif
 
+
+
+
 CMoCtrl* CWLIView::pMCtr = nullptr;
 CMotionControlDlg* CWLIView::pMSet = nullptr;
 CCameraDlg* CWLIView::pCam1 = nullptr;
@@ -52,6 +55,10 @@ BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_COMMAND(ID_RECIPE_CREATERECIPE, &CWLIView::OnRecipeCreaterecipe)
 	ON_MESSAGE(UM_RESULT_DLG, &CWLIView::OnUmResultDlg)
 	ON_MESSAGE(UM_ANALYSIS_DLG, &CWLIView::OnUmAnalysisDlg)
+
+	ON_MESSAGE(IDC_ADDPOINT, OnAddPoint)
+	ON_MESSAGE(IDC_ADDALGNPOINT, OnAddalgnpoint)
+	ON_MESSAGE(IDC_DELETEPOINT, OnDeletepoint)
 END_MESSAGE_MAP()
 
 CWLIView::CWLIView() noexcept
@@ -117,7 +124,7 @@ void CWLIView::OnInitialUpdate() {
 	m_cWaferMap.pParent = this;
 	m_cWaferMap.Redraw();
 
-
+	m_cPoint = nullptr;
 
 
 	rcpDlg = new RecipeDlg;
@@ -158,6 +165,7 @@ void CWLIView::OnInitialUpdate() {
 		operationDlg->Create(IDD_OPERATION_DLG, &cTab);
 		cTab.AddTab(operationDlg, CString("Operation").GetBuffer(), nTab++);
 	}
+	//20250112 - Mahmudul Haque 
 	analysisNewDlg = new CAnalysisNewDlg();
 	if (analysisNewDlg) {
 		analysisNewDlg->Create(IDD_ANALYSIS_DLG_NEW, &cTab);
@@ -436,7 +444,7 @@ afx_msg LRESULT CWLIView::OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-//20250112 - Mahmudul Haque
+//20250112 - Mahmudul Haque--------------
 void CWLIView::setButtonIcon(int size)
 {
 	loadButton.SetIconByID(IDI_ICON1,size);
@@ -456,6 +464,7 @@ void CWLIView::setButtonIcon(int size)
 //	}
 //	return CResizableFormView::OnCtlColor(pDC, pWnd, nCtlColor);
 //}
+
 
 HBRUSH CWLIView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
@@ -484,6 +493,8 @@ HBRUSH CWLIView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return CResizableFormView::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
+
+
 void CWLIView::UpdateTimeLabel()
 {
 	CTime currentTime = CTime::GetCurrentTime();
@@ -505,7 +516,7 @@ void CWLIView::OnTimer(UINT_PTR nIDEvent)
 	}
 	CResizableFormView::OnTimer(nIDEvent);
 }
-
+//20250112 - Mahmudul Haque -------------
 
 void CWLIView::camRun() {
 	CAM::SCtx Ctx;
@@ -517,3 +528,28 @@ void CWLIView::camRun() {
 		pCam->StartStream(Ctx, pCam->SCaM.ID);
 	}
 }
+
+
+
+
+void CWLIView::Renumber() {
+	pRcp->Renumber();
+	pRcp->UpdateControl(rcpDlg->m_cPoint);
+	m_cWaferMap.Redraw();
+}
+
+LRESULT CWLIView::OnAddPoint(WPARAM wP, LPARAM lP) {
+	rcpDlg->Renumber();
+	return 0;
+}
+
+LRESULT CWLIView::OnAddalgnpoint(WPARAM wP, LPARAM lP) {
+	rcpDlg->Renumber();
+	return 0;
+}
+
+LRESULT CWLIView::OnDeletepoint(WPARAM wP, LPARAM lP) {
+	pRcp->UpdateControl(rcpDlg->m_cPoint);
+	return 0;
+}
+

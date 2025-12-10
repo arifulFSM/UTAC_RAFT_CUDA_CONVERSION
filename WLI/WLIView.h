@@ -19,6 +19,7 @@
 #include "SignalTower.h"
 #include "OperationDlg.h"
 #include "AnalysisNewDlg.h"
+#include "MyListCtrl.h"
 
 
 class CWLIDoc;
@@ -56,7 +57,7 @@ public:
 	//static BaslerCameraDlg* pBaslerCam;
 	BaslerCameraDlg* pBaslerCam = nullptr;
 
-protected: // create from serialization only
+public: // create from serialization only
 	CWLIView() noexcept;
 	DECLARE_DYNCREATE(CWLIView)
 
@@ -114,15 +115,13 @@ protected:
 
 public:
 
-	
-
 
 	afx_msg void OnBaslerCamera();
 	afx_msg void OnRecipeCreaterecipe();
 	afx_msg LRESULT OnUmResultDlg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam);
 
-	//20250112 - Mahmudul Haque
+	//20250112 - Mahmudul Haque-----------------
 	void setButtonIcon(int size);
 	CIconButton loadButton;
 	CIconButton saveButton;
@@ -133,7 +132,7 @@ public:
 	HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	void UpdateTimeLabel();
 	void OnTimer(UINT_PTR nIDEvent);
-	//20250112 - Mahmudul Haque
+
 	CSignalTower m_signalTower;
 	CIconButton cameraMotionButton;
 	CIconButton loadDataButton;
@@ -145,6 +144,17 @@ public:
 	CStyleStatic m_cameraYValue;
 	CStyleStatic m_cameraZValue;
 	CWaferMap m_cWaferMap;
+
+	void Renumber();
+
+	CMyListCtrl* m_cPoint;
+	
+
+protected : 
+	LRESULT OnAddPoint(WPARAM wP, LPARAM lP);
+	LRESULT OnAddalgnpoint(WPARAM wP, LPARAM lP);
+	LRESULT OnDeletepoint(WPARAM wP, LPARAM lP);
+	//20250112 - Mahmudul Haque ----------------
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp
