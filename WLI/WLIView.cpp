@@ -431,7 +431,7 @@ afx_msg LRESULT CWLIView::OnUmResultDlg(WPARAM wParam, LPARAM lParam) {
 
 afx_msg LRESULT CWLIView::OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam) {
 	//! Switch & Notify Result dialog
-	if (analysisDlg) {
+	if (analysisNewDlg) {
 		CWnd* pWnd = cTab.GetSelectTab(cTab.GetTabIndexByName(_T("Analysis")));
 		if (pWnd) {
 			::PostMessage(pWnd->GetSafeHwnd(), UM_ANALYSIS_DLG, wParam, lParam);

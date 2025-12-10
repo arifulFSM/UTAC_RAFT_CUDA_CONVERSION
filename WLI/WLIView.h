@@ -38,7 +38,7 @@ class CWLIView : public CResizableFormView {
 	HeightPlot* heightPlotDlg = nullptr; // 05302023 - Mortuja
 	RecipeDlg* rcpDlg = nullptr; //07252023
 	MeasurementDlg* measDlg = nullptr;
-	AnalysisDlg* analysisDlg = nullptr;
+	AnalysisDlg* analysisDlg = nullptr;// will delete this 20251210
 	RoughnessDlg* roughDlg = nullptr;
 	CAcqDlg* acqDlg = nullptr;
 	ResultDlg* rsltDlg = nullptr;
