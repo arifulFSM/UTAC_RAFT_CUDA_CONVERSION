@@ -1226,7 +1226,8 @@ void CAnalysisNewDlg::lineProfile()
 
 	// subset colors, line type, point type
 	// 20251203
-	DWORD dwArray[1] = { PERGB(255,8,146,208) };
+	//DWORD dwArray[1] = { PERGB(255,8,146,208) };
+	DWORD dwArray[1] = { PERGB(255,49,160,159) };
 	int nLineTypes[] = { PELT_MEDIUMSOLID };
 	int nPointTypes[] = { PEPT_PIXEL };
 
@@ -2842,7 +2843,7 @@ void CAnalysisNewDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 	double dY2 = y2 * m_yStep;
 
 	int symbol = PEGAT_THICKSOLIDLINE;
-	DWORD color = PERGB(255, 255, 255, 255); // Same as line profile
+	DWORD color = PERGB(255, 49, 160, 159); // Same as line profile
 
 	// Segment 1: Start Point
 	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PREVIEW_LINE_START_IDX, &dX1);
