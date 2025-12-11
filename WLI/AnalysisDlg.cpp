@@ -281,9 +281,7 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 
 	// 20252411 -------------------- 
-	// ---------------------------------------------------------
 	// HANDLE 2D PLOT EVENTS (m_hPE2)
-	// ---------------------------------------------------------
 	if (lParam == (LPARAM)m_hPE2) {
 
 
@@ -331,6 +329,11 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				static DWORD lastUpdateTime = 0;
 				DWORD currentTime = GetTickCount();
 
+				// 20251208 ------
+				// if new line selected previous line profile annotations are cleared
+				ClearLineAnnotations();
+				// 20251208 ------
+
 				if (currentTime - lastUpdateTime > 100) {
 					lastUpdateTime = currentTime;
 
@@ -367,13 +370,18 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				flag = isPointOnLine(checkPoint);
 
 				if (flag) {
-					Create2D();
-					lineProfile();
+					//Create2D();
+					//lineProfile();
 				}
 
 				// Reset selection state if we were in the middle of one
 				m_bIsSelectingLine = FALSE;
 				//p1.reset();
+
+				// 20251208 ------
+				// if new line selected previous line profile annotations are cleared
+				ClearLineAnnotations();
+				// 20251208 ------
 
 				return TRUE; // Exit early
 			}
@@ -455,15 +463,21 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				profileCnt++;
 				// ----------------------------------
 
+
+				// 20251208 ------
 				// Redraw everything
-				Create2D();
+				//Create2D();
 
 				// Logic for Area vs Line profile
 				/*if (isArea) areaProfile();
 				else */
-				lineProfile();
+				//lineProfile();
 
 				// AdditionalCalculations();
+
+				// 20251209 ------
+				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 			}
 
 			return TRUE; // Event handled
@@ -1119,7 +1133,7 @@ void AnalysisDlg::lineProfile()
 	// subset colors, line type, point type
 	// 20251203
 	DWORD dwArray[1] = { PERGB(255,8,146,208) };
-	int nLineTypes[] = { PELT_THICKSOLID };
+	int nLineTypes[] = { PELT_MEDIUMSOLID };
 	int nPointTypes[] = { PEPT_DOTSOLID };
 
 	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
@@ -1294,8 +1308,17 @@ void AnalysisDlg::lineProfile()
 	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
 
 	// Show instruction in subtitle
-	TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
-	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);
+	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
+	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
+
+	// 20251209 ------------
+	// Enable Zooming //
+	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
+	float fZ = 2.00F; PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
+	// 20251209 ------------
 
 
 }
@@ -2085,22 +2108,36 @@ void AnalysisDlg::Create3D() {
 	m_hPE3 = PEcreate(PECONTROL_3D, WS_VISIBLE, &itemRect, m_hWnd, 1001);
 
 	// Enable smoother rotation and zooming //
-	PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 6);
+	/*PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 6);
 	PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
-	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 3);
+	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 3);*/
+
+	PEnset(m_hPE3, PEP_nSCROLLSMOOTHNESS, 0);
+	PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 0);
+	PEnset(m_hPE3, PEP_nPINCHZOOMSMOOTHNESS, 0);
 
 
 	// Zoom faster //
-	float fZF = 10000.0F;
+	//float fZF = 10000.0F;
+	float fZF = 4.0F;
 	PEvset(m_hPE3, PEP_fMOUSEWHEELZOOMFACTOR3D, &fZF, 1);
 	PEvset(m_hPE3, PEP_fPINCHZOOMFACTOR3D, &fZF, 1);
+
+	// 20251210 ---------------------
+	//PEnset(m_hPE3, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	//PEnset(m_hPE3, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	//PEnset(m_hPE3, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+	//PEnset(m_hPE3, PEP_bGRIDBANDS, FALSE);
+	//float fZ3D = 2.00F; PEvset(m_hPE3, PEP_fMOUSEWHEELZOOMFACTOR, &fZ3D, 1);
+	// 20251210 ---------------------
 
 	// Enable DegreePrompting, to view rotation, zoom, light location to aid
 	// in determining different default values for such properties //
 	PEnset(m_hPE3, PEP_bDEGREEPROMPTING, TRUE);
 	PEnset(m_hPE3, PEP_nROTATIONSPEED, 68);
 	PEnset(m_hPE3, PEP_nROTATIONINCREMENT, PERI_INCBY1);
-	PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_FULLDETAIL);
+	//PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_FULLDETAIL);
+	PEnset(m_hPE3, PEP_nROTATIONDETAIL, PERD_WIREFRAME);
 	PEnset(m_hPE3, PEP_nROTATIONMENU, PEMC_GRAYED);
 	PEnset(m_hPE3, PEP_nDEGREEOFROTATION, 180);
 
@@ -2216,7 +2253,6 @@ void AnalysisDlg::Create3D() {
 	// 20251202
 	PEnset(m_hPE3, PEP_nCONTOURCOLORALPHA, 255);
 	PEnset(m_hPE2, PEP_dwGRAPHBACKCOLOR, 5);
-
 
 	PEnset(m_hPE3, PEP_nSHOWCONTOUR, PESC_NONE);//PESC_BOTTOMLINES
 	PEnset(m_hPE3, PEP_nCONTOURLEGENDPRECISION, 1);//set the precision of the legend
@@ -2797,7 +2833,7 @@ void AnalysisDlg::CreateTemporaryLineProfileWindow()
 	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
 
 	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
 	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
 	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
 	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
@@ -3003,6 +3039,7 @@ void AnalysisDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 {
 	// Safety: Ensure control exists
 	if (!m_hPEl || !::IsWindow(m_hPEl)) {
+		// 20251208 ------
 		//CreateTemporaryLineProfileWindow();
 		lineProfile();
 		return;
