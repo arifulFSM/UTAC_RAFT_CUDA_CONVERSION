@@ -6,11 +6,20 @@
 #include "BaslerCameraDlg.h" //12222022
 #include "RecipeDlg.h" //07252023
 #include "RoughnessDlg.h"
+#include "WaferMap.h"
 
 //#include "StripDlg.h"
 //#include "HeightDlg.h"
 #include "SRC/XTabCtrl.h"
 #include "SRC/ResizableFormView.h"
+#include "BottomTabCtrl.h"
+
+#include "ModernTabCtrl.h"
+#include "IconButton.h"
+#include "SignalTower.h"
+#include "OperationDlg.h"
+#include "AnalysisNewDlg.h"
+
 
 class CWLIDoc;
 class CStripDlg;
@@ -20,6 +29,8 @@ class CAcqDlg;
 class MeasurementDlg;
 class AnalysisDlg;
 class ResultDlg;
+class COperationDlg;
+class CAnalysisNewDlg;
 
 class CWLIView : public CResizableFormView {
 	CStripDlg* pStrip = nullptr;
@@ -27,10 +38,12 @@ class CWLIView : public CResizableFormView {
 	HeightPlot* heightPlotDlg = nullptr; // 05302023 - Mortuja
 	RecipeDlg* rcpDlg = nullptr; //07252023
 	MeasurementDlg* measDlg = nullptr;
-	AnalysisDlg* analysisDlg = nullptr;
+	AnalysisDlg* analysisDlg = nullptr;// will delete this 20251210
 	RoughnessDlg* roughDlg = nullptr;
 	CAcqDlg* acqDlg = nullptr;
 	ResultDlg* rsltDlg = nullptr;
+	COperationDlg* operationDlg = nullptr;
+	CAnalysisNewDlg* analysisNewDlg = nullptr;
 
 	void Refresh() {
 		// show image and plot
@@ -47,7 +60,7 @@ protected: // create from serialization only
 	CWLIView() noexcept;
 	DECLARE_DYNCREATE(CWLIView)
 
-		CXTabCtrl cTab;
+		CModernTabCtrl cTab;
 
 public:
 #ifdef AFX_DESIGN_TIME
@@ -93,11 +106,48 @@ protected:
 	afx_msg LRESULT OnUmHeightCalced(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUmHeightCalc(WPARAM wParam, LPARAM lParam); // 05302023 - Mortuja
 	afx_msg LRESULT OnRoughnessDlg(WPARAM wParam, LPARAM lParam);
+
+
+	CRecipeRAFT* pRcp;
+
 public:
+
+	
+
+
 	afx_msg void OnBaslerCamera();
 	afx_msg void OnRecipeCreaterecipe();
 	afx_msg LRESULT OnUmResultDlg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUmAnalysisDlg(WPARAM wParam, LPARAM lParam);
+
+	//20250112 - Mahmudul Haque
+	void setButtonIcon(int size);
+	CIconButton loadButton;
+	CIconButton saveButton;
+	CIconButton settingButton;
+	CIconButton loginButton;
+
+	CBrush m_brushBack;
+	HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	void UpdateTimeLabel();
+	void OnTimer(UINT_PTR nIDEvent);
+	//20250112 - Mahmudul Haque
+	CSignalTower m_signalTower;
+	CIconButton cameraMotionButton;
+	CIconButton loadDataButton;
+	CStyleStatic m_cameraPosition;
+	CStyleStatic m_xTitle;
+	CStyleStatic m_yTitle;
+	CStyleStatic m_zTitle;
+	CStyleStatic m_cameraXValue;
+	CStyleStatic m_cameraYValue;
+	CStyleStatic m_cameraZValue;
+	CWaferMap m_cWaferMap;
+
+	//20251205 
+	CStatic m_cLiveVid;
+	void camRun();
+	afx_msg void OnBnClickedButtonLoadData();
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

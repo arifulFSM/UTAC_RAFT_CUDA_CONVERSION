@@ -2,8 +2,8 @@
 #include "XTabCtrl.h"
 
 CXTabCtrl::CXTabCtrl() {
-	m_ptTabs.x = 4;
-	m_ptTabs.y = 28;
+	m_ptTabs.x = 0;
+	m_ptTabs.y = 28+30;
 }
 
 BOOL CXTabCtrl::IsTabEnabled(int iIndex) {
@@ -221,8 +221,11 @@ short CXTabCtrl::AddSelectTab(CWnd* pWnd, LPTSTR lpszCaption, int iImage) {
 	return idx;
 }
 
-short CXTabCtrl::AddTab(CWnd* pWnd, LPTSTR lpszCaption, int iImage, int cx, int cy) {
+short CXTabCtrl::AddTab(CWnd* pWnd, LPTSTR lpszCaption, int iImage, int cx, int cy ) {
 	ASSERT_VALID(pWnd);
+
+
+
 
 	TCITEM item;
 	item.mask = TCIF_TEXT | TCIF_PARAM | TCIF_IMAGE;
@@ -301,12 +304,12 @@ CWnd* CXTabCtrl::ChangeTab(int iIndex, CWnd* pNewTab, LPTSTR lpszCaption, int iI
 	pNewTab->ShowWindow(SW_HIDE);
 
 	if ((cx == 0) && (cy == 0)) {
-		pNewTab->SetWindowPos(NULL, m_ptTabs.x, m_ptTabs.y, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER);
+		pNewTab->SetWindowPos(NULL, m_ptTabs.x, m_ptTabs.y, 20, 20, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER);
 	}
 	else {
 		cx -= 2 * m_ptTabs.x; if (cx < 10) cx = 10;
 		cy -= (m_ptTabs.y + 8); if (cy < 10) cy = 10;
-		pNewTab->SetWindowPos(NULL, m_ptTabs.x, m_ptTabs.y, cx, cy, SWP_FRAMECHANGED | SWP_NOZORDER);
+		pNewTab->SetWindowPos(NULL, m_ptTabs.x, m_ptTabs.y, cx+20, cy+20, SWP_FRAMECHANGED | SWP_NOZORDER);
 	}
 	//** the initial status is enabled
 	m_arrayStatusTab[iIndex] = TRUE;

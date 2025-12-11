@@ -7,8 +7,8 @@ class CHollow;
 // Chuck mask is ALWAYS grid X& Y colinear but some holes may be absent
 // .. Also there will always be a Vertical & Horizontal line
 // .. going through Origin
-struct Point { float X, Y; };
-typedef std::vector<Point> Points;
+struct Point2 { float X, Y; };
+typedef std::vector<Point2> Points;
 
 class CChuckMask {
 public:

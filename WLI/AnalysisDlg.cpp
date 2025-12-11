@@ -22,7 +22,7 @@
 using namespace std;
 
 // AnalysisDlg dialog
-#pragma comment(lib,"PEGRP64G.lib")
+//#pragma comment(lib,"PEGRP64G.lib")
 
 //10212024 / ARIFUL ISLAM
 // 20251124 / Mohammad Fahim Hossain / Implemented Real-Time Line Profile graph
@@ -88,13 +88,13 @@ AnalysisDlg::AnalysisDlg(CWnd* pParent /*=nullptr*/)
 
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
-	CString inifile = CString(DosUtil.GetLocalSysFile().c_str());
+	CString inifile = CString(DosUtil.GetLocalCfgFile().c_str());
 	//m_xStep = DosUtil.ReadINI("Plot", "XStep", m_xStep, inifile);
 	//m_xStep = 10;
 	//m_yStep = DosUtil.ReadINI("Plot", "YStep", m_yStep, inifile);
 	//m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), static_cast<int>(m_xStep), inifile);
-	m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), m_xStep, static_cast<LPCTSTR>(inifile));
-	m_yStep = DosUtil.ReadINI(_T("Plot"), _T("YStep"), m_yStep, static_cast<LPCTSTR>(inifile));
+	m_xStep = DosUtil.ReadINI(_T("Plot"), _T("XStep"), m_xStep, inifile);
+	m_yStep = DosUtil.ReadINI(_T("Plot"), _T("YStep"), m_yStep, inifile);
 
 }
 
@@ -127,7 +127,7 @@ BEGIN_MESSAGE_MAP(AnalysisDlg, CResizableDialog)
 	ON_BN_CLICKED(IDC_ABSDIST, &AnalysisDlg::OnBnClickedAbsdist)
 	ON_BN_CLICKED(IDC_RADIO_MINMAX, &AnalysisDlg::OnBnClickedRadioMinmax)
 	ON_BN_CLICKED(IDC_RADIO_2POINTS, &AnalysisDlg::OnBnClickedRadio2points)
-	ON_MESSAGE(UM_ANALYSIS_DLG,&AnalysisDlg::onUmAnalysisDlg)
+	//ON_MESSAGE(UM_ANALYSIS_DLG,&AnalysisDlg::onUmAnalysisDlg)
 END_MESSAGE_MAP()
 
 // AnalysisDlg message handlers
@@ -878,48 +878,6 @@ void AnalysisDlg::lineProfile(std::vector<float>profile) {
 }
 
 //20250916
-void AnalysisDlg::applyDespike(float* pProfileYData, int sz) {
-	int windowSize = 10;
-	int half = windowSize / 2;
-
-	for (int i = half; i < sz - half; ++i) {
-		std::vector<float> win;
-		win.reserve(windowSize);
-		for (int j = -half; j <= half; ++j) {
-			win.push_back(pProfileYData[i + j]);
-		}
-
-		std::vector<float>tmp = win;
-		std::nth_element(tmp.begin(), tmp.begin() + half, tmp.end());
-		float median = tmp[half];
-
-		pProfileYData[i] = median;
-	}
-}
-
-void AnalysisDlg::applyDespikeVec(std::vector<std::vector<float>>& data) {
-	int windowSize = 10;
-	int half = windowSize / 2;
-	int rows = data[0].size();
-	int cols = data.size();
-
-	for (int y = 1; y < rows-1; ++y) {
-		for (int x = 1; x < cols-1; ++x) {
-			float val = data[x][y];
-			float kernel[9];
-			int k = 0;
-			for (int j = -1; j <= 1; j++) {
-				for (int i = -1; i <= 1; i++) {
-					kernel[k++] = data[x + i][y + j];
-				}
-			}
-			std::nth_element(kernel, kernel + 4, kernel + 9);
-			float median = kernel[4];
-
-			data[x][y] = median;
-		}
-	}
-}
 
 void AnalysisDlg::lineProfile()
 {
@@ -1052,6 +1010,8 @@ void AnalysisDlg::lineProfile()
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
 	double scale = Dr / Di;
 
+	int cnt = 0;
+
 	for (i = 0; i < nTotalCnt; i++) {
 		pProfileYData[i] = 0;
 		k = 0;
@@ -1065,6 +1025,7 @@ void AnalysisDlg::lineProfile()
 			{
 				pProfileYData[i] += profile[Row][Col];
 				k++;
+				cnt++;
 			}
 		}
 		if (k > 1)
@@ -1085,17 +1046,13 @@ void AnalysisDlg::lineProfile()
 		//20251201
 		CString xAxisVal;
 		xAxisVal.Format(_T("%0.2lf"), xval);
-		//TCHAR* xAxis;
-		//xAxis = _tcsdup(xAxisVal);
-		//PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, TEXT(xAxis));
 		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
 
 	}
-	//file.close();
+
+	//filter.applyDespike1DVec(pProfileYData,cnt);
 	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
 	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
-
-
 
 	// Manually Control Y Axis //
 	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
@@ -2505,7 +2462,6 @@ afx_msg LRESULT AnalysisDlg::OnThresholdApply(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-
 void AnalysisDlg::showCharts() {
 
 	if (data.size()) {
@@ -2553,6 +2509,12 @@ void AnalysisDlg::readData() {
 			col = 0;
 			while (std::getline(lineStream, value, ',')) {
 				float val;
+				if (value == "") {
+					val = PEMSC_NONE;
+					vec.push_back(val);
+					col++;
+					continue;
+				}
 				val = static_cast<float>(stof(value));
 				if (isnan(static_cast<double>(val))) {
 					val = PEMSC_NONE;
@@ -2580,7 +2542,6 @@ void AnalysisDlg::readData() {
 	}
 }
 
-
 void AnalysisDlg::OnBnClickedDrawChart()
 {
 	readData();
@@ -2599,7 +2560,6 @@ void AnalysisDlg::OnBnClickedDrawChart()
 
 	}
 }
-
 
 void AnalysisDlg::OnBnClickedFilterOptions()
 {
@@ -2682,9 +2642,9 @@ void AnalysisDlg::readDataFromFile(CString fileName){
 		while (std::getline(lineStream, value, ',')) {
 			float val;
 			val = static_cast<float>(stof(value));
-			if (isnan(static_cast<double>(val))) {
+			/*if (isnan(static_cast<double>(val))) {
 				val = PEMSC_NONE;
-			}
+			}*/
 			vec.push_back(val);
 			mxVal = max(mxVal, val);
 			if (val < mnVal) {
@@ -2703,8 +2663,6 @@ void AnalysisDlg::readDataFromFile(CString fileName){
 		avgVal = (mxVal + mnVal) / 2.0;
 	}
 }
-
-
 void AnalysisDlg::showDirect2D3D(CString path) {
 	readDataFromFile(path);
 	if (data.size() > 0) {
@@ -2722,9 +2680,6 @@ void AnalysisDlg::showDirect2D3D(CString path) {
 
 	}
 }
-
-
-
 // 20251124
 void AnalysisDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 {

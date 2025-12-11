@@ -39,6 +39,7 @@ public:
 	void ApplyDespike(std::vector<std::vector<float>>& img);
 	void ApplyFFT(std::vector<std::vector<float>>& img);
 	void ApplyDespikeRowColWise(cv::Mat& ImCV);
+	void applyDespike1DVec(float* pProfileYData, int sz);
 
 	//20251201
 	void iterativeAverageFill(int maxIterations, std::vector<float>& HeightData, int ht, int wd);

@@ -1163,7 +1163,7 @@ bool CChuckMask::GetRow(unsigned int Row, Points& Pts) {
 		}
 		Line& RefLine = lit->second;
 		for (UINT iPt = 0; iPt < RefLine.Holes.size(); iPt++) {
-			Point Pt;
+			Point2 Pt;
 			dfPoint& Ref = RefLine.Holes[iPt];
 			Pt.X = Ref.X;
 			Pt.Y = Ref.Y;
@@ -1184,7 +1184,7 @@ bool CChuckMask::Cross(Points& Pts) {
 			if (fabs(lit->first - 0.0f) < .1) {
 				for (unsigned int iCpt = 0; iCpt < lit->second.Holes.size(); iCpt++) {
 					dfPoint& Pt = lit->second.Holes[iCpt];
-					Point Cpt;
+					Point2 Cpt;
 					Cpt.X = Pt.X;
 					Cpt.Y = Pt.Y;
 					Pts.push_back(Cpt);
@@ -1193,7 +1193,7 @@ bool CChuckMask::Cross(Points& Pts) {
 			else {
 				for (unsigned int iPt = 0; iPt < lit->second.Holes.size(); iPt++) {
 					if (fabs(lit->second.Holes[iPt].X) < .1) {
-						Point CPt;
+						Point2 CPt;
 						dfPoint& Pt = lit->second.Holes[iPt];
 						CPt.X = Pt.X;
 						CPt.Y = Pt.Y;
@@ -1214,7 +1214,7 @@ bool CChuckMask::Circumferance(Points& Pts) {
 		_Lines::iterator lit = LogLines.Map.Lines.begin();
 		for (; lit != LogLines.Map.Lines.end(); ++lit) {
 			dfPoint& Pt1 = lit->second.Holes[0];
-			Point Cpt;
+			Point2 Cpt;
 			Cpt.X = Pt1.X;
 			Cpt.Y = Pt1.Y;
 			Pts.push_back(Cpt);

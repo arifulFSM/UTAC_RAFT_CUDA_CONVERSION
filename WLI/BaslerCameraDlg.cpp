@@ -350,7 +350,7 @@ void BaslerCameraDlg::FillDeviceListCtrl(Pylon::DeviceInfoList_t devices) {
 
 void BaslerCameraDlg::OnBnClickedSingleShot() {
 	if (!m_camera.IsOpen() || m_camera.IsGrabbing()) {
-		AfxMessageBox(L"Camera Not Open Or Another Instance Running");
+		//AfxMessageBox(L"Camera Not Open Or Another Instance Running");
 		return;
 	}
 	cntFrame = 0;
@@ -360,7 +360,7 @@ void BaslerCameraDlg::OnBnClickedSingleShot() {
 
 void BaslerCameraDlg::OnGrabOne() {
 	if (!m_camera.IsOpen() || m_camera.IsGrabbing()) {
-		AfxMessageBox(L"Camera Not Open Or Another Instance Running");
+		//AfxMessageBox(L"Camera Not Open Or Another Instance Running");
 		return;
 	}
 	cntFrame = 0;
@@ -375,7 +375,7 @@ void BaslerCameraDlg::OnUpdateGrabOne(CCmdUI* pCmdUI) {
 void BaslerCameraDlg::OnStartGrabbing() {
 	// Camera may have been disconnected.
 	if (!m_camera.IsOpen() || m_camera.IsGrabbing()) {
-		AfxMessageBox(L"Camera Not Open Or Another Instance Running");
+		//AfxMessageBox(L"Camera Not Open Or Another Instance Running");
 		return;
 	}
 	cntFrame = 0;

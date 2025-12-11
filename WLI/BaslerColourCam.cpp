@@ -222,8 +222,13 @@ void CAM::CBaslerColourCam::DisplayImage() {
 	HGDIOBJ oldBitmap = SelectObject(hdcMem, ImgStream);
 
 	// Use BitBlt to copy the image directly to the window HDC
-	BitBlt(hDc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, SRCCOPY);
-	//StretchBlt(hDc, 0, 0, Ctx.rc.right - Ctx.rc.left, Ctx.rc.bottom - Ctx.rc.top, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+	//BitBlt(hDc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, SRCCOPY); //20251205 COMMENTED
+
+	//20251205 ===============
+	SetStretchBltMode(hDc, HALFTONE);
+	SetBrushOrgEx(hDc, 0, 0, NULL);
+	StretchBlt(hDc, 0, 0, Ctx.rc.right - Ctx.rc.left, Ctx.rc.bottom - Ctx.rc.top, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+	// =========================
 	ReleaseDC(Ctx.hWnd, hDc);
 
 	// Clean up
@@ -233,7 +238,7 @@ void CAM::CBaslerColourCam::DisplayImage() {
 
 BOOL CAM::CBaslerColourCam::StartStream(SCtx& _Ctx, USHORT ID) {
 	if (!m_camera.IsOpen() || m_camera.IsGrabbing()) {
-		AfxMessageBox(L"Camera Not Open Or Another Instance Running");
+		//AfxMessageBox(L"Camera Not Open Or Another Instance Running");
 		return FALSE;
 	}
 	Ctx = _Ctx;

@@ -67,7 +67,7 @@ public:
 	int profileCnt, profileCntDist, pointDistCnt;
 	float height1Val, height2Val;//for two point height diff
 	std::vector<std::pair<float, float> > heightTwoPt;
-	int m_xStep, m_yStep;
+	float m_xStep, m_yStep;
 	bool flagDepth;
 
 	// 20251118
@@ -132,7 +132,6 @@ public:
 	afx_msg void OnBnClickedRadio2points();
 	void drawLineOn2D(float x1, float y1, float x2, float y2, DWORD color, int annotationCnt/*, LPARAM lParam*/);
 	void applyDespike(float* pProfileYData, int sz);//20250916
-	void applyDespikeVec(std::vector<std::vector<float>>& data);
 	afx_msg LRESULT onUmAnalysisDlg(WPARAM wParam, LPARAM lParam);//20251127
 	void showDirect2D3D(CString path);//20251127
 	void readDataFromFile(CString fileName);//20251127

@@ -58,7 +58,7 @@ BOOL RecipeDlg::OnInitDialog() {
 	m_cPoint.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
 	pWLIView->ShowMoSetup(0);
-	camRun();
+	//camRun(); //20251205 COMMENTED
 
 	return TRUE;
 }
@@ -216,10 +216,11 @@ LRESULT RecipeDlg::OnTabSelected(WPARAM wP, LPARAM lP) {
 		bTabSelected = TRUE;
 	}
 
-	camRun();
+	//camRun(); // 20251205 COMMENTED
 
 	return 0;
 }
+
 
 LRESULT RecipeDlg::OnTabDeselected(WPARAM wP, LPARAM lP) {
 	if (bTabSelected) {
