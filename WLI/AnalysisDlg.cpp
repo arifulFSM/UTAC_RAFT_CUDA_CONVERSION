@@ -370,13 +370,18 @@ BOOL AnalysisDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				flag = isPointOnLine(checkPoint);
 
 				if (flag) {
-					Create2D();
-					lineProfile();
+					//Create2D();
+					//lineProfile();
 				}
 
 				// Reset selection state if we were in the middle of one
 				m_bIsSelectingLine = FALSE;
 				//p1.reset();
+
+				// 20251208 ------
+				// if new line selected previous line profile annotations are cleared
+				ClearLineAnnotations();
+				// 20251208 ------
 
 				return TRUE; // Exit early
 			}
