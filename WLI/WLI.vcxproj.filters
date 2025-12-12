@@ -121,6 +121,9 @@
     <ClCompile Include="AnalysisNewDlg.cpp" />
     <ClCompile Include="MyHeaderCtrl.cpp" />
     <ClCompile Include="MyListCtrl.cpp" />
+    <ClCompile Include="CheckBox.cpp" />
+    <ClCompile Include="RoundStatic.cpp" />
+    <ClCompile Include="EditPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CAM\CamDev.h" />
@@ -260,6 +263,9 @@
     <ClInclude Include="AnalysisNewDlg.h" />
     <ClInclude Include="MyHeaderCtrl.h" />
     <ClInclude Include="MyListCtrl.h" />
+    <ClInclude Include="CheckBox.h" />
+    <ClInclude Include="RoundStatic.h" />
+    <ClInclude Include="EditPoint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WLI.cpp">

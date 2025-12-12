@@ -113,7 +113,6 @@ BOOL COperationDlg::OnInitDialog() {
 	setButtonIcon(20);
 
 
-
 	 m_currentZ.SetFontOptions(10,false);
 	 m_lowZ.SetFontOptions(10, false);
 	 m_highZ.SetFontOptions(10, false);

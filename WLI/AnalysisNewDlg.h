@@ -9,6 +9,8 @@
 #include "ColorSliderCtrl.h"
 #include "CustomRadioButton.h"
 #include "MyListCtrl.h"
+#include "CheckBox.h"
+#include "RoundStatic.h"
 // CAnalysisNewDlg dialog
 
 class CAnalysisNewDlg : public CResizableDialog
@@ -65,4 +67,10 @@ public:
 
 	CMyListCtrl m_listCtrl;
 	afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
+	CCheckBox m_checkEffectCorrection;
+	CCheckBox m_checkDoubleGaussianFilter;
+
+	CRoundStatic m_2dViewPanel;
+	CRoundStatic m_3dViewPanel;
+	CRoundStatic m_profileGraph;
 };

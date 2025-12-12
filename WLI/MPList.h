@@ -21,5 +21,6 @@ public:
 	void EnsureData();
 	void Serialize(CArchive& ar);
 	void Clear();
+	BOOL EditLocMP(CCoor& Point, float XCoord, float YCoord); //20251211 Mahmudul Haque
 };
 

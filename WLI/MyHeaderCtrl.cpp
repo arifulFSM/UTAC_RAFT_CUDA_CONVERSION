@@ -69,7 +69,7 @@ void CMyHeaderCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
         pDC->DrawText(szBuffer, &rect, uFormat);
 
         // 3. Draw Separator Line (Optional, makes it look like a real table)
-        CPen pen(PS_SOLID, 1, RGB(200, 100, 0)); // Darker orange line
+        CPen pen(PS_SOLID, 1, RGB(255, 255, 255)); 
         CPen* pOld = pDC->SelectObject(&pen);
         pDC->MoveTo(rect.right - 1, rect.top);
         pDC->LineTo(rect.right - 1, rect.bottom);

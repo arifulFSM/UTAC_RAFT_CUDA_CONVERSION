@@ -3,6 +3,7 @@
 #include "../MTH/Stat.h"
 #include <vector>
 #include <algorithm>
+#include "EditPoint.h"
 
 int CMPList::GetCount()
 {
@@ -307,4 +308,27 @@ void CMPList::Clear() {
 		}
 	}
 	MPLst.RemoveAll();
+}
+
+
+//20251211 Mahmudul Haque
+BOOL CMPList::EditLocMP(CCoor& Point, float XCoord, float YCoord) {
+	POSITION pos = MPLst.GetHeadPosition();
+	bool bFound = false;
+	while (pos) {
+		CMPoint* p = (CMPoint*)MPLst.GetNext(pos);
+		if ((p) && (p->GetCoor()->IsPoint(Point))) {
+			CEditPoint dlg;
+
+			dlg.m_XCoor = XCoord;
+			dlg.m_YCoor = YCoord;
+
+			if (dlg.DoModal() == IDOK) {
+				p->GetCoor()->x = dlg.m_XCoor;
+				p->GetCoor()->y = dlg.m_YCoor;
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }

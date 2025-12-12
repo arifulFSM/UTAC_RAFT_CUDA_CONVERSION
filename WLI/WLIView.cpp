@@ -59,6 +59,7 @@ BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_MESSAGE(IDC_ADDPOINT, OnAddPoint)
 	ON_MESSAGE(IDC_ADDALGNPOINT, OnAddalgnpoint)
 	ON_MESSAGE(IDC_DELETEPOINT, OnDeletepoint)
+	ON_MESSAGE(IDC_EDITPOINT, OnEditpoint)
 END_MESSAGE_MAP()
 
 CWLIView::CWLIView() noexcept
@@ -92,6 +93,7 @@ void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_CAMERA_Z_VALUE, m_cameraZValue);
 	DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
 	DDX_Control(pDX, IDC_CAMERA, m_cLiveVid);
+	DDX_Control(pDX, IDC_NOTIFICATION_PANEL, m_notificationPanel);
 }
 
 CWLIView* CWLIView::GetView() {
@@ -126,7 +128,7 @@ void CWLIView::OnInitialUpdate() {
 
 	m_cPoint = nullptr;
 
-
+	
 	rcpDlg = new RecipeDlg;
 	if (rcpDlg) {
 		rcpDlg->Create(IDD_RCP_DLG, &cTab);
@@ -173,36 +175,22 @@ void CWLIView::OnInitialUpdate() {
 	}
 
 
-	//cTab.SetCurSel(5);
-
-
-
-
-
 	//20250112 - Mahmudul Haque -------start ---------
 	AddResizedControl(IDC_FSM_LOGO, TOP_LEFT, TOP_LEFT);
-	
 	AddResizedControl(IDC_SIGNAL_TOWER, TOP_RIGHT, TOP_RIGHT);
 	AddResizedControl(IDC_BUTTON_LOGIN, TOP_RIGHT, TOP_RIGHT);
-
-
-	//AddResizedControl(IDC_CAMERA, CSize(0, 80), CSize(0, 80));
 	AddResizedControl(IDC_WAFERMAP, CSize(0, 95), CSize(0, 95));
-
-	//AddResizedControl(IDC_BUTTON_LOAD, CSize(65, 0), CSize(65, 0));
-	//AddResizedControl(IDC_BUTTON_SAVE, CSize(65, 0), CSize(65, 0));
-	//AddResizedControl(IDC_BUTTON_SETTING, CSize(65, 0), CSize(65, 0));
-	//AddResizedControl(IDC_BUTTON_MOTION, CSize(65, 0), CSize(65, 0));
-
-
-	m_brushBack.CreateSolidBrush(RGB(255, 255, 255)); //235, 236, 237 setting dialog background color
-
-	setButtonIcon(48);
+	//20250112 - Mahmudul Haque -------end--------
 
 	camRun();//20251205
 
+	//20250112 - Mahmudul Haque -------start ---------
+	m_brushBack.CreateSolidBrush(RGB(255, 255, 255)); //235, 236, 237 setting dialog background color
+	setButtonIcon(48);
 	UpdateTimeLabel();       // Show time immediately
 	SetTimer(1, 1000, NULL);
+
+	m_notificationPanel.SetBkColor(RGB(240, 240, 240));
 	//20250112 ------------end ------------------
 
 	AnchorControls();
@@ -553,3 +541,18 @@ LRESULT CWLIView::OnDeletepoint(WPARAM wP, LPARAM lP) {
 	return 0;
 }
 
+
+
+LRESULT CWLIView::OnEditpoint(WPARAM wP, LPARAM lP) {
+	pRcp->UpdateControl(rcpDlg->m_cPoint);
+	return 0;
+}
+
+
+
+//LRESULT CWLIView::UpdatePoint(CCoor* p) {
+//	if (UpdatePointB(p)) {
+//		pRcp->UpdateControl(rcpDlg->m_cPoint);
+//		m_cWaferMap.Redraw();
+//	}
+//}

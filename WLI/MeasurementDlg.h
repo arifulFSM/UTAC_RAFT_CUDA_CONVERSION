@@ -11,6 +11,8 @@
 #include "wdefine.h"
 #include "filters.h"
 #include <opencv2/core.hpp>
+
+#include "MyListCtrl.h"
 //#include <opencv2/imgproc.hpp>
 
 // MeasurementDlg dialog
@@ -54,7 +56,7 @@ protected:
 	BOOL OnInitDialog();
 	DECLARE_MESSAGE_MAP()
 public:
-	CListCtrl m_cResults;
+	CMyListCtrl m_cResults;
 	afx_msg void OnBnClickedMeLoadrcp();
 	afx_msg void OnBnClickedMeasure();
 	void Make24HStretchCV(cv::Mat& ImCV);//20250916
@@ -81,13 +83,13 @@ public:
 	float m_fRa1 = 0.0;
 	float m_fRmax1 = 0.0;
 	int wd, ht;
-	CWaferMap m_cWaferMap;
+	//CWaferMap m_cWaferMap; //20251211 Mahmudul Haque
 	LRESULT OnTabSelected(WPARAM wP, LPARAM lP);
 	LRESULT OnTabDeselected(WPARAM wP, LPARAM lP);
 	void RecipeToLocal();
 	MeasProgressDlg* progress = nullptr;
-	CStatic cLiveVid;
-	void camRun();
+	//CStatic cLiveVid; //20251211 Mahmudul Haque
+	//void camRun(); //20251211 Mahmudul Haque
 	afx_msg void OnBnClickedMotSetupMd();
 	afx_msg void OnBnClickedCamPropMd();
 	CStatic m_ProgressMsg;

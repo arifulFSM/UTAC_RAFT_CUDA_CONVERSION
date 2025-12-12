@@ -3,6 +3,7 @@
 //
 #include "Coor.h"
 
+
 #define FILL_LEVEL	(26)
 
 // class CCoor;			HAQUE/ADDED/WAFER MAP

@@ -12,6 +12,8 @@ CModernTabCtrl::CModernTabCtrl()
     m_colHoverText = RGB(0, 80, 180);       // Slightly darker blue on hover
     m_colUnderline = RGB(0, 120, 215);
     m_colBkg = RGB(240, 240, 240); //218, 242, 247 background color 237, 252, 255
+    //m_colBkg = RGB(162, 214, 245); //218, 242, 247 background color 237, 252, 255
+
 
     CXTabCtrl::CXTabCtrl();
 }

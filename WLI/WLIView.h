@@ -20,6 +20,7 @@
 #include "OperationDlg.h"
 #include "AnalysisNewDlg.h"
 #include "MyListCtrl.h"
+#include "RoundStatic.h"
 
 
 class CWLIDoc;
@@ -72,7 +73,7 @@ public:
 	CWLIDoc* GetDocument() const;
 	static CWLIView* GetView();
 	void camRun();//20251205
-	CStatic m_cLiveVid;//20251205
+	CRoundStatic m_cLiveVid;//20251205
 
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -154,7 +155,11 @@ protected :
 	LRESULT OnAddPoint(WPARAM wP, LPARAM lP);
 	LRESULT OnAddalgnpoint(WPARAM wP, LPARAM lP);
 	LRESULT OnDeletepoint(WPARAM wP, LPARAM lP);
+	LRESULT OnEditpoint(WPARAM wP, LPARAM lP);
+	//LRESULT UpdatePoint(CCoor* p);
 	//20250112 - Mahmudul Haque ----------------
+public:
+	CStyleStatic m_notificationPanel;
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

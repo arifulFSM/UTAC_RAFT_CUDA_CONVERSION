@@ -103,7 +103,7 @@ BOOL CWLIApp::InitInstance() {
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, NULL);
 
-	CCardPanel::RegisterWindowClass();
+	//CCardPanel::RegisterWindowClass();
 
 
 

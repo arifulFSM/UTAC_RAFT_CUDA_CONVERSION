@@ -36,10 +36,10 @@ BOOL RecipeDlg::OnInitDialog() {
 	MO = Dev.MC.get();
 
 	pRcp = &pRAFTApp->RcpSetup;
-	m_cWaferMap.pRcp = pRcp;
-	m_cWaferMap.bSiteView = FALSE; // Show recipe points [6/25/2010 Yuen]
-	m_cWaferMap.pParent = this;
-	m_cWaferMap.Redraw();
+	//m_cWaferMap.pRcp = pRcp;
+	//m_cWaferMap.bSiteView = FALSE; // Show recipe points [6/25/2010 Yuen]
+	//m_cWaferMap.pParent = this;
+	//m_cWaferMap.Redraw();
 
 	const wchar_t* dwCjName[] =
 	{
@@ -70,14 +70,15 @@ void RecipeDlg::DoDataExchange(CDataExchange* pDX) {
 	//DDX_Control(pDX, IDC_X1, m_X1);
 	//DDX_Control(pDX, IDC_Y1, m_Y1);
 	//DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
-	DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
+	// 
+	//DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap); //20251211 Mahmudul Haque
 	DDX_Control(pDX, IDC_LIST1, m_cPoint);
 	DDX_Control(pDX, IDC_AF_CAL_RANGE, m_AFRange);
 	DDX_Control(pDX, IDC_AF_CAL_STEP_SIZE, m_AFStepSize);
 	DDX_Control(pDX, IDC_ME_RANGE, m_MERange);
 	DDX_Control(pDX, IDC_ME_FRAMES, m_MEFrames);
 	DDX_Control(pDX, IDC_AF_CALZ, m_AFCalZ);
-	DDX_Control(pDX, IDC_CAMERA, cLiveVid);
+	//DDX_Control(pDX, IDC_CAMERA, cLiveVid); //20251211 Mahmudul Haque
 }
 
 BEGIN_MESSAGE_MAP(RecipeDlg, CResizableDialog)
@@ -105,7 +106,7 @@ END_MESSAGE_MAP()
 void RecipeDlg::Renumber() {
 	pRcp->Renumber();
 	pRcp->UpdateControl(m_cPoint);
-	m_cWaferMap.Redraw();
+	//m_cWaferMap.Redraw();
 }
 
 LRESULT RecipeDlg::OnAddPoint(WPARAM wP, LPARAM lP) {
@@ -151,7 +152,7 @@ void RecipeDlg::RecipeToLocal() {
 	pRcp = &pRAFTApp->RcpSetup;
 	pRcp->UpdateControl(m_cPoint);
 	SetValue();
-	m_cWaferMap.Redraw();
+	//m_cWaferMap.Redraw();
 }
 
 void RecipeDlg::OnBnClickedNewRecipe() {
@@ -213,7 +214,7 @@ void RecipeDlg::SetValue() {
 LRESULT RecipeDlg::OnTabSelected(WPARAM wP, LPARAM lP) {
 	if (!bTabSelected) {
 		RecipeToLocal();
-		m_cWaferMap.pRcp = pRcp;
+		//m_cWaferMap.pRcp = pRcp;
 		pRcp->UpdateControl(m_cPoint);
 		bTabSelected = TRUE;
 	}
@@ -231,7 +232,9 @@ LRESULT RecipeDlg::OnTabDeselected(WPARAM wP, LPARAM lP) {
 	return 0;
 }
 
-void RecipeDlg::camRun() {
+
+//20251211 Mahmudul Haque  //Comment
+/*void RecipeDlg::camRun() {
 	CAM::SCtx Ctx;
 	CAM::CCamera* pCam = Dev.Cam.GetCamera(CAM::ECAM::PRICAM);
 	if (pCam != NULL) {
@@ -240,7 +243,7 @@ void RecipeDlg::camRun() {
 		pCam->StopStream(Ctx, pCam->SCaM.ID);
 		pCam->StartStream(Ctx, pCam->SCaM.ID);
 	}
-}
+} */
 
 void RecipeDlg::OnBnClickedMotSetup() {
 	// TODO: Add your control notification handler code here

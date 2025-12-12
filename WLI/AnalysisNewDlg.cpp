@@ -50,6 +50,11 @@ void CAnalysisNewDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MICRO_METER, m_microMeter);
 	DDX_Control(pDX, IDC_MICROMETER2, m_microMeter2);
 	DDX_Control(pDX, IDC_LIST1, m_listCtrl);
+	DDX_Control(pDX, IDC_CHECK_END_EFFECT_CORRECTION, m_checkEffectCorrection);
+	DDX_Control(pDX, IDC_CHECK_DOUBLE_GAUSSIAN_FILTER, m_checkDoubleGaussianFilter);
+	DDX_Control(pDX, IDC_2D_VIEW_PANEL, m_2dViewPanel);
+	DDX_Control(pDX, IDC_3D_VIEW_PANEL, m_3dViewPanel);
+	DDX_Control(pDX, IDC_GRAPH_1, m_profileGraph);
 }
 
 

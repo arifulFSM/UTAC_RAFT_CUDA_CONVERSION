@@ -115,8 +115,45 @@ CCoor& CWaferMap::Dev2Log(CPoint point) {
 
 void CWaferMap::OnPaint() {
 	CPaintDC dc(this); // device context for painting
+
+
+	//20251211 Mahmudul Haque-----------------------------
+	// 1. Get the size of the control
+	CRect rect;
+	GetClientRect(&rect);
+
+	// 2. Paint the area behind the corners (Optional but recommended)
+	// If you don't do this, the corners might look black or have garbage pixels.
+	// We fill it with the standard dialog background color.
+	dc.FillSolidRect(rect, RGB(255, 255, 255));
+
+
+	// 3. Create a Rounded Region
+	// Arguments: x1, y1, x2, y2, width_ellipse, height_ellipse
+	CRgn rgn;
+	int cornerRadius = 20; // Adjust this for more/less roundness
+	rgn.CreateRoundRectRgn(rect.left, rect.top, rect.right, rect.bottom, cornerRadius, cornerRadius);
+
+	// 4. Select this region into the DC
+	// This creates the "mask". Anything drawn after this line will strictly
+	// stay inside the rounded shape.
+	dc.SelectClipRgn(&rgn);
+
+	// 5. Draw a background color for your panel (inside the clip)
+	// You likely want the wafer map to have a white or black background
+	dc.FillSolidRect(rect, RGB(255, 255, 255));
+
+	// 6. Call your existing drawing logic
+	// Your OnDraw doesn't need to know about rounded corners; 
+	// the DC will handle the clipping automatically.
 	OnDraw(dc);
-	// Do not call CStatic::OnPaint() for painting messages
+
+	// 7. (Optional) Draw a border frame
+	// Clipping often leaves jagged edges. Drawing a frame helps smooth it out.
+	// We use the same region we created earlier.
+	CBrush borderBrush(RGB(255, 255, 255)); // Dark Gray border
+	dc.FrameRgn(&rgn, &borderBrush, 1, 1);
+	//20251211 Mahmudul Haque -----------------------------------
 }
 
 void CWaferMap::OnSize(UINT nType, int cx, int cy) {
@@ -1407,8 +1444,10 @@ void CWaferMap::GotoPoint(CPoint& point) {
 	}
 }
 
+
+
 void CWaferMap::EditPoint(CPoint& point) {
-	/* HAQUE/ADDED/WAFER MAP
+	// HAQUE/ADDED/WAFER MAP
 	CCoor& pt = Dev2Log(point);
 	if (pRcp) {
 		float Distance;
@@ -1424,8 +1463,9 @@ void CWaferMap::EditPoint(CPoint& point) {
 	if (pParent) {
 		pParent->PostMessage(IDC_EDITPOINT, 0, (LPARAM)&pt);
 	}
-	*/
-}
+	
+} 
+
 
 void CWaferMap::DeletePoint(CPoint& point) {
 	CCoor& pt = Dev2Log(point);

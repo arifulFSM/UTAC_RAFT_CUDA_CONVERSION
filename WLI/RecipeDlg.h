@@ -51,7 +51,7 @@ public:
 	//afx_msg void OnNMDblclkListShowRcpPoint(NMHDR* pNMHDR, LRESULT* pResult);
 	MeasProgressDlg* measDlg = nullptr;
 
-	CWaferMap m_cWaferMap;
+	//CWaferMap m_cWaferMap; //20251211 Mahmudul Haque
 	void Renumber();
 	CMyListCtrl	m_cPoint;
 
@@ -70,7 +70,7 @@ public:
 	CEdit m_AFCalZ;
 	LRESULT OnTabSelected(WPARAM wP, LPARAM lP);
 	LRESULT OnTabDeselected(WPARAM wP, LPARAM lP);
-	CStatic cLiveVid;
+//	CStatic cLiveVid; //20251211 Mahmudul Haque
 	void camRun();
 	afx_msg void OnBnClickedMotSetup();
 	afx_msg void OnBnClickedCamProp();

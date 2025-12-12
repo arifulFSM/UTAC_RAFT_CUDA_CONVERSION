@@ -37,8 +37,8 @@ MeasurementDlg::~MeasurementDlg() {
 void MeasurementDlg::DoDataExchange(CDataExchange* pDX) {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_RESULTS, m_cResults);
-	DDX_Control(pDX, IDC_WAFERMAP2, m_cWaferMap);
-	DDX_Control(pDX, IDC_CAMERA_MEAS, cLiveVid);
+	//DDX_Control(pDX, IDC_WAFERMAP2, m_cWaferMap); //20251211 Mahmudul Haque
+	//DDX_Control(pDX, IDC_CAMERA_MEAS, cLiveVid); //20251211 Mahmudul Haque
 	DDX_Control(pDX, IDC_PROGRESS_MSG, m_ProgressMsg);
 	DDX_Control(pDX, IDC_PROGRESS1, m_MeasurementProgress);
 	DDX_Control(pDX, IDC_PROGRESS_COUNT, m_ProgressCount);
@@ -62,10 +62,11 @@ BOOL MeasurementDlg::OnInitDialog() {
 	__super::OnInitDialog();
 
 	pRcp = &pRAFTApp->RcpSetup;
-	m_cWaferMap.pRcp = pRcp;
-	m_cWaferMap.bSiteView = FALSE; // Show recipe points [6/25/2010 Yuen]
-	m_cWaferMap.pParent = this;
-	m_cWaferMap.Redraw();
+	//20251211 Mahmudul Haque
+	//m_cWaferMap.pRcp = pRcp;
+	//m_cWaferMap.bSiteView = FALSE; // Show recipe points [6/25/2010 Yuen]
+	//m_cWaferMap.pParent = this;
+	//m_cWaferMap.Redraw();
 
 	pResult = &pRAFTApp->Result;
 
@@ -405,7 +406,7 @@ void MeasurementDlg::OnBnClickedMeasure() {
 		if (p) {
 			numOfPoint++;
 			p->Co.status = CCoor::MEASURE;
-			m_cWaferMap.Redraw();
+		//	m_cWaferMap.Redraw(); //20251211 Mahmudul Haque
 		}
 	}
 
@@ -454,7 +455,7 @@ void MeasurementDlg::OnBnClickedMeasure() {
 		if (p) {
 			//02282024/HAQUE/ADD MEASURING COLOR==================
 			p->Co.status = CCoor::MEASURING;
-			m_cWaferMap.Redraw();
+			//m_cWaferMap.Redraw(); //20251211 Mahmudul Haque
 			//====================================================
 
 			//nItem = 2;
@@ -585,7 +586,7 @@ void MeasurementDlg::OnBnClickedMeasure() {
 
 			i++;
 			p->Co.status = CCoor::MEASURED;
-			m_cWaferMap.Redraw();
+		//	m_cWaferMap.Redraw(); //20251211 Mahmudul Haque
 			//====================================================
 		}
 	}
@@ -1086,13 +1087,13 @@ void MeasurementDlg::CalculateRoughnessStats(RSTATS* pStats) {
 void MeasurementDlg::RecipeToLocal() {
 	pRcp = &pRAFTApp->RcpSetup;
 	pRcp->UpdateControl(m_cResults);
-	m_cWaferMap.Redraw();
+//	m_cWaferMap.Redraw(); //20251211 Mahmudul Haque
 }
 
 LRESULT MeasurementDlg::OnTabSelected(WPARAM wP, LPARAM lP) {
 	if (!bTabSelected) {
 		RecipeToLocal();
-		m_cWaferMap.pRcp = pRcp;
+	//	m_cWaferMap.pRcp = pRcp; //20251211 Mahmudul Haque
 		pRcp->UpdateControl(m_cResults);
 		bTabSelected = TRUE;
 	}
@@ -1109,7 +1110,9 @@ LRESULT MeasurementDlg::OnTabDeselected(WPARAM wP, LPARAM lP) {
 	return 0;
 }
 
-void MeasurementDlg::camRun() {
+
+//20251211 Mahmudul Haque / Comment
+/*void MeasurementDlg::camRun() {
 	CAM::SCtx Ctx;
 	CAM::CCamera* pCam = Dev.Cam.GetCamera(CAM::ECAM::PRICAM);
 	if (pCam != NULL) {
@@ -1118,7 +1121,7 @@ void MeasurementDlg::camRun() {
 		pCam->StopStream(Ctx, pCam->SCaM.ID);
 		pCam->StartStream(Ctx, pCam->SCaM.ID);
 	}
-}
+} */
 
 void MeasurementDlg::OnBnClickedMotSetupMd() {
 	// TODO: Add your control notification handler code here

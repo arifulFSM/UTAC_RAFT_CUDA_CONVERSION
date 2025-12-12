@@ -4,6 +4,8 @@
 #include "SRC/XTabDefine.h"
 #include "ResultRAFT.h"
 
+#include "MyListCtrl.h"
+
 // ResultDlg dialog
 
 class ResultDlg : public CResizableDialog
@@ -29,6 +31,6 @@ public:
 	LRESULT OnTabDeselected(WPARAM wP, LPARAM lP);
 	afx_msg void OnBnClickedImportResult();
 	afx_msg void OnBnClickedExportResult();
-	CListCtrl m_Result;
+	CMyListCtrl m_Result;
 	afx_msg LRESULT OnUmResultDlg(WPARAM wParam, LPARAM lParam);
 };

@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by WLI.rc
 //
+#define IDC_USECURRENT                  3
 #define IDD_ABOUTBOX                    100
 #define IDP_OLE_INIT_FAILED             100
 #define IDD_WLI_FORM                    101
@@ -87,6 +88,8 @@
 #define IDI_ICON35                      442
 #define IDI_ICON36                      443
 #define IDI_ICON37                      444
+#define IDD_DIALOG22                    445
+#define IDD_EDITMPOINT                  445
 #define IDC_BUTTON1                     1000
 #define IDC_BUTTON2                     1001
 #define IDC_BUTTON3                     1002
@@ -491,6 +494,7 @@
 #define IDC_MICRO_METER                 1248
 #define IDC_MICROMETER2                 1249
 #define IDC_BUTTON_TOP_LEFT             1250
+#define IDC_CAMERA_FORM                 1250
 #define IDC_BUTTON_UP                   1251
 #define IDC_BUTTON_TOP_RIGHT            1252
 #define IDC_BUTTON_LEFT                 1253
@@ -527,7 +531,9 @@
 #define IDC_CAMERA_X_VALUE              1284
 #define IDC_CAMERA_Y_VALUE              1285
 #define IDC_CAMERA_Z_VALUE              1286
-#define IDC_CAMERA_FORM                 1250
+#define IDC_NOTIFICATION_PANEL          1287
+#define IDC_XCOOR                       1288
+#define IDC_YCOOR                       1289
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -600,9 +606,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        445
+#define _APS_NEXT_RESOURCE_VALUE        447
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1287
+#define _APS_NEXT_CONTROL_VALUE         1290
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
