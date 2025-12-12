@@ -3334,7 +3334,7 @@ void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
 	const int RULER_GAP_PX = 30; // 30px gap between line and ruler
 	const int TEXT_GAP_PX = 50;  // 70px gap for text
 	const int MARGIN_PX = 10;    // Minimum screen margin
-	const int TOTAL_REQ_SPACE = RULER_GAP_PX + TEXT_GAP_PX + MARGIN_PX + 20;
+	const int TOTAL_REQ_SPACE = RULER_GAP_PX + TEXT_GAP_PX + MARGIN_PX + 30;
 	// Placement Decision
 	bool bFitRight = (pxMaxX + TOTAL_REQ_SPACE) < screenW;
 	bool bFitLeft = (pxMinX - TOTAL_REQ_SPACE) > 0;
@@ -3371,9 +3371,7 @@ void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
 	// --- 3. CONVERT BACK TO GRAPH UNITS ---
 
 	double graphRulerX, graphTextX, dummyY;
-
 	PEconvpixeltograph(m_hPEl, &nAxis, &pxRulerX, &pxY, &graphRulerX, &dummyY, FALSE, FALSE, FALSE);
-
 	PEconvpixeltograph(m_hPEl, &nAxis, &pxTextX, &pxY, &graphTextX, &dummyY, FALSE, FALSE, FALSE);
 
 
@@ -3452,11 +3450,60 @@ void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
 	distText.Format(_T("%.2f um"), distance);
 	TCHAR* distValue = _tcsdup(distText);
 	symbol = PEGAT_NOSYMBOL; // Just text
+	//symbol = PEGAT_ANGLED_TEXT_C;
+	//int nAngle = 900;
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphTextX);
 	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
 	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	//PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONHOTSPOT, annotationIdx, &nAngle); // <--- Sets rotation
 	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
 	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	//// --- Draw Distance Text (To the side) - VERTICAL ---
+	//annotationIdx++;
+
+	//// Text Position: Vertical center of the line, slightly right of the ruler
+	//double textY = (bottomY + topY) / 2.0;
+	//CString distText;
+	//distText.Format(_T("%.2f um"), distance);
+	//TCHAR* distValue = _tcsdup(distText);
+
+	//// Use PEGAT_ANGLED_TEXT_C for centered vertical text (90 degrees)
+	//symbol = PEGAT_ANGLED_TEXT_C;
+
+	//PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphTextX);
+	//PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	//PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	//PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	//PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+
+	//// Set the angle to 90 degrees for vertical text
+	//annotationIdx++;
+	//double angle = 90.0;  // 90 degrees for vertical text
+	//symbol = PEGAT_ANGLED_TEXT;
+	//PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &angle);
+	//PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+
+	//// --- Draw Distance Text (To the side) - VERTICAL ---
+	//annotationIdx++;
+
+	//double textY = (bottomY + topY) / 2.0;
+	//CString distText;
+	//distText.Format(_T("%.2f um"), distance);
+	//TCHAR* distValue = _tcsdup(distText);
+
+	//// Use PEGAT_AXIS_ANGLES to set rotation angle
+	//int angle = 900;  // 90 for vertical (bottom-to-top), 270 for (top-to-bottom)
+	//// Next annotation contains the actual text at the position
+	//annotationIdx++;
+	//symbol = PEGAT_ANGLED_TEXT_C;  // Centered angled text
+
+	//PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &graphTextX);
+	//PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
+	//PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
+	//PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
+	//PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
+	//PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONHOTSPOT, annotationIdx, &angle);
 
 	// Styling
 
