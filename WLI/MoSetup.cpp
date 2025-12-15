@@ -15,6 +15,10 @@
 #include "AutoFocus.h"
 #include "fstream"
 
+#include "WLIView.h" 
+#include "MainFrm.h"   // To recognize CMainFrame
+
+
 using namespace MOT;
 
 IMPLEMENT_DYNAMIC(CMoSetup, CDialogEx)
@@ -67,6 +71,30 @@ void CMoSetup::UpdatePositions() {
 
 	str.Format(_T("P: %.3f um"), MO->Piezo.GetPos_um());
 	GetDlgItem(IDC_EDIT18)->SetWindowTextW(str);
+
+
+	CWnd* pMainWnd = AfxGetMainWnd();
+	// Cast it to your MainFrame class
+	CMainFrame* pMainFrame = dynamic_cast<CMainFrame*>(pMainWnd);
+	if (pMainFrame != nullptr)
+	{
+		// Ask the Main Frame for the currently active View
+		CView* pView = pMainFrame->GetActiveView();
+		// Verify this is actually your WLIView before sending
+		if (pView && pView->IsKindOf(RUNTIME_CLASS(CWLIView)))
+		{
+			// SUCCESS: We found the view
+			pView->PostMessage(UM_UPDATE_XYZ_VALUE, (WPARAM)1, (LPARAM)0);
+		}
+		else
+		{
+			// Fallback: If for some reason the view isn't active, 
+			// you might want to try sending it to the MainFrame itself
+			// pMainFrame->PostMessage(UM_UPDATE_XYZ_VALUE, (WPARAM)1, (LPARAM)0);
+			TRACE("Could not find CWLIView!\n");
+		}
+	}
+
 }
 
 void CMoSetup::TiltX(float tlt, DWORD tout, bool bCheck) {

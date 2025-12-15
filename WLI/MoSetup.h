@@ -7,6 +7,8 @@
 #include "Spot.h"
 #include "AutoFocus.h"
 
+#include "wdefine.h"
+
 #define M_PI 3.14159
 
 struct RES {

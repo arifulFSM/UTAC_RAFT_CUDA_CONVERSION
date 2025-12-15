@@ -111,7 +111,7 @@ protected:
 	afx_msg LRESULT OnUmHeightCalc(WPARAM wParam, LPARAM lParam); // 05302023 - Mortuja
 	afx_msg LRESULT OnRoughnessDlg(WPARAM wParam, LPARAM lParam);
 
-
+public: 
 	CRecipeRAFT* pRcp;
 
 public:
@@ -156,6 +156,11 @@ protected :
 	LRESULT OnAddalgnpoint(WPARAM wP, LPARAM lP);
 	LRESULT OnDeletepoint(WPARAM wP, LPARAM lP);
 	LRESULT OnEditpoint(WPARAM wP, LPARAM lP);
+	LRESULT UpdatePoint(WPARAM wP, LPARAM lP);
+
+	MOT::CMotorCtrl* MO = nullptr; // pointer only
+	void UpdateXYZPositions();
+	afx_msg LRESULT CallForXYZUpdate(WPARAM wParam, LPARAM lParam);
 	//LRESULT UpdatePoint(CCoor* p);
 	//20250112 - Mahmudul Haque ----------------
 public:

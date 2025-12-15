@@ -55,11 +55,13 @@ BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_COMMAND(ID_RECIPE_CREATERECIPE, &CWLIView::OnRecipeCreaterecipe)
 	ON_MESSAGE(UM_RESULT_DLG, &CWLIView::OnUmResultDlg)
 	ON_MESSAGE(UM_ANALYSIS_DLG, &CWLIView::OnUmAnalysisDlg)
+	ON_MESSAGE(UM_UPDATE_XYZ_VALUE, &CWLIView::CallForXYZUpdate)
 
 	ON_MESSAGE(IDC_ADDPOINT, OnAddPoint)
 	ON_MESSAGE(IDC_ADDALGNPOINT, OnAddalgnpoint)
 	ON_MESSAGE(IDC_DELETEPOINT, OnDeletepoint)
 	ON_MESSAGE(IDC_EDITPOINT, OnEditpoint)
+	ON_MESSAGE(ID_UPDATEPOINT, UpdatePoint)
 END_MESSAGE_MAP()
 
 CWLIView::CWLIView() noexcept
@@ -179,7 +181,7 @@ void CWLIView::OnInitialUpdate() {
 	AddResizedControl(IDC_FSM_LOGO, TOP_LEFT, TOP_LEFT);
 	AddResizedControl(IDC_SIGNAL_TOWER, TOP_RIGHT, TOP_RIGHT);
 	AddResizedControl(IDC_BUTTON_LOGIN, TOP_RIGHT, TOP_RIGHT);
-	AddResizedControl(IDC_WAFERMAP, CSize(0, 95), CSize(0, 95));
+	AddResizedControl(IDC_WAFERMAP, CSize(0, 100), CSize(0, 100));
 	//20250112 - Mahmudul Haque -------end--------
 
 	camRun();//20251205
@@ -191,6 +193,9 @@ void CWLIView::OnInitialUpdate() {
 	SetTimer(1, 1000, NULL);
 
 	m_notificationPanel.SetBkColor(RGB(240, 240, 240));
+
+	MO = Dev.MC.get(); //for showing motor xyz position
+	UpdateXYZPositions();
 	//20250112 ------------end ------------------
 
 	AnchorControls();
@@ -549,10 +554,41 @@ LRESULT CWLIView::OnEditpoint(WPARAM wP, LPARAM lP) {
 }
 
 
-
-//LRESULT CWLIView::UpdatePoint(CCoor* p) {
+LRESULT CWLIView::UpdatePoint(WPARAM wP, LPARAM lP) {
 //	if (UpdatePointB(p)) {
-//		pRcp->UpdateControl(rcpDlg->m_cPoint);
-//		m_cWaferMap.Redraw();
+	rcpDlg->Renumber();
+	return 0;
 //	}
-//}
+}
+
+void CWLIView::UpdateXYZPositions() {
+	CString str;
+	MOT::SMotPar* M = &MO->tilt.Mpar[0];
+
+	str.Format(_T("%.3f mm"), M[int(MOT::MAXIS::Y)].now);
+	//GetDlgItem(IDC_CAMERA_Y_VALUE)->SetWindowText(str);
+	//SetDlgItemText(IDC_CAMERA_Y_VALUE, str);
+	m_cameraYValue.SetTextCustom(str);
+
+	str.Format(_T("%.3f mm"), M[int(MOT::MAXIS::X)].now);
+	//GetDlgItem(IDC_CAMERA_X_VALUE)->SetWindowText(str);
+	//SetDlgItemText(IDC_CAMERA_X_VALUE, str);
+	m_cameraXValue.SetTextCustom(str);
+
+	
+	str.Format(_T("%.3f mm"), M[int(MOT::MAXIS::Z)].now);
+	//GetDlgItem(IDC_CAMERA_Z_VALUE)->SetWindowText(str);
+	//SetDlgItemText(IDC_CAMERA_Z_VALUE, str);
+	m_cameraZValue.SetTextCustom(str);
+}
+
+
+
+afx_msg LRESULT CWLIView::CallForXYZUpdate(WPARAM wParam, LPARAM lParam) {
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+
+	//AfxMessageBox(_T("call ashche"));
+	UpdateXYZPositions();
+	return 0;
+}

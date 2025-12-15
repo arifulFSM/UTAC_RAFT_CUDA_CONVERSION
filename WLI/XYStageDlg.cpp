@@ -10,6 +10,10 @@
 #include "afxdialogex.h"
 #include "XYStageDlg.h"
 
+#include "WLIView.h" 
+#include "MainFrm.h"   // To recognize CMainFrame
+
+
 // CXYStageDlg dialog
 
 IMPLEMENT_DYNAMIC(CXYStageDlg, CDialogEx)
@@ -51,6 +55,8 @@ BEGIN_MESSAGE_MAP(CXYStageDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON81, &CXYStageDlg::OnBnClickedButton81)
 END_MESSAGE_MAP()
 
+
+
 void CXYStageDlg::UpdatePositions() {
 	CString str;
 	MOT::SMotPar* M = &MO->tilt.Mpar[0];
@@ -58,6 +64,48 @@ void CXYStageDlg::UpdatePositions() {
 	GetDlgItem(IDC_EDIT1)->SetWindowTextW(str);
 	str.Format(_T("Y:%.3f mm"), M[int(MOT::MAXIS::Y)].now);
 	GetDlgItem(IDC_EDIT9)->SetWindowTextW(str);
+
+	//::PostMessageW(hWndParent, UM_UPDATE_XYZ_VALUE, 0, 0);
+	//AfxMessageBox(_T("call ashche bahire"));
+	//CWnd* pTargetDlg = GetDlgItem(IDD_WLI_FORM);
+	//if (pTargetDlg != nullptr && pTargetDlg->GetSafeHwnd() != nullptr)
+	//{
+	//	AfxMessageBox(_T("call ashche vitore"));
+	//pTargetDlg->PostMessage(UM_UPDATE_XYZ_VALUE, 0, 0);
+	//}
+
+
+
+	CWnd* pMainWnd = AfxGetMainWnd();
+
+	// Cast it to your MainFrame class
+	CMainFrame* pMainFrame = dynamic_cast<CMainFrame*>(pMainWnd);
+
+	if (pMainFrame != nullptr)
+	{
+		// Ask the Main Frame for the currently active View
+		CView* pView = pMainFrame->GetActiveView();
+		TRACE("Parent Class: %s\n", pView->GetRuntimeClass()->m_lpszClassName);//tabctrl
+
+		// Verify this is actually your WLIView before sending
+		if (pView && pView->IsKindOf(RUNTIME_CLASS(CWLIView)))
+		{
+			// SUCCESS: We found the view
+			pView->PostMessage(UM_UPDATE_XYZ_VALUE, (WPARAM)1, (LPARAM)0);
+		}
+		else
+		{
+			// Fallback: If for some reason the view isn't active, 
+			// you might want to try sending it to the MainFrame itself
+			// pMainFrame->PostMessage(UM_UPDATE_XYZ_VALUE, (WPARAM)1, (LPARAM)0);
+			TRACE("Could not find CWLIView!\n");
+		}
+	}
+
+
+	//pParent->PostMessage(UM_UPDATE_XYZ_VALUE, (WPARAM)1, (LPARAM)0);
+
+
 }
 
 void CXYStageDlg::MoveR(MOT::MAXIS nAx, float inc, DWORD tout, bool bCheck) {

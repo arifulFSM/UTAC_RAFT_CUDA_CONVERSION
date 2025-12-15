@@ -2,6 +2,7 @@
 
 #include "Dev.h"
 #include "afxdialogex.h"
+#include "wdefine.h"
 
 class CXYStageDlg : public CDialogEx {
 	DECLARE_DYNAMIC(CXYStageDlg)
@@ -50,4 +51,8 @@ public:
 	afx_msg void OnBnClickedButton24();
 	afx_msg void OnBnClickedButton80();
 	afx_msg void OnBnClickedButton81();
+
+
+
+	HWND hWndParent = 0;
 };

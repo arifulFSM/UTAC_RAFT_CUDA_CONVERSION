@@ -16,6 +16,8 @@ public:
     void SetTextColor(COLORREF color);
     void SetBkColor(COLORREF color);
     void SetTransparent(bool bTransparent);
+    void SetTextCustom(CString strText);
+
 
 protected:
     // Attributes

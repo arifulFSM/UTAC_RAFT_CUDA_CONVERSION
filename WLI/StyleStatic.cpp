@@ -104,3 +104,27 @@ HBRUSH CStyleStatic::CtlColor(CDC* pDC, UINT nCtlColor)
         return (HBRUSH)m_bkBrush.GetSafeHandle();
     }
 }
+
+
+
+void CStyleStatic::SetTextCustom(CString strText)
+{
+    if (m_bTransparent)
+    {
+        // 1. Hide the window. This forces the Parent to draw the camera feed 
+        // over the spot where the text used to be.
+        ShowWindow(SW_HIDE);
+
+        // 2. Update the text while hidden.
+        SetWindowText(strText);
+
+        // 3. Show the window again. This paints only the new letters 
+        // on top of the fresh background.
+        ShowWindow(SW_SHOWNA); // SW_SHOWNA = Show No Activate
+    }
+    else
+    {
+        SetWindowText(strText);
+    }
+
+}

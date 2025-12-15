@@ -1551,7 +1551,7 @@ void CWaferMap::RelocateToTop(CPoint& point) {
 }
 
 void CWaferMap::UpdatePoint(CPoint& point) {
-	/* HAQUE/ADDED/WAFER MAP
+	// HAQUE/ADDED/WAFER MAP
 	CCoor& pt = Dev2Log(point);
 	if (pRcp) {
 		float Distance;
@@ -1559,20 +1559,22 @@ void CWaferMap::UpdatePoint(CPoint& point) {
 
 		CMPoint* mp = pPat->FindNearestMP(pt, Distance);
 		if (mp && (Distance < 5.0f)) {
-			C413Global* g = &p413App->Global;
-			mp->Co.x = g->LocXY.X;
-			mp->Co.y = g->LocXY.Y;
+			MOT::CMotorCtrl* MO = nullptr; // pointer only
+			CString str;
+			MOT::SMotPar* M = &MO->tilt.Mpar[0];
+			mp->Co.x = M[int(MOT::MAXIS::Y)].now;
+			mp->Co.y = M[int(MOT::MAXIS::X)].now;
 			Redraw();
 		}
 	}
 	if (pParent) {
 		pParent->PostMessage(ID_UPDATEPOINT, 0, (LPARAM)&pt);
 	}
-	*/
+	
 }
 
 void CWaferMap::OnLButtonDblClk(UINT nFlags, CPoint point) {
-	/* HAQUE/ADDED/WAFER MAP
+	// HAQUE/ADDED/WAFER MAP
 	if (dmMode != 0) {
 		CCoor& pt = Dev2Log(point);
 		if (pRcp) {
@@ -1591,7 +1593,7 @@ void CWaferMap::OnLButtonDblClk(UINT nFlags, CPoint point) {
 			pParent->PostMessage(ID_UPDATEPOINT, 0, (LPARAM)&pt);
 		}
 	}
-	*/
+	
 }
 
 void CWaferMap::OnLButtonDown(UINT nFlags, CPoint point) {
