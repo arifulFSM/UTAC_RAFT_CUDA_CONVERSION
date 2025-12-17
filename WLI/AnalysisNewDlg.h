@@ -182,7 +182,7 @@ public:
 	void readDataFromFile(CString fileName);//20251127
 	MeasurementDlg measurementDlgPtr;
 
-	//20251124 / Fahim / -----------------
+	//20251124 -----------------
 	// State variables
 	// Real-time mouse tracking state
 	BOOL m_bIsSelectingLine;     // TRUE when waiting for second click
