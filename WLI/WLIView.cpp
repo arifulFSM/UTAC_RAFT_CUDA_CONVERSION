@@ -54,7 +54,6 @@ BEGIN_MESSAGE_MAP(CWLIView, CResizableFormView)
 	ON_MESSAGE(UM_RESULT_DLG, &CWLIView::OnUmResultDlg)
 	ON_MESSAGE(UM_ANALYSIS_DLG, &CWLIView::OnUmAnalysisDlg)
 	ON_BN_CLICKED(IDC_BUTTON_LOAD_DATA, &CWLIView::OnBnClickedButtonLoadData)
-	ON_MESSAGE(UM_MOUSE_MOVE, OnMoMove) // 20251217 - Fahim
 END_MESSAGE_MAP()
 
 CWLIView::CWLIView() noexcept
@@ -88,7 +87,6 @@ void CWLIView::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_CAMERA_Z_VALUE, m_cameraZValue);
 	DDX_Control(pDX, IDC_WAFERMAP, m_cWaferMap);
 	DDX_Control(pDX, IDC_CAMERA, m_cLiveVid);
-	DDX_Control(pDX, IDC_MOUSEMESSAGE2, m_cMouseMessage);
 }
 
 CWLIView* CWLIView::GetView() {
@@ -527,11 +525,4 @@ void CWLIView::OnBnClickedButtonLoadData()
 {
 	analysisNewDlg->loadData();
 
-}
-
-
-// 20251217 - Fahim
-long CWLIView::OnMoMove(WPARAM wP, LPARAM lP) {
-	m_cMouseMessage.SetWindowText(MoMove(wP, lP));
-	return 0;
 }
