@@ -148,6 +148,12 @@ public:
 	CStatic m_cLiveVid;
 	void camRun();
 	afx_msg void OnBnClickedButtonLoadData();
+
+	// 20251217 / Fahim
+	long OnMoMove(WPARAM wP, LPARAM lP);
+	CStatic	m_cMouseMessage;
+	CString MoMove(WPARAM wP, LPARAM lP);
+	// 20251217 --------------
 };
 
 #ifndef _DEBUG  // debug version in WLIView.cpp

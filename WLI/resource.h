@@ -529,6 +529,7 @@
 #define IDC_CAMERA_Y_VALUE              1285
 #define IDC_CAMERA_Z_VALUE              1286
 #define IDC_LINEPROFILE_VIEW_PANEL      1287
+#define IDC_MOUSEMESSAGE2               1288
 #define ID_WLI_MOTIONCONTROLLER         32771
 #define ID_WLI_CAMERA                   32772
 #define ID_WLI_ACQUIRE                  32773
@@ -603,7 +604,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        445
 #define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1288
+#define _APS_NEXT_CONTROL_VALUE         1289
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
