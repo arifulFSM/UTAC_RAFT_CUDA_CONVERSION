@@ -221,4 +221,14 @@ public:
 	BOOL IsLineHorizontal(double angle);
 	void DisplayWidthBetweenLines();    // For HORIZONTAL lines 
 	double GetPixelAngle(double x1, double y1, double x2, double y2);
+	// 20251218 / Fahim / Circle Profiling
+	BOOL m_bIsSelectingCircle;
+	POINT m_ptCircleCenter;       // Center in Screen Pixels
+	int   m_iCircleRadius;        // Radius in Screen Pixels
+
+	// Helper Functions
+	// Draw using Pixel inputs
+	void DrawPreviewCircleOn2D(POINT centerPx, int radiusPx);
+	// Profile using Pixel inputs
+	void CircleProfile(POINT centerPx, int radiusPx);
 };

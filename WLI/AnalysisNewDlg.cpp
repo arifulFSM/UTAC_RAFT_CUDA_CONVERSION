@@ -73,6 +73,9 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	m_xStep = 1;
 	m_yStep = 1;
 
+	m_bIsSelectingCircle = FALSE;
+	m_ptCircleCenter = { 0, 0 };
+	m_iCircleRadius = 0;
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
 	CString inifile = CString(DosUtil.GetLocalCfgFile().c_str());
@@ -273,6 +276,12 @@ BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 	// 4. Update the tracking variable
 	m_nSelectedToolID = nID;
 
+	// RESET STATES
+	m_bIsSelectingLine = FALSE;
+	m_lineDrawingState = 0;
+
+	// 20251218 / Reset Circle State
+	m_bIsSelectingCircle = FALSE;
 
 
 	// 5. Handle Tool Logic
@@ -467,181 +476,262 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 		if (curRow < 0) curRow = 0;
 		if (curRow >= maxRow) curRow = maxRow - 1;
 
+
 		// Get the event type
 		WORD wNotifyCode = HIWORD(wParam);
 
-		// --- HANDLE MOUSE MOVE EVENTS ---
-		if (wNotifyCode == PEWN_MOUSEMOVE ||
-			wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT) {
+		// --- GET RAW PIXEL COORDINATES ---
+		POINT ptCurrent;
+		PEvget(m_hPE2, PEP_ptLASTMOUSEMOVE, &ptCurrent);
 
-			// Display Tooltip (Always show coordinates)
-			TCHAR buffer[128];
-			if (isMM) {
-				_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f mm"),
-					dX, dY, dZ / 1000.0);
+		// --- CIRCLE TOOL LOGIC ---
+		if (m_nSelectedToolID == IDC_BUTTON_CIRCLE)
+		{
+			// MOUSE MOVE: Update Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Optional: Tooltip still uses Graph Units for user info
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("X=%.0f, Y=%.0f, Z=%.4f"), dX, dY, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// DRAWING LOGIC (PIXEL MATH)
+				if (m_bIsSelectingCircle)
+				{
+					// Calculate visual radius using Pythagoras on Pixels
+					double dx = (double)(ptCurrent.x - m_ptCircleCenter.x);
+					double dy = (double)(ptCurrent.y - m_ptCircleCenter.y);
+					int currentRadius = (int)sqrt(dx * dx + dy * dy);
+
+					DrawPreviewCircleOn2D(m_ptCircleCenter, currentRadius);
+				}
+				return TRUE;
 			}
-			else {
-				_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f um"),
-					dX, dY, dZ);
+
+			// LEFT CLICK UP
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				if (!m_bIsSelectingCircle)
+				{
+					// --- 1st Click: CENTER (Save as Pixel) ---
+					m_bIsSelectingCircle = TRUE;
+					m_ptCircleCenter = ptCurrent;
+
+					// Disable Zooming so dragging works
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
+
+					// Draw initial dot
+					DrawPreviewCircleOn2D(m_ptCircleCenter, 0);
+				}
+				else
+				{
+					// --- 2nd Click: RADIUS (Save as Pixel) ---
+					double dx = (double)(ptCurrent.x - m_ptCircleCenter.x);
+					double dy = (double)(ptCurrent.y - m_ptCircleCenter.y);
+					m_iCircleRadius = (int)sqrt(dx * dx + dy * dy);
+
+					m_bIsSelectingCircle = FALSE;
+
+					// Enable Zooming back
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					// Final Draw
+					DrawPreviewCircleOn2D(m_ptCircleCenter, m_iCircleRadius);
+
+					CString msg;
+					float ffx = m_ptCircleCenter.x;
+					float ffy = m_ptCircleCenter.y;
+					msg.Format(_T("Circle center: (%.f, %.f)\r\nRadius: %d"), ffx, ffy, m_iCircleRadius);
+					AfxMessageBox(msg);
+
+					// Generate Profile
+					CircleProfile(m_ptCircleCenter, m_iCircleRadius);
+				}
+				return TRUE;
 			}
-			PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+		}
 
-			if (m_bIsSelectingLine) {
-				// Throttle updates to every 30ms (33 FPS)
-				static DWORD lastUpdateTime = 0;
-				DWORD currentTime = GetTickCount();
+		// 20251218  / Fahim
+		if (m_nSelectedToolID == IDC_BUTTON_2_POINTS)
+		{
+			// --- HANDLE MOUSE MOVE EVENTS ---
+			if (wNotifyCode == PEWN_MOUSEMOVE ||
+				wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT) {
 
-				// 20251208 ------
-				// if new line selected previous line profile annotations are cleared
-				ClearLineAnnotations();
-				// 20251208 ------
+				// Display Tooltip (Always show coordinates)
+				TCHAR buffer[128];
+				if (isMM) {
+					_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f mm"),
+						dX, dY, dZ / 1000.0);
+				}
+				else {
+					_stprintf_s(buffer, TEXT("X=%.0f um, Y=%.0f um, Z=%.4f um"),
+						dX, dY, dZ);
+				}
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
 
-				if (currentTime - lastUpdateTime > 100) {
-					lastUpdateTime = currentTime;
+				if (m_bIsSelectingLine) {
+					// Throttle updates to every 30ms (33 FPS)
+					static DWORD lastUpdateTime = 0;
+					DWORD currentTime = GetTickCount();
 
-					// Clamp coordinates
-					if (curCol < 0) curCol = 0;
-					if (curCol >= maxCol) curCol = maxCol - 1;
-					if (curRow < 0) curRow = 0;
-					if (curRow >= maxRow) curRow = maxRow - 1;
+					// 20251208 ------
+					// if new line selected previous line profile annotations are cleared
+					ClearLineAnnotations();
+					// 20251208 ------
 
+					if (currentTime - lastUpdateTime > 100) {
+						lastUpdateTime = currentTime;
+
+						// Clamp coordinates
+						if (curCol < 0) curCol = 0;
+						if (curCol >= maxCol) curCol = maxCol - 1;
+						if (curRow < 0) curRow = 0;
+						if (curRow >= maxRow) curRow = maxRow - 1;
+
+						m_previewX2 = curCol;
+						m_previewY2 = curRow;
+						PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+						DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+						UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+					}
+				}
+
+				return TRUE; // Event handled
+			}
+
+			// --- HANDLE LEFT BUTTON UP (CLICK EVENTS) ---
+			if (wNotifyCode == PEWN_LBUTTONUP) {
+
+				// 1. HANDLE SPECIAL MODES (Ctrl Pressed or Distance Marker)
+
+				// CASE A: Ctrl + Click (Check if point is on an existing line)
+				if (isCtrlPressed) {
+					m_lineProfileX1 = curCol; // Assuming curCol/curRow are the current mouse coords
+					m_lineProfileY1 = curRow;
+
+					pair<float, float> checkPoint = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+					BOOL flag = FALSE;
+					flag = isPointOnLine(checkPoint);
+
+					if (flag) {
+						Create2D();
+						lineProfile();
+					}
+
+					// Reset selection state if we were in the middle of one
+					m_bIsSelectingLine = FALSE;
+					//p1.reset();
+
+					return TRUE; // Exit early
+				}
+
+				// CASE B: Distance Marking Mode
+				else if (isDistMarked) {
+					m_lineProfileX1 = curCol;
+					m_lineProfileY1 = curRow;
+					pointDist.push_back({ (float)m_lineProfileX1, (float)m_lineProfileY1 });
+
+					Create2D();
+					return TRUE; // Exit early
+				}
+
+				// 2. STANDARD LINE PROFILING (First & Second Click)
+
+				// FIRST CLICK: Start line selection
+				else if (!m_bIsSelectingLine) {
+					m_bIsSelectingLine = TRUE;
+					isInsidePlot = TRUE;
+
+					// Store Start Point
+					m_previewX1 = curCol;
+					m_previewY1 = curRow;
 					m_previewX2 = curCol;
 					m_previewY2 = curRow;
+
+					// --- OLD CODE COMPATIBILITY: Capture initial data ---
+					m_lineProfileX1 = m_previewX1;
+					m_lineProfileY1 = m_previewY1;
+					p1 = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+					drawProfile = TRUE;
+
+					// Get Height 1 (dZ) safely
+					height1Val = (m_lineProfileY1 < maxRow && m_lineProfileX1 < maxCol) ?
+						filterData[m_lineProfileY1][m_lineProfileX1] : 0.0f;
+					// ----------------------------------------------------
+
+					// Disable zooming during selection
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
 					PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
 
+					// Draw initial point preview
+					DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+					UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+				}
+
+				// SECOND CLICK: Finalize line selection
+				else {
+					//ReleaseCapture();
+					m_bIsSelectingLine = FALSE;
+					isInsidePlot = FALSE;
+
+					// Re-enable zooming
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					// Save final coordinates
+					m_lineProfileX1 = m_previewX1; // Start
+					m_lineProfileY1 = m_previewY1;
+					m_lineProfileX2 = curCol;      // End
+					m_lineProfileY2 = curRow;
+
+					isDepth = TRUE;
+					depthLine = TRUE;
+					distLine = FALSE; // Reset distLine as per old code
+
+					if (twoPointHeight == TRUE) flagDepth = TRUE;
+					else flagDepth = FALSE;
+
+					p2 = { (float)m_lineProfileX2, (float)m_lineProfileY2 };
+
+					// Get Height 2 (dZ) safely
+					height2Val = (m_lineProfileY2 < maxRow && m_lineProfileX2 < maxCol) ?
+						filterData[m_lineProfileY2][m_lineProfileX2] : 0.0f;
+
+					// Push to history vectors
+					multiProfile.push_back({ { p1, p2 }, flagDepth });
+					heightTwoPt.push_back({ height1Val, height2Val });
+					profileCnt++;
+					// ----------------------------------
+
+
+					// 20251208 ------
+					// Redraw everything
+					//Create2D();
+
+					// Logic for Area vs Line profile
+					/*if (isArea) areaProfile();
+					else */
+					//lineProfile();
+
+					// AdditionalCalculations();
+
+					// 20251209 ------
 					DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 					UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 				}
+
+				return TRUE; // Event handled
 			}
 
-			return TRUE; // Event handled
+			// Allow other events to propagate
+			return CResizableDialog::OnCommand(wParam, lParam);
 		}
 
-		// --- HANDLE LEFT BUTTON UP (CLICK EVENTS) ---
-		if (wNotifyCode == PEWN_LBUTTONUP) {
-
-			// 1. HANDLE SPECIAL MODES (Ctrl Pressed or Distance Marker)
-
-			// CASE A: Ctrl + Click (Check if point is on an existing line)
-			if (isCtrlPressed) {
-				m_lineProfileX1 = curCol; // Assuming curCol/curRow are the current mouse coords
-				m_lineProfileY1 = curRow;
-
-				pair<float, float> checkPoint = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
-				BOOL flag = FALSE;
-				flag = isPointOnLine(checkPoint);
-
-				if (flag) {
-					Create2D();
-					lineProfile();
-				}
-
-				// Reset selection state if we were in the middle of one
-				m_bIsSelectingLine = FALSE;
-				//p1.reset();
-
-				return TRUE; // Exit early
-			}
-
-			// CASE B: Distance Marking Mode
-			else if (isDistMarked) {
-				m_lineProfileX1 = curCol;
-				m_lineProfileY1 = curRow;
-				pointDist.push_back({ (float)m_lineProfileX1, (float)m_lineProfileY1 });
-
-				Create2D();
-				return TRUE; // Exit early
-			}
-
-			// 2. STANDARD LINE PROFILING (First & Second Click)
-
-			// FIRST CLICK: Start line selection
-			else if (!m_bIsSelectingLine) {
-				m_bIsSelectingLine = TRUE;
-				isInsidePlot = TRUE;
-
-				// Store Start Point
-				m_previewX1 = curCol;
-				m_previewY1 = curRow;
-				m_previewX2 = curCol;
-				m_previewY2 = curRow;
-
-				// --- OLD CODE COMPATIBILITY: Capture initial data ---
-				m_lineProfileX1 = m_previewX1;
-				m_lineProfileY1 = m_previewY1;
-				p1 = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
-				drawProfile = TRUE;
-
-				// Get Height 1 (dZ) safely
-				height1Val = (m_lineProfileY1 < maxRow && m_lineProfileX1 < maxCol) ?
-					filterData[m_lineProfileY1][m_lineProfileX1] : 0.0f;
-				// ----------------------------------------------------
-
-				// Disable zooming during selection
-				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
-				PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
-
-				// Draw initial point preview
-				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
-				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
-			}
-
-			// SECOND CLICK: Finalize line selection
-			else {
-				//ReleaseCapture();
-				m_bIsSelectingLine = FALSE;
-				isInsidePlot = FALSE;
-
-				// Re-enable zooming
-				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
-
-				// Save final coordinates
-				m_lineProfileX1 = m_previewX1; // Start
-				m_lineProfileY1 = m_previewY1;
-				m_lineProfileX2 = curCol;      // End
-				m_lineProfileY2 = curRow;
-
-				isDepth = TRUE;
-				depthLine = TRUE;
-				distLine = FALSE; // Reset distLine as per old code
-
-				if (twoPointHeight == TRUE) flagDepth = TRUE;
-				else flagDepth = FALSE;
-
-				p2 = { (float)m_lineProfileX2, (float)m_lineProfileY2 };
-
-				// Get Height 2 (dZ) safely
-				height2Val = (m_lineProfileY2 < maxRow && m_lineProfileX2 < maxCol) ?
-					filterData[m_lineProfileY2][m_lineProfileX2] : 0.0f;
-
-				// Push to history vectors
-				multiProfile.push_back({ { p1, p2 }, flagDepth });
-				heightTwoPt.push_back({ height1Val, height2Val });
-				profileCnt++;
-				// ----------------------------------
-
-
-				// 20251208 ------
-				// Redraw everything
-				//Create2D();
-
-				// Logic for Area vs Line profile
-				/*if (isArea) areaProfile();
-				else */
-				//lineProfile();
-
-				// AdditionalCalculations();
-
-				// 20251209 ------
-				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
-				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
-			}
-
-			return TRUE; // Event handled
-		}
-
-		// Allow other events to propagate
-		return CResizableDialog::OnCommand(wParam, lParam);
 	}
 	// 20252411 ------------------------
 
@@ -3717,4 +3807,115 @@ void CAnalysisNewDlg::DisplayWidthBetweenLines()
 
 }
 
+void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
+{
+	const int CIRCLE_IDX_1 = 600;
+	const int CIRCLE_IDX_2 = 601;
 
+	// 1. Define Bounding Box in PIXELS (Perfect Square)
+	int pxLeft = centerPx.x - radiusPx;
+	int pxTop = centerPx.y - radiusPx;
+	int pxRight = centerPx.x + radiusPx;
+	int pxBottom = centerPx.y + radiusPx;
+
+	// 2. Convert Pixel Corners -> Graph Coordinates
+	double gX1 = 0, gY1 = 0;
+	double gX2 = 0, gY2 = 0;
+	int nAxis = 0;
+
+	// Convert Top-Left Pixel -> Graph (bViceVersa = TRUE)
+	PEconvpixeltograph(m_hPE2, &nAxis, &pxLeft, &pxTop, &gX1, &gY1, FALSE, FALSE, FALSE);
+
+	// Convert Bottom-Right Pixel -> Graph (bViceVersa = TRUE)
+	PEconvpixeltograph(m_hPE2, &nAxis, &pxRight, &pxBottom, &gX2, &gY2, FALSE, FALSE, FALSE);
+
+	// 3. Set Annotations
+	int symbol1 = PEGAT_ELLIPSE_THIN;
+	int symbol2 = PEGAT_BOTTOMRIGHT;
+	DWORD color = PERGB(255, 255, 0, 0); // Red
+
+	// Top-Left
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, CIRCLE_IDX_1, &gX1);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, CIRCLE_IDX_1, &gY1);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, CIRCLE_IDX_1, &symbol1);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, CIRCLE_IDX_1, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, CIRCLE_IDX_1, (void*)TEXT(""));
+
+	// Bottom-Right
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, CIRCLE_IDX_2, &gX2);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, CIRCLE_IDX_2, &gY2);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, CIRCLE_IDX_2, &symbol2);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, CIRCLE_IDX_2, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, CIRCLE_IDX_2, (void*)TEXT(""));
+
+	// 4. Force Redraw
+	// Note: If annotations are hidden, ensure PEP_bSHOWANNOTATIONS is TRUE
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
+{
+	if (filterData.empty()) return;
+
+	// Calculate circumference in pixels
+	double circumferencePx = 2.0 * 3.14159 * radiusPx;
+	int numPoints = static_cast<int>(circumferencePx);
+	// Minimum 360 points for a smooth chart
+	if (numPoints < 360) numPoints = 360;
+
+	std::vector<float> profileData;
+	profileData.reserve(numPoints);
+
+	int maxRows = static_cast<int>(filterData.size());
+	int maxCols = static_cast<int>(filterData[0].size());
+	const double PI = 3.14159265358979323846;
+
+	int nAxis = 0;
+
+	for (int i = 0; i < numPoints; i++)
+	{
+		// 1. Calculate Pixel Position on the visual circle
+		double theta = (double)i / (double)numPoints * 2.0 * PI;
+
+		// Calculate point in Screen Pixels
+		int pxX = centerPx.x + (int)(radiusPx * cos(theta));
+		int pxY = centerPx.y + (int)(radiusPx * sin(theta));
+
+		// 2. Convert Pixel -> Graph Coordinates
+		double graphX = 0, graphY = 0;
+		PEconvpixeltograph(m_hPE2, &nAxis, &pxX, &pxY, &graphX, &graphY, FALSE, FALSE, TRUE);
+
+		// 3. Convert Graph Units -> Data Array Indices
+		// Ensure steps are non-zero
+		if (m_xStep == 0) m_xStep = 1.0;
+		if (m_yStep == 0) m_yStep = 1.0;
+
+		int col = static_cast<int>(graphX / m_xStep);
+		int row = static_cast<int>(graphY / m_yStep);
+
+		float val = 0.0f;
+		// Bounds Check
+		if (row >= 0 && row < maxRows && col >= 0 && col < maxCols)
+		{
+			val = filterData[row][col];
+		}
+
+		profileData.push_back(val);
+	}
+
+	// 4. Draw Profile Chart
+	lineProfile(profileData);
+
+	// Update Chart Text
+	if (m_hPEl) {
+		TCHAR mainTitle[] = TEXT("Circle Profile");
+		PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+		// Force update of the profile window
+		PEreinitialize(m_hPEl);
+		PEresetimage(m_hPEl, 0, 0);
+		::InvalidateRect(m_hPEl, NULL, FALSE);
+		::UpdateWindow(m_hPEl);
+	}
+}
