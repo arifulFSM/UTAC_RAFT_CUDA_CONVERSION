@@ -221,4 +221,13 @@ public:
 	BOOL IsLineHorizontal(double angle);
 	void DisplayWidthBetweenLines();    // For HORIZONTAL lines 
 	double GetPixelAngle(double x1, double y1, double x2, double y2);
+
+	// 20251218 / Fahim / Circle drawing state 
+	BOOL m_bIsDrawingCircle;          // TRUE when circle tool is active
+	int m_circleState;                // 0=no circle, 1=center set, waiting for radius
+	int m_circleCenterX, m_circleCenterY;  // Center point (grid coordinates)
+	int m_circleRadiusX, m_circleRadiusY; // Radius endpoint (grid coordinates)
+	int m_circleRadius;               // Calculated radius in pixels
+	void DrawPreviewCircleOn2D(int centerX, int centerY, int radiusX, int radiusY);
+	void ExtractCircularProfile(int centerX, int centerY, int radius);
 };

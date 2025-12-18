@@ -57,6 +57,11 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	, m_line1X1(0), m_line1Y1(0), m_line1X2(0), m_line1Y2(0)
 	, m_line2X1(0), m_line2Y1(0), m_line2X2(0), m_line2Y2(0)
 	, m_currentLineStartX(0), m_currentLineStartY(0) // 20251202 -------
+	, m_bIsDrawingCircle(FALSE) // 20251218 
+	, m_circleState(0)
+	, m_circleCenterX(0), m_circleCenterY(0)
+	, m_circleRadiusX(0), m_circleRadiusY(0)
+	, m_circleRadius(0)
 {
 
 	nProfCnt = 0;
@@ -160,7 +165,7 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	m_profileToolCardPanel.SetTitle(_T("Profile Tool"));
 	m_lineRoughnessCardPanel.SetTitle(_T("Line Roughness Setting"));
 	
-	OnToolButtonClicked(IDC_BUTTON_2_POINTS);
+	//OnToolButtonClicked(IDC_BUTTON_2_POINTS);
 
 
 	m_toolButton2Points.SetIconByID(IDI_ICON30, 35);
@@ -273,17 +278,20 @@ BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 	// 4. Update the tracking variable
 	m_nSelectedToolID = nID;
 
-
+	// Reset all drawing states
+	m_bIsSelectingLine = FALSE;
+	m_bIsDrawingCircle = FALSE;
+	m_circleState = 0;
 
 	// 5. Handle Tool Logic
 	switch (nID)
 	{
 	case IDC_BUTTON_2_POINTS:
-		//AfxMessageBox(_T("button 1 clicked"));
+		AfxMessageBox(_T("button 1 clicked"));
 		break;
 
 	case IDC_BUTTON_HORIZONTAL:
-		//AfxMessageBox(_T("button 2 clicked"));
+		AfxMessageBox(_T("button 2 clicked"));
 		break;
 
 	case IDC_BUTTON_VERTICAL:
@@ -308,6 +316,8 @@ BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 
 	case IDC_BUTTON_CIRCLE:
 		//AfxMessageBox(_T("button 8 clicked"));
+		m_bIsDrawingCircle = TRUE;
+		m_circleState = 0;
 		break;
 
 	default:
@@ -486,33 +496,55 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 			}
 			PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
 
-			if (m_bIsSelectingLine) {
-				// Throttle updates to every 30ms (33 FPS)
+			//if (m_bIsSelectingLine) {
+			//	// Throttle updates to every 30ms (33 FPS)
+			//	static DWORD lastUpdateTime = 0;
+			//	DWORD currentTime = GetTickCount();
+
+			//	// 20251208 ------
+			//	// if new line selected previous line profile annotations are cleared
+			//	ClearLineAnnotations();
+			//	// 20251208 ------
+
+			//	if (currentTime - lastUpdateTime > 100) {
+			//		lastUpdateTime = currentTime;
+
+			//		// Clamp coordinates
+			//		if (curCol < 0) curCol = 0;
+			//		if (curCol >= maxCol) curCol = maxCol - 1;
+			//		if (curRow < 0) curRow = 0;
+			//		if (curRow >= maxRow) curRow = maxRow - 1;
+
+			//		m_previewX2 = curCol;
+			//		m_previewY2 = curRow;
+			//		PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+			//		DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+			//		UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+			//	}
+			//}
+
+			// 20251218 / Fahim / CIRCLE PREVIEW / -------
+			if (m_bIsDrawingCircle && m_circleState == 1)
+			{
+				// Throttle updates
 				static DWORD lastUpdateTime = 0;
 				DWORD currentTime = GetTickCount();
 
-				// 20251208 ------
-				// if new line selected previous line profile annotations are cleared
-				ClearLineAnnotations();
-				// 20251208 ------
-
-				if (currentTime - lastUpdateTime > 100) {
+				if (currentTime - lastUpdateTime > 100)
+				{
 					lastUpdateTime = currentTime;
 
-					// Clamp coordinates
-					if (curCol < 0) curCol = 0;
-					if (curCol >= maxCol) curCol = maxCol - 1;
-					if (curRow < 0) curRow = 0;
-					if (curRow >= maxRow) curRow = maxRow - 1;
+					m_circleRadiusX = curCol;
+					m_circleRadiusY = curRow;
+					m_circleRadius = euclideanDist(m_circleCenterX, m_circleCenterY,
+						m_circleRadiusX, m_circleRadiusY);
 
-					m_previewX2 = curCol;
-					m_previewY2 = curRow;
-					PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
-
-					DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
-					UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+					DrawPreviewCircleOn2D(m_circleCenterX, m_circleCenterY,
+						m_circleRadiusX, m_circleRadiusY);
 				}
 			}
+			// 20251218 / Fahim / CIRCLE PREVIEW / -------
 
 			return TRUE; // Event handled
 		}
@@ -520,123 +552,159 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 		// --- HANDLE LEFT BUTTON UP (CLICK EVENTS) ---
 		if (wNotifyCode == PEWN_LBUTTONUP) {
 
-			// 1. HANDLE SPECIAL MODES (Ctrl Pressed or Distance Marker)
+			// 20251218 / Fahim / CIRCLE DRAWING / -------
+			if (m_bIsDrawingCircle)
+			{
+				if (m_circleState == 0)
+				{
+					// FIRST CLICK: Set center
+					m_circleCenterX = curCol;
+					m_circleCenterY = curRow;
+					m_circleState = 1;
 
-			// CASE A: Ctrl + Click (Check if point is on an existing line)
-			if (isCtrlPressed) {
-				m_lineProfileX1 = curCol; // Assuming curCol/curRow are the current mouse coords
-				m_lineProfileY1 = curRow;
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
 
-				pair<float, float> checkPoint = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
-				BOOL flag = FALSE;
-				flag = isPointOnLine(checkPoint);
-
-				if (flag) {
-					Create2D();
-					lineProfile();
+					return TRUE;
 				}
+				else if (m_circleState == 1)
+				{
+					// SECOND CLICK: Set radius and extract profile
+					m_circleRadiusX = curCol;
+					m_circleRadiusY = curRow;
+					m_circleRadius = euclideanDist(m_circleCenterX, m_circleCenterY,
+						m_circleRadiusX, m_circleRadiusY);
 
-				// Reset selection state if we were in the middle of one
-				m_bIsSelectingLine = FALSE;
-				//p1.reset();
+					// Draw final circle on 2D plot
+					DrawPreviewCircleOn2D(m_circleCenterX, m_circleCenterY,
+						m_circleRadiusX, m_circleRadiusY);
 
-				return TRUE; // Exit early
+					// Extract circular profile
+					ExtractCircularProfile(m_circleCenterX, m_circleCenterY, m_circleRadius);
+
+					// Reset state
+					m_circleState = 0;
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					return TRUE;
+				}
 			}
+			// 20251218 / Fahim / CIRCLE DRAWING / -------
 
-			// CASE B: Distance Marking Mode
-			else if (isDistMarked) {
-				m_lineProfileX1 = curCol;
-				m_lineProfileY1 = curRow;
-				pointDist.push_back({ (float)m_lineProfileX1, (float)m_lineProfileY1 });
+		//	// CASE A: Ctrl + Click (Check if point is on an existing line)
+		//	if (isCtrlPressed) {
+		//		m_lineProfileX1 = curCol; // Assuming curCol/curRow are the current mouse coords
+		//		m_lineProfileY1 = curRow;
 
-				Create2D();
-				return TRUE; // Exit early
-			}
+		//		pair<float, float> checkPoint = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+		//		BOOL flag = FALSE;
+		//		flag = isPointOnLine(checkPoint);
 
-			// 2. STANDARD LINE PROFILING (First & Second Click)
+		//		if (flag) {
+		//			Create2D();
+		//			lineProfile();
+		//		}
 
-			// FIRST CLICK: Start line selection
-			else if (!m_bIsSelectingLine) {
-				m_bIsSelectingLine = TRUE;
-				isInsidePlot = TRUE;
+		//		// Reset selection state if we were in the middle of one
+		//		m_bIsSelectingLine = FALSE;
+		//		//p1.reset();
 
-				// Store Start Point
-				m_previewX1 = curCol;
-				m_previewY1 = curRow;
-				m_previewX2 = curCol;
-				m_previewY2 = curRow;
+		//		return TRUE; // Exit early
+		//	}
 
-				// --- OLD CODE COMPATIBILITY: Capture initial data ---
-				m_lineProfileX1 = m_previewX1;
-				m_lineProfileY1 = m_previewY1;
-				p1 = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
-				drawProfile = TRUE;
+		//	// CASE B: Distance Marking Mode
+		//	else if (isDistMarked) {
+		//		m_lineProfileX1 = curCol;
+		//		m_lineProfileY1 = curRow;
+		//		pointDist.push_back({ (float)m_lineProfileX1, (float)m_lineProfileY1 });
 
-				// Get Height 1 (dZ) safely
-				height1Val = (m_lineProfileY1 < maxRow && m_lineProfileX1 < maxCol) ?
-					filterData[m_lineProfileY1][m_lineProfileX1] : 0.0f;
-				// ----------------------------------------------------
+		//		Create2D();
+		//		return TRUE; // Exit early
+		//	}
 
-				// Disable zooming during selection
-				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
-				PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+		//	// 2. STANDARD LINE PROFILING (First & Second Click)
 
-				// Draw initial point preview
-				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
-				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
-			}
+		//	// FIRST CLICK: Start line selection
+		//	else if (m_bIsSelectingLine) {
+		//		m_bIsSelectingLine = TRUE;
+		//		isInsidePlot = TRUE;
 
-			// SECOND CLICK: Finalize line selection
-			else {
-				//ReleaseCapture();
-				m_bIsSelectingLine = FALSE;
-				isInsidePlot = FALSE;
+		//		// Store Start Point
+		//		m_previewX1 = curCol;
+		//		m_previewY1 = curRow;
+		//		m_previewX2 = curCol;
+		//		m_previewY2 = curRow;
 
-				// Re-enable zooming
-				PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+		//		// --- OLD CODE COMPATIBILITY: Capture initial data ---
+		//		m_lineProfileX1 = m_previewX1;
+		//		m_lineProfileY1 = m_previewY1;
+		//		p1 = { (float)m_lineProfileX1, (float)m_lineProfileY1 };
+		//		drawProfile = TRUE;
 
-				// Save final coordinates
-				m_lineProfileX1 = m_previewX1; // Start
-				m_lineProfileY1 = m_previewY1;
-				m_lineProfileX2 = curCol;      // End
-				m_lineProfileY2 = curRow;
+		//		// Get Height 1 (dZ) safely
+		//		height1Val = (m_lineProfileY1 < maxRow && m_lineProfileX1 < maxCol) ?
+		//			filterData[m_lineProfileY1][m_lineProfileX1] : 0.0f;
+		//		// ----------------------------------------------------
 
-				isDepth = TRUE;
-				depthLine = TRUE;
-				distLine = FALSE; // Reset distLine as per old code
+		//		// Disable zooming during selection
+		//		PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
+		//		PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
 
-				if (twoPointHeight == TRUE) flagDepth = TRUE;
-				else flagDepth = FALSE;
+		//		// Draw initial point preview
+		//		DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+		//		UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX1, m_previewY1);
+		//	}
 
-				p2 = { (float)m_lineProfileX2, (float)m_lineProfileY2 };
+		//	// SECOND CLICK: Finalize line selection
+		//	else {
+		//		//ReleaseCapture();
+		//		m_bIsSelectingLine = FALSE;
+		//		isInsidePlot = FALSE;
 
-				// Get Height 2 (dZ) safely
-				height2Val = (m_lineProfileY2 < maxRow && m_lineProfileX2 < maxCol) ?
-					filterData[m_lineProfileY2][m_lineProfileX2] : 0.0f;
+		//		// Re-enable zooming
+		//		PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
 
-				// Push to history vectors
-				multiProfile.push_back({ { p1, p2 }, flagDepth });
-				heightTwoPt.push_back({ height1Val, height2Val });
-				profileCnt++;
-				// ----------------------------------
+		//		// Save final coordinates
+		//		m_lineProfileX1 = m_previewX1; // Start
+		//		m_lineProfileY1 = m_previewY1;
+		//		m_lineProfileX2 = curCol;      // End
+		//		m_lineProfileY2 = curRow;
+
+		//		isDepth = TRUE;
+		//		depthLine = TRUE;
+		//		distLine = FALSE; // Reset distLine as per old code
+
+		//		if (twoPointHeight == TRUE) flagDepth = TRUE;
+		//		else flagDepth = FALSE;
+
+		//		p2 = { (float)m_lineProfileX2, (float)m_lineProfileY2 };
+
+		//		// Get Height 2 (dZ) safely
+		//		height2Val = (m_lineProfileY2 < maxRow && m_lineProfileX2 < maxCol) ?
+		//			filterData[m_lineProfileY2][m_lineProfileX2] : 0.0f;
+
+		//		// Push to history vectors
+		//		multiProfile.push_back({ { p1, p2 }, flagDepth });
+		//		heightTwoPt.push_back({ height1Val, height2Val });
+		//		profileCnt++;
+		//		// ----------------------------------
 
 
-				// 20251208 ------
-				// Redraw everything
-				//Create2D();
+		//		// 20251208 ------
+		//		// Redraw everything
+		//		//Create2D();
 
-				// Logic for Area vs Line profile
-				/*if (isArea) areaProfile();
-				else */
-				//lineProfile();
+		//		// Logic for Area vs Line profile
+		//		/*if (isArea) areaProfile();
+		//		else */
+		//		//lineProfile();
 
-				// AdditionalCalculations();
+		//		// AdditionalCalculations();
 
-				// 20251209 ------
-				DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
-				UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
-			}
-
+		//		// 20251209 ------
+		//		DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+		//		UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+		//	}
+			
 			return TRUE; // Event handled
 		}
 
@@ -3717,4 +3785,647 @@ void CAnalysisNewDlg::DisplayWidthBetweenLines()
 
 }
 
+// 20251218 / Fahim
+//void CAnalysisNewDlg::DrawPreviewCircleOn2D(int centerX, int centerY, int radiusX, int radiusY)
+//{
+//	// Clear previous circle annotations
+//	const int CIRCLE_START_IDX = 500;
+//	for (int i = CIRCLE_START_IDX; i < CIRCLE_START_IDX + 100; i++)
+//	{
+//		int symbol = PEGAT_NOSYMBOL;
+//		double zero = 0.0;
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, i, &symbol);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, i, &zero);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, i, &zero);
+//	}
+//
+//	// Calculate radius in grid units
+//	int radiusGrid = euclideanDist(centerX, centerY, radiusX, radiusY);
+//
+//	// Convert to physical units
+//	double dCenterX = centerX * m_xStep;
+//	double dCenterY = centerY * m_yStep;
+//	double dRadius = radiusGrid * min(m_xStep, m_yStep);
+//
+//	int annotIdx = CIRCLE_START_IDX;
+//	DWORD color = PERGB(255, 49, 160, 159); // Cyan color
+//
+//	// Draw circle using multiple line segments (36 segments = 10 degree increments)
+//	const int numSegments = 36;
+//	const double PI = 3.14159265359;
+//
+//	// Start polygon
+//	int symbol = PEGAT_STARTPOLY;
+//	double x = dCenterX + dRadius * cos(0);
+//	double y = dCenterY + dRadius * sin(0);
+//
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//	annotIdx++;
+//
+//	// Add points around the circle
+//	for (int i = 1; i <= numSegments; i++)
+//	{
+//		double angle = (2.0 * PI * i) / numSegments;
+//		x = dCenterX + dRadius * cos(angle);
+//		y = dCenterY + dRadius * sin(angle);
+//
+//		symbol = PEGAT_ADDPOLYPOINT;
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		annotIdx++;
+//	}
+//
+//	// Close the polyline
+//	symbol = PEGAT_ENDPOLYLINE_THICK;
+//	double zero = 0.0;
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &zero);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &zero);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &color);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//	annotIdx++;
+//
+//	// Add center point marker
+//	symbol = PEGAT_DOTSOLID;
+//	DWORD centerColor = PERGB(255, 255, 0, 0);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &dCenterX);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &dCenterY);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &centerColor);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT("C"));
+//
+//	// Refresh display
+//	PEreinitialize(m_hPE2);
+//	PEresetimage(m_hPE2, 0, 0);
+//	::InvalidateRect(m_hPE2, NULL, FALSE);
+//	::UpdateWindow(m_hPE2);
+//}
 
+//void CAnalysisNewDlg::DrawPreviewCircleOn2D(int centerX, int centerY, int radiusX, int radiusY)
+//{
+//	// Clear previous circle annotations
+//	const int CIRCLE_START_IDX = 500;
+//	for (int i = CIRCLE_START_IDX; i < CIRCLE_START_IDX + 100; i++)
+//	{
+//		int symbol = PEGAT_NOSYMBOL;
+//		double zero = 0.0;
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, i, &symbol);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, i, &zero);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, i, &zero);
+//	}
+//
+//	// Calculate radius in grid units (this is the TRUE circular distance)
+//	int radiusGrid = euclideanDist(centerX, centerY, radiusX, radiusY);
+//
+//	// Convert center to physical units
+//	double dCenterX = centerX * m_xStep;
+//	double dCenterY = centerY * m_yStep;
+//
+//	// For a PERFECT CIRCLE, use the same grid radius for both X and Y
+//	// and scale each coordinate by its respective step size
+//	double dRadiusX = radiusGrid * m_xStep;
+//	double dRadiusY = radiusGrid * m_yStep;
+//
+//	int annotIdx = CIRCLE_START_IDX;
+//	DWORD color = PERGB(255, 49, 160, 159); // Cyan color
+//
+//	// Draw circle using 72 segments (5 degree increments) for smoothness
+//	const int numSegments = 120;
+//	const double PI = 3.14159265359;
+//
+//	// Calculate first point
+//	double x = dCenterX + dRadiusX * cos(0);
+//	double y = dCenterY + dRadiusY * sin(0);
+//
+//	// Start polygon
+//	int symbol = PEGAT_STARTPOLY;
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//	annotIdx++;
+//
+//	// Add points around the circle
+//	for (int i = 1; i <= numSegments; i++)
+//	{
+//		double angle = (2.0 * PI * i) / numSegments;
+//
+//		// Scale X and Y separately to maintain circularity
+//		x = dCenterX + dRadiusX * cos(angle);
+//		y = dCenterY + dRadiusY * sin(angle);
+//
+//		symbol = PEGAT_ADDPOLYPOINT;
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		annotIdx++;
+//	}
+//
+//	// Close the polyline
+//	symbol = PEGAT_ENDPOLYGON;
+//	double zero = 0.0;
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &zero);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &zero);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &color);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//	annotIdx++;
+//
+//	// Add center point marker
+//	symbol = PEGAT_DOT;
+//	DWORD centerColor = PERGB(255, 255, 0, 0);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &dCenterX);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &dCenterY);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &centerColor);
+//	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//
+//	// Refresh display
+//	PEreinitialize(m_hPE2);
+//	PEresetimage(m_hPE2, 0, 0);
+//	::InvalidateRect(m_hPE2, NULL, FALSE);
+//	::UpdateWindow(m_hPE2);
+//}
+
+//void CAnalysisNewDlg::DrawPreviewCircleOn2D(int centerX, int centerY, int radiusX, int radiusY)
+//{
+//	constexpr int CIRCLE_START_IDX = 500;
+//	constexpr int MAX_CIRCLE_ANNOTS = 150;
+//	constexpr int NUM_SEGMENTS = 120;
+//	constexpr double PI = 3.141592653589793;
+//
+//	// ---------------------------------------------------------------------
+//	// 1. Clear previous circle annotations
+//	// ---------------------------------------------------------------------
+//	for (int i = CIRCLE_START_IDX; i < CIRCLE_START_IDX + MAX_CIRCLE_ANNOTS; ++i)
+//	{
+//		int noSymbol = PEGAT_NOSYMBOL;
+//		double zero = 0.0;
+//
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, i, &noSymbol);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, i, &zero);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, i, &zero);
+//	}
+//
+//	// ---------------------------------------------------------------------
+//	// 2. Compute TRUE circular radius in grid units
+//	// ---------------------------------------------------------------------
+//	const int radiusGrid = euclideanDist(centerX, centerY, radiusX, radiusY);
+//
+//	// Convert center and radius to graph (physical) units
+//	double cx = centerX * m_xStep;
+//	double cy = centerY * m_yStep;
+//
+//	const double rx = radiusGrid * m_xStep;
+//	const double ry = radiusGrid * m_yStep;
+//
+//	// ---------------------------------------------------------------------
+//	// 3. Circle styling
+//	// ---------------------------------------------------------------------
+//	DWORD circleColor = PERGB(255, 49, 160, 159); // Cyan
+//	DWORD centerColor = PERGB(255, 255, 0, 0);   // Red
+//
+//	int annotIdx = CIRCLE_START_IDX;
+//
+//	double firstX = cx + rx;
+//	double firstY = cy;
+//
+//	// ---------------------------------------------------------------------
+//	// 4. Start polygon (circle outline)
+//	// ---------------------------------------------------------------------
+//	{
+//		double x0 = cx + rx;
+//		double y0 = cy;
+//
+//		int symbol = PEGAT_STARTPOLY;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x0);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y0);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}
+//
+//	// ---------------------------------------------------------------------
+//	// 5. Add polygon points (circle approximation)
+//	// ---------------------------------------------------------------------
+//	for (int i = 1; i <= NUM_SEGMENTS; ++i)
+//	{
+//		const double angle = (2.0 * PI * i) / NUM_SEGMENTS;
+//
+//		double x = cx + rx * cos(angle);
+//		double y = cy + ry * sin(angle);
+//
+//		int symbol = PEGAT_ADDPOLYPOINT;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &x);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &y);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}
+//
+//	// ---------------------------------------------------------------------
+//	// 6. End polygon (thick outline)
+//	// ---------------------------------------------------------------------
+//	/*{
+//		int symbol = PEGAT_ENDPOLYGON;
+//
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &circleColor);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}*/
+//
+//	// Explicitly close the circle
+//	int symbol = PEGAT_ADDPOLYPOINT;
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &firstX);
+//	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &firstY);
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	annotIdx++;
+//
+//	// Now end the polyline
+//	symbol = PEGAT_ENDPOLYLINE_THICK;
+//	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &circleColor);
+//	++annotIdx;
+//
+//	// ---------------------------------------------------------------------
+//	// 7. Draw center marker
+//	// ---------------------------------------------------------------------
+//	{
+//		int symbol = PEGAT_DOTSOLID;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, &cx);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, &cy);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, &symbol);
+//		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, &centerColor);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//	}
+//
+//	// ---------------------------------------------------------------------
+//	// 8. Refresh graph
+//	// ---------------------------------------------------------------------
+//	PEreinitialize(m_hPE2);
+//	PEresetimage(m_hPE2, 0, 0);
+//	::InvalidateRect(m_hPE2, nullptr, FALSE);
+//	::UpdateWindow(m_hPE2);
+//}
+
+//void CAnalysisNewDlg::DrawPreviewCircleOn2D(
+//	int centerX, int centerY,
+//	int radiusX, int radiusY)
+//{
+//	constexpr int CIRCLE_START_IDX = 500;
+//	constexpr int MAX_CIRCLE_ANNOTS = 200;
+//	constexpr int NUM_SEGMENTS = 120;
+//	constexpr double PI = 3.141592653589793;
+//
+//	// ------------------------------------------------------------
+//	// 1. Clear previous circle annotations
+//	// ------------------------------------------------------------
+//	for (int i = CIRCLE_START_IDX; i < CIRCLE_START_IDX + MAX_CIRCLE_ANNOTS; ++i)
+//	{
+//		int noSymbol = PEGAT_NOSYMBOL;
+//		double zero = 0.0;
+//
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, i, (void*)&noSymbol);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, i, (void*)&zero);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, i, (void*)&zero);
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 2. Compute TRUE radius in grid units
+//	// ------------------------------------------------------------
+//	const int radiusGrid = euclideanDist(centerX, centerY, radiusX, radiusY);
+//
+//	// Convert center to graph units
+//	const double cx = centerX * m_xStep;
+//	const double cy = centerY * m_yStep;
+//
+//	// ------------------------------------------------------------
+//	// 3. Get axis ranges (Pegrpapi.h compatible)
+//	// ------------------------------------------------------------
+//	double xMin = 0.0, xMax = 0.0;
+//	double yMin = 0.0, yMax = 0.0;
+//
+//	PEvgetcell(m_hPE2, PEP_faXAXISMIN, 0, (void*)&xMin);
+//	PEvgetcell(m_hPE2, PEP_faXAXISMAX, 0, (void*)&xMax);
+//	PEvgetcell(m_hPE2, PEP_faYAXISMIN, 0, (void*)&yMin);
+//	PEvgetcell(m_hPE2, PEP_faYAXISMAX, 0, (void*)&yMax);
+//
+//	// ------------------------------------------------------------
+//	// 4. Compute pixel scaling
+//	// ------------------------------------------------------------
+//	RECT rc;
+//	::GetClientRect(m_hPE2, &rc);
+//
+//	const double xPixelsPerUnit =
+//		(rc.right - rc.left) / (xMax - xMin);
+//
+//	const double yPixelsPerUnit =
+//		(rc.bottom - rc.top) / (yMax - yMin);
+//
+//	// Use a single pixel-space radius (key to perfect circle)
+//	const double pixelRadius =
+//		radiusGrid * min(xPixelsPerUnit * m_xStep,
+//			yPixelsPerUnit * m_yStep);
+//
+//	// Convert back to graph units
+//	const double rx = pixelRadius / xPixelsPerUnit;
+//	const double ry = pixelRadius / yPixelsPerUnit;
+//
+//	// ------------------------------------------------------------
+//	// 5. Styling
+//	// ------------------------------------------------------------
+//	const DWORD circleColor = PERGB(255, 49, 160, 159); // cyan
+//	const DWORD centerColor = PERGB(255, 255, 0, 0);   // red
+//
+//	int annotIdx = CIRCLE_START_IDX;
+//
+//	// ------------------------------------------------------------
+//	// 6. Start polygon (store first point)
+//	// ------------------------------------------------------------
+//	const double firstX = cx + rx;
+//	const double firstY = cy;
+//
+//	{
+//		int symbol = PEGAT_STARTPOLY;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&firstX);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&firstY);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 7. Add circle points
+//	// ------------------------------------------------------------
+//	for (int i = 1; i <= NUM_SEGMENTS; ++i)
+//	{
+//		const double angle = (2.0 * PI * i) / NUM_SEGMENTS;
+//
+//		const double x = cx + rx * cos(angle);
+//		const double y = cy + ry * sin(angle);
+//
+//		int symbol = PEGAT_ADDPOLYPOINT;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&x);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&y);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 8. EXPLICITLY close the polygon (Option A)
+//	// ------------------------------------------------------------
+//	{
+//		int symbol = PEGAT_ADDPOLYPOINT;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&firstX);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&firstY);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+//		++annotIdx;
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 9. End polyline cleanly (NO stray line)
+//	// ------------------------------------------------------------
+//	{
+//		int symbol = PEGAT_ENDPOLYLINE_THICK;
+//
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+//		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, (void*)&circleColor);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+//		++annotIdx;
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 10. Draw center marker
+//	// ------------------------------------------------------------
+//	{
+//		int symbol = PEGAT_DOTSOLID;
+//
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&cx);
+//		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&cy);
+//		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+//		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, (void*)&centerColor);
+//		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT("C"));
+//	}
+//
+//	// ------------------------------------------------------------
+//	// 11. Refresh graph
+//	// ------------------------------------------------------------
+//	PEreinitialize(m_hPE2);
+//	PEresetimage(m_hPE2, 0, 0);
+//	::InvalidateRect(m_hPE2, nullptr, FALSE);
+//	::UpdateWindow(m_hPE2);
+//}
+
+void CAnalysisNewDlg::DrawPreviewCircleOn2D(
+	int centerX, int centerY,
+	int radiusX, int radiusY)
+{
+	constexpr int CIRCLE_START_IDX = 500;
+	constexpr int MAX_CIRCLE_ANNOTS = 200;
+	constexpr int NUM_SEGMENTS = 120;
+	constexpr double PI = 3.141592653589793;
+
+	// ------------------------------------------------------------
+	// 1. Clear previous circle annotations
+	// ------------------------------------------------------------
+	for (int i = CIRCLE_START_IDX; i < CIRCLE_START_IDX + MAX_CIRCLE_ANNOTS; ++i)
+	{
+		int noSymbol = PEGAT_NOSYMBOL;
+		double zero = 0.0;
+
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, i, (void*)&noSymbol);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, i, (void*)&zero);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, i, (void*)&zero);
+	}
+
+	// ------------------------------------------------------------
+	// 2. Convert center and radius to graph units
+	// ------------------------------------------------------------
+	const double cx = centerX * m_xStep;
+	const double cy = centerY * m_yStep;
+
+	const double rx = radiusX * m_xStep;
+	const double ry = radiusY * m_yStep;
+
+	// ------------------------------------------------------------
+	// 3. Styling
+	// ------------------------------------------------------------
+	const DWORD circleColor = PERGB(255, 49, 160, 159); // cyan
+	const DWORD centerColor = PERGB(255, 49, 160, 159);   
+
+	int annotIdx = CIRCLE_START_IDX;
+
+	// ------------------------------------------------------------
+	// 4. Start polygon (first point)
+	// ------------------------------------------------------------
+	const double firstX = cx + rx;
+	const double firstY = cy;
+
+	{
+		int symbol = PEGAT_STARTPOLY;
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&cx);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&cy);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+		++annotIdx;
+	}
+
+	// ------------------------------------------------------------
+	// 5. Add circle points
+	// ------------------------------------------------------------
+	for (int i = 1; i <= NUM_SEGMENTS; ++i)
+	{
+		const double angle = (2.0 * PI * i) / NUM_SEGMENTS;
+		const double x = cx + rx * cos(angle);
+		const double y = cy + ry * sin(angle);
+
+		int symbol = PEGAT_ADDPOLYPOINT;
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&x);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&y);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+		++annotIdx;
+	}
+
+	// ------------------------------------------------------------
+	// 6. Close polygon
+	// ------------------------------------------------------------
+	{
+		int symbol = PEGAT_ADDPOLYPOINT;
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&firstX);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&firstY);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+		++annotIdx;
+	}
+
+	// ------------------------------------------------------------
+	// 7. End polyline
+	// ------------------------------------------------------------
+	{
+		int symbol = PEGAT_ENDPOLYLINE_THICK;
+
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, (void*)&circleColor);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+		++annotIdx;
+	}
+
+	// ------------------------------------------------------------
+	// 8. Draw center marker
+	// ------------------------------------------------------------
+	{
+		int symbol = PEGAT_DOT;
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, annotIdx, (void*)&cx);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, annotIdx, (void*)&cy);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, annotIdx, (void*)&symbol);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, annotIdx, (void*)&centerColor);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, annotIdx, (void*)TEXT(""));
+	}
+
+	// ------------------------------------------------------------
+	// 9. Refresh graph
+	// ------------------------------------------------------------
+	PEreinitialize(m_hPE2);
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, nullptr, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+
+
+
+// 20251218 / Fahim / Extract Circular Profile Data
+void CAnalysisNewDlg::ExtractCircularProfile(int centerX, int centerY, int radius)
+{
+	if (filterData.empty() || filterData[0].empty()) return;
+
+	int maxRow = static_cast<int>(filterData.size());
+	int maxCol = static_cast<int>(filterData[0].size());
+
+	std::vector<float> circleProfile;
+	circleProfile.clear();
+
+	// Sample points around the circle (360 degrees)
+	int numSamples = max(360, radius * 6); // More samples for larger circles
+
+	for (int i = 0; i < numSamples; i++)
+	{
+		double angle = (2.0 * 3.14159265359 * i) / numSamples;
+
+		// Calculate point on circle
+		int x = centerX + static_cast<int>(radius * cos(angle));
+		int y = centerY + static_cast<int>(radius * sin(angle));
+
+		// Bounds check
+		if (x >= 0 && x < maxCol && y >= 0 && y < maxRow)
+		{
+			circleProfile.push_back(filterData[y][x]);
+		}
+		else
+		{
+			// Outside bounds - use average value
+			circleProfile.push_back(avgVal);
+		}
+	}
+
+	// Update line profile with circular data
+	if (circleProfile.size() > 0)
+	{
+		// Calculate profile stats
+		float mnVal = 1e9f, mxVal = -1e9f;
+		for (size_t i = 0; i < circleProfile.size(); i++)
+		{
+			if (circleProfile[i] < mnVal) mnVal = circleProfile[i];
+			if (circleProfile[i] > mxVal) mxVal = circleProfile[i];
+		}
+
+		// Update the line profile graph
+		int nTotalCnt = static_cast<int>(circleProfile.size());
+
+		if (!m_hPEl || !::IsWindow(m_hPEl))
+		{
+			lineProfile(); // Create window if doesn't exist
+		}
+
+		// Update data
+		PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
+		PEvset(m_hPEl, PEP_faYDATA, circleProfile.data(), nTotalCnt);
+
+		// Update Y-axis scale
+		double dMin = mnVal - (fabs(mnVal) * 0.1);
+		double dMax = mxVal + (fabs(mxVal) * 0.1);
+		if (dMin == dMax) { dMin -= 1.0; dMax += 1.0; }
+
+		PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+		PEvset(m_hPEl, PEP_fMANUALMINY, &dMin, 1);
+		PEvset(m_hPEl, PEP_fMANUALMAXY, &dMax, 1);
+
+		// Update title
+		TCHAR mainTitle[] = TEXT("|Circular Profile|");
+		PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+
+		// Redraw
+		PEreinitialize(m_hPEl);
+		PEresetimage(m_hPEl, 0, 0);
+		::InvalidateRect(m_hPEl, NULL, FALSE);
+		::UpdateWindow(m_hPEl);
+	}
+}
