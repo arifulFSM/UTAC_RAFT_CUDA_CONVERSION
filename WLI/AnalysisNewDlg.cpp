@@ -3831,7 +3831,7 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 	PEconvpixeltograph(m_hPE2, &nAxis, &pxRight, &pxBottom, &gX2, &gY2, FALSE, FALSE, FALSE);
 
 	// 3. Set Annotations
-	int symbol1 = PEGAT_ELLIPSE_THIN;
+	int symbol1 = PEGAT_ELLIPSE_MEDIUM;
 	int symbol2 = PEGAT_BOTTOMRIGHT;
 	int symbol3 = PEGAT_TOPLEFT;
 	DWORD color = PERGB(255, 255, 0, 0); // Red
