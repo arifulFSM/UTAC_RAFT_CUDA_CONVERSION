@@ -542,11 +542,11 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 					// Final Draw
 					DrawPreviewCircleOn2D(m_ptCircleCenter, m_iCircleRadius);
 
-					CString msg;
+					/*CString msg;
 					float ffx = m_ptCircleCenter.x;
 					float ffy = m_ptCircleCenter.y;
 					msg.Format(_T("Circle center: (%.f, %.f)\r\nRadius: %d"), ffx, ffy, m_iCircleRadius);
-					AfxMessageBox(msg);
+					AfxMessageBox(msg);*/
 
 					// Generate Profile
 					CircleProfile(m_ptCircleCenter, m_iCircleRadius);
@@ -3811,6 +3811,7 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 {
 	const int CIRCLE_IDX_1 = 600;
 	const int CIRCLE_IDX_2 = 601;
+	const int CIRCLE_IDX_3 = 602;
 
 	// 1. Define Bounding Box in PIXELS (Perfect Square)
 	int pxLeft = centerPx.x - radiusPx;
@@ -3832,6 +3833,7 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 	// 3. Set Annotations
 	int symbol1 = PEGAT_ELLIPSE_THIN;
 	int symbol2 = PEGAT_BOTTOMRIGHT;
+	int symbol3 = PEGAT_TOPLEFT;
 	DWORD color = PERGB(255, 255, 0, 0); // Red
 
 	// Top-Left
@@ -3848,8 +3850,19 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, CIRCLE_IDX_2, &color);
 	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, CIRCLE_IDX_2, (void*)TEXT(""));
 
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, CIRCLE_IDX_3, &gX1);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, CIRCLE_IDX_3, &gY1);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, CIRCLE_IDX_3, &symbol3);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, CIRCLE_IDX_3, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, CIRCLE_IDX_3, (void*)TEXT(""));
+
+	/*CString msg;
+	msg.Format(_T("Top Left: (%.2f, %.2f)\r\nTop Right: (%.2f, %.2f)"), gX1, gY1, gX2, gY2);
+	AfxMessageBox(msg);*/
+
 	// 4. Force Redraw
 	// Note: If annotations are hidden, ensure PEP_bSHOWANNOTATIONS is TRUE
+	PEreinitialize(m_hPE2);
 	PEresetimage(m_hPE2, 0, 0);
 	::InvalidateRect(m_hPE2, NULL, FALSE);
 	::UpdateWindow(m_hPE2);
@@ -3873,7 +3886,7 @@ void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 	const double PI = 3.14159265358979323846;
 
 	int nAxis = 0;
-
+	
 	for (int i = 0; i < numPoints; i++)
 	{
 		// 1. Calculate Pixel Position on the visual circle
