@@ -231,4 +231,6 @@ public:
 	void DrawPreviewCircleOn2D(POINT centerPx, int radiusPx);
 	// Profile using Pixel inputs
 	void CircleProfile(POINT centerPx, int radiusPx);
+	// 20251222
+	void ShowCircleProfile(std::vector<float>& profileData);
 };

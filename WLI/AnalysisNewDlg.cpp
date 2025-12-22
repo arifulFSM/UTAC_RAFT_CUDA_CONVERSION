@@ -1,4 +1,4 @@
-// AnalysisNewDlg.cpp : implementation file
+﻿// AnalysisNewDlg.cpp : implementation file
 //
 
 #include "pch.h"
@@ -502,12 +502,25 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 				// DRAWING LOGIC (PIXEL MATH)
 				if (m_bIsSelectingCircle)
 				{
-					// Calculate visual radius using Pythagoras on Pixels
-					double dx = (double)(ptCurrent.x - m_ptCircleCenter.x);
-					double dy = (double)(ptCurrent.y - m_ptCircleCenter.y);
-					int currentRadius = (int)sqrt(dx * dx + dy * dy);
+					static DWORD lastUpdateTime = 0;
+					DWORD currentTime = GetTickCount();
 
-					DrawPreviewCircleOn2D(m_ptCircleCenter, currentRadius);
+					if (currentTime - lastUpdateTime > 30)
+					{
+						lastUpdateTime = currentTime;
+
+						// 2. Calculate Radius (Pixel)
+						double dx = (double)(ptCurrent.x - m_ptCircleCenter.x);
+						double dy = (double)(ptCurrent.y - m_ptCircleCenter.y);
+						int currentRadius = (int)sqrt(dx * dx + dy * dy);
+
+						// 3. Update Preview Circle (Visual)
+						DrawPreviewCircleOn2D(m_ptCircleCenter, currentRadius);
+
+						// 4. Update Profile Chart (Data)
+						// This calls the optimized ShowCircleProfile
+						CircleProfile(m_ptCircleCenter, currentRadius);
+					}
 				}
 				return TRUE;
 			}
@@ -3205,6 +3218,23 @@ void CAnalysisNewDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 	// Safety: Ensure data exists
 	if (filterData.empty() || filterData[0].empty()) return;
 
+	// 20251222 / Fahim 
+	// Update Title
+	TCHAR mainTitle[] = TEXT("|Line Profile|");
+	TCHAR subTitle[] = TEXT("||");
+	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
+	// Axis label
+	TCHAR szBufZ[] = TEXT("Height um");
+	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufZ);
+	TCHAR szBufX[] = TEXT("X um");
+	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
+
+	//subset labels 
+	// 20251118/Fahim/ typecast
+	if (isDepth)PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Height Difference"));
+	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
+
 	// 1. Calculate geometry
 	double diffX = nX2 - nX1;
 	double diffY = nY2 - nY1;
@@ -3868,15 +3898,203 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 	::UpdateWindow(m_hPE2);
 }
 
+//void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
+//{
+//	if (filterData.empty() || filterData[0].empty()) {
+//		AfxMessageBox(_T("No data available for profiling"));
+//		return;
+//	}
+//
+//	int maxRows = static_cast<int>(filterData.size());
+//	int maxCols = static_cast<int>(filterData[0].size());
+//
+//	// Safety check for step sizes
+//	float xStep = (m_xStep > 0) ? m_xStep : 1.0f;
+//	float yStep = (m_yStep > 0) ? m_yStep : 1.0f;
+//
+//	// --- STEP 1: Convert Center (Pixel -> Graph) ---
+//	int nAxis = 0;
+//	double graphCx = 0, graphCy = 0;
+//	int intcenterPxX = centerPx.x;
+//	int intcenterPxY = centerPx.y;
+//	PEconvpixeltograph(m_hPE2, &nAxis, &intcenterPxX, &intcenterPxY,
+//		&graphCx, &graphCy, FALSE, FALSE, FALSE);
+//
+//	// --- STEP 2: Calculate Graph-Space Radius ---
+//	// Sample point on right edge
+//	int pxRight = centerPx.x + radiusPx;
+//	double gRightX = 0, gRightY = 0;
+//	PEconvpixeltograph(m_hPE2, &nAxis, &pxRight, &intcenterPxY,
+//		&gRightX, &gRightY, FALSE, FALSE, FALSE);
+//
+//	// Sample point on top edge
+//	int pxTop = centerPx.y - radiusPx;
+//	double gTopX = 0, gTopY = 0;
+//	PEconvpixeltograph(m_hPE2, &nAxis, &intcenterPxX, &pxTop,
+//		&gTopX, &gTopY, FALSE, FALSE, FALSE);
+//
+//	double graphRadiusX = fabs(gRightX - graphCx);
+//	double graphRadiusY = fabs(gTopY - graphCy);
+//
+//	// Debug output
+//	TRACE(_T("Center Pixel: (%d, %d) -> Graph: (%.2f, %.2f)\n"),
+//		centerPx.x, centerPx.y, graphCx, graphCy);
+//	TRACE(_T("Radius Pixel: %d -> Graph: X=%.2f, Y=%.2f\n"),
+//		radiusPx, graphRadiusX, graphRadiusY);
+//	TRACE(_T("Data dimensions: %d rows x %d cols\n"), maxRows, maxCols);
+//	TRACE(_T("Step sizes: X=%.2f, Y=%.2f\n"), xStep, yStep);
+//
+//	// --- STEP 3: Determine Sampling Resolution ---
+//	double circumferencePx = 2.0 * 3.14159 * radiusPx;
+//	int numPoints = static_cast<int>(circumferencePx);
+//	if (numPoints < 360) numPoints = 360;
+//	if (numPoints > 3600) numPoints = 3600; // Cap at reasonable limit
+//
+//	std::vector<float> profileData;
+//	profileData.reserve(numPoints);
+//
+//	const double PI = 3.14159265358979323846;
+//
+//	// Statistics for debugging
+//	int validPoints = 0;
+//	int outOfBounds = 0;
+//	float minVal = 1e9f;
+//	float maxVal = -1e9f;
+//
+//	// Calculate radius in "cell units" for diagnostics
+//	double radiusInCellsX = graphRadiusX / xStep;
+//	double radiusInCellsY = graphRadiusY / yStep;
+//
+//	TRACE(_T("Radius in cells: X=%.2f, Y=%.2f\n"), radiusInCellsX, radiusInCellsY);
+//
+//	// Warning for very small circles
+//	if (radiusInCellsX < 2.0 || radiusInCellsY < 2.0) {
+//		TRACE(_T("WARNING: Circle radius is very small (< 2 cells). Using interpolation.\n"));
+//
+//		CString warning;
+//		warning.Format(_T("⚠️ Circle is small (%.1f × %.1f cells)\n\n")
+//			_T("Recommendations:\n")
+//			_T("• Draw a larger circle for better detail\n")
+//			_T("• Using interpolation to improve sampling\n")
+//			_T("• Circle covers ~%.0f data cells\n\n")
+//			_T("Continue anyway?"),
+//			radiusInCellsX, radiusInCellsY,
+//			3.14159 * radiusInCellsX * radiusInCellsY);
+//
+//		if (AfxMessageBox(warning, MB_YESNO | MB_ICONWARNING) == IDNO) {
+//			return; // User chose to cancel
+//		}
+//	}
+//
+//	// --- STEP 4: Sample Around Circle with BILINEAR INTERPOLATION ---
+//	for (int i = 0; i < numPoints; i++)
+//	{
+//		// Angle in radians (0 to 2π)
+//		double theta = (double)i / (double)numPoints * 2.0 * PI;
+//
+//		// Calculate position in GRAPH space (ellipse equation)
+//		double gX = graphCx + graphRadiusX * cos(theta);
+//		double gY = graphCy + graphRadiusY * sin(theta);
+//
+//		// Convert Graph coordinates to CONTINUOUS Data Array indices
+//		// Use double precision to preserve sub-pixel position
+//		double colFloat = gX / xStep;
+//		double rowFloat = gY / yStep;
+//
+//		float val = 0.0f;
+//
+//		// Get integer cell indices (floor)
+//		int col0 = static_cast<int>(floor(colFloat));
+//		int row0 = static_cast<int>(floor(rowFloat));
+//		int col1 = col0 + 1;
+//		int row1 = row0 + 1;
+//
+//		// Calculate fractional parts for interpolation
+//		double fracX = colFloat - col0;
+//		double fracY = rowFloat - row0;
+//
+//		// Bounds check - ensure all 4 corners are valid
+//		if (row0 >= 0 && row1 < maxRows && col0 >= 0 && col1 < maxCols)
+//		{
+//			// Bilinear interpolation using 4 neighboring cells
+//			// f(x,y) = f(0,0)(1-x)(1-y) + f(1,0)x(1-y) + f(0,1)(1-x)y + f(1,1)xy
+//
+//			float v00 = filterData[row0][col0];  // Top-left
+//			float v10 = filterData[row0][col1];  // Top-right
+//			float v01 = filterData[row1][col0];  // Bottom-left
+//			float v11 = filterData[row1][col1];  // Bottom-right
+//
+//			// Perform bilinear interpolation
+//			val = (float)(
+//				v00 * (1.0 - fracX) * (1.0 - fracY) +
+//				v10 * fracX * (1.0 - fracY) +
+//				v01 * (1.0 - fracX) * fracY +
+//				v11 * fracX * fracY
+//				);
+//
+//			validPoints++;
+//
+//			if (val < minVal) minVal = val;
+//			if (val > maxVal) maxVal = val;
+//
+//			// Debug first few points
+//			if (i < 5) {
+//				TRACE(_T("Point %d: theta=%.2f, Graph(%.2f,%.2f) -> Cell[%.2f][%.2f] = %.4f (interpolated)\n"),
+//					i, theta, gX, gY, rowFloat, colFloat, val);
+//				TRACE(_T("  Corners: [%d,%d]=%.4f [%d,%d]=%.4f [%d,%d]=%.4f [%d,%d]=%.4f\n"),
+//					row0, col0, v00, row0, col1, v10, row1, col0, v01, row1, col1, v11);
+//			}
+//		}
+//		else
+//		{
+//			// Point is outside data bounds
+//			outOfBounds++;
+//
+//			// Use nearest neighbor with clamping
+//			int clampedRow = max(0, min(static_cast<int>(round(rowFloat)), maxRows - 1));
+//			int clampedCol = max(0, min(static_cast<int>(round(colFloat)), maxCols - 1));
+//			val = filterData[clampedRow][clampedCol];
+//
+//			if (i < 5) {
+//				TRACE(_T("Point %d OUT OF BOUNDS: [%.2f][%.2f] -> clamped to [%d][%d]=%.4f\n"),
+//					i, rowFloat, colFloat, clampedRow, clampedCol, val);
+//			}
+//		}
+//
+//		profileData.push_back(val);
+//	}
+//
+//	// --- STEP 5: Validation ---
+//	TRACE(_T("=== Circle Profile Stats ===\n"));
+//	TRACE(_T("Total points: %d\n"), numPoints);
+//	TRACE(_T("Valid points: %d\n"), validPoints);
+//	TRACE(_T("Out of bounds: %d\n"), outOfBounds);
+//	TRACE(_T("Value range: %.4f to %.4f\n"), minVal, maxVal);
+//
+//	if (validPoints < numPoints / 4) {
+//		CString msg;
+//		msg.Format(_T("Warning: Circle is mostly outside data bounds\n%d/%d points valid"),
+//			validPoints, numPoints);
+//		AfxMessageBox(msg);
+//	}
+//
+//	if (maxVal - minVal < 0.001f) {
+//		AfxMessageBox(_T("Warning: Profile data has very little variation.\nAll values are nearly identical."));
+//	}
+//
+//	// --- STEP 6: Display ---
+//	ShowCircleProfile(profileData);
+//}
+
 void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 {
 	if (filterData.empty()) return;
 
-	// Calculate circumference in pixels
+	// 1. Calculate circumference in pixels
+	// We sample based on screen pixels to catch every detail visible to the user
 	double circumferencePx = 2.0 * 3.14159 * radiusPx;
 	int numPoints = static_cast<int>(circumferencePx);
-	// Minimum 360 points for a smooth chart
-	if (numPoints < 360) numPoints = 360;
+	if (numPoints < 360) numPoints = 360; // Minimum resolution
 
 	std::vector<float> profileData;
 	profileData.reserve(numPoints);
@@ -3886,29 +4104,32 @@ void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 	const double PI = 3.14159265358979323846;
 
 	int nAxis = 0;
-	
+
 	for (int i = 0; i < numPoints; i++)
 	{
-		// 1. Calculate Pixel Position on the visual circle
+		// 2. Trace the visual circle in Screen Pixels
 		double theta = (double)i / (double)numPoints * 2.0 * PI;
 
-		// Calculate point in Screen Pixels
-		int pxX = centerPx.x + (int)(radiusPx * cos(theta));
-		int pxY = centerPx.y + (int)(radiusPx * sin(theta));
+		// Calculate point in Pixels
+		int intPxX = centerPx.x + (int)(radiusPx * cos(theta));
+		int intPxY = centerPx.y + (int)(radiusPx * sin(theta));
 
-		// 2. Convert Pixel -> Graph Coordinates
+		// 3. Convert Pixel -> Graph Coordinates
 		double graphX = 0, graphY = 0;
-		PEconvpixeltograph(m_hPE2, &nAxis, &pxX, &pxY, &graphX, &graphY, FALSE, FALSE, TRUE);
 
-		// 3. Convert Graph Units -> Data Array Indices
-		// Ensure steps are non-zero
-		if (m_xStep == 0) m_xStep = 1.0;
-		if (m_yStep == 0) m_yStep = 1.0;
+		// *** USER FIX: bViceVersa = FALSE ***
+		PEconvpixeltograph(m_hPE2, &nAxis, &intPxX, &intPxY, &graphX, &graphY, FALSE, FALSE, FALSE);
 
-		int col = static_cast<int>(graphX / m_xStep);
-		int row = static_cast<int>(graphY / m_yStep);
+		// 4. Convert Graph Units -> Data Array Indices
+		// Protect against zero step size
+		float xStep = (m_xStep > 0) ? m_xStep : 1.0f;
+		float yStep = (m_yStep > 0) ? m_yStep : 1.0f;
+
+		int col = static_cast<int>(graphX / xStep);
+		int row = static_cast<int>(graphY / yStep);
 
 		float val = 0.0f;
+
 		// Bounds Check
 		if (row >= 0 && row < maxRows && col >= 0 && col < maxCols)
 		{
@@ -3918,17 +4139,300 @@ void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 		profileData.push_back(val);
 	}
 
-	// 4. Draw Profile Chart
-	lineProfile(profileData);
+	// 5. Draw Profile Chart
+	// This calls the helper function that handles initialization (PEcreate)
+	ShowCircleProfile(profileData);
+}
 
-	// Update Chart Text
-	if (m_hPEl) {
-		TCHAR mainTitle[] = TEXT("Circle Profile");
-		PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
-		// Force update of the profile window
-		PEreinitialize(m_hPEl);
-		PEresetimage(m_hPEl, 0, 0);
-		::InvalidateRect(m_hPEl, NULL, FALSE);
-		::UpdateWindow(m_hPEl);
+// 20251222
+//void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
+//{
+//	UpdateData(TRUE);
+//	if (profile.empty()) return;
+//
+//	// 1. Clean up existing graph
+//	if (m_hPEl) {
+//		PEdestroy(m_hPEl);
+//		//m_hPEl = NULL;
+//	}
+//
+//	// 2. Calculate Window Position
+//	RECT wndRect, itemRect;
+//	this->GetWindowRect(&wndRect);
+//	CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
+//	if (pPanel) {
+//
+//		/*CString msg;
+//		msg.Format(_T("IDC_PROFILE found"));
+//		AfxMessageBox(msg);*/
+//		pPanel->GetWindowRect(&itemRect);
+//		itemRect.left -= wndRect.left;
+//		itemRect.top -= wndRect.top;
+//		itemRect.right -= wndRect.left;
+//		itemRect.bottom -= wndRect.top;
+//	}
+//	else {
+//		/*CString msg;
+//		msg.Format(_T("IDC_PROFILE not found"));
+//		AfxMessageBox(msg);*/
+//		return; // Safety check
+//	}
+//
+//	// 3. Create Graph Control
+//	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+//
+//	// 4. Styles & Theme (Matched to your lineProfile)
+//	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
+//
+//	// This will allow you to move cursor by clicking data point //
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+//	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+//	// Reducing HOTSPOT size ensures the user must click ON the line.
+//	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+//
+//	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+//	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+//
+//	// Dark Theme Colors
+//	DWORD darkGray = PERGB(255, 30, 30, 33);
+//	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+//	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+//	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+//
+//	// Grid Lines
+//	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+//	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+//	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+//
+//	// Fonts
+//	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+//	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+//
+//	// Axis Text Colors
+//	DWORD axisColor = PERGB(255, 160, 160, 160);
+//	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+//	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+//	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
+//
+//	// Axis Scale
+//	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
+//	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
+//	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
+//
+//	// 5. Prepare Data
+//	long nTotalCnt = (long)profile.size();
+//
+//	// Allocate buffers
+//	double* pXData = new double[nTotalCnt];
+//	float* pYData = new float[nTotalCnt];
+//
+//	for (long i = 0; i < nTotalCnt; i++) {
+//		pYData[i] = profile[i];
+//
+//		// X-Axis = Degrees (0 to 360)
+//		double angle = (double)i / (double)nTotalCnt * 360.0;
+//		pXData[i] = angle;
+//
+//		// Set Point Labels
+//		CString xAxisVal;
+//		xAxisVal.Format(_T("%0.0f"), angle);
+//		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
+//	}
+//
+//	// 6. Pass Data to Graph
+//	PEnset(m_hPEl, PEP_nSUBSETS, 1);
+//	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
+//	PEvset(m_hPEl, PEP_faXDATAII, pXData, nTotalCnt);
+//	PEvset(m_hPEl, PEP_faYDATA, pYData, nTotalCnt);
+//
+//	// Cleanup buffers
+//	delete[] pXData;
+//	delete[] pYData;
+//
+//	// 7. Titles
+//	TCHAR mainTitle[] = TEXT("|Circle Profile|");
+//	TCHAR subTitle[] = TEXT("");
+//	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+//	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
+//
+//	TCHAR szBufY[] = TEXT("Height");
+//	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufY);
+//	TCHAR szBufX[] = TEXT("Angle (Deg)");
+//	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
+//
+//	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
+//
+//	// 8. Line Color (Teal)
+//	DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
+//	int nLineTypes[] = { PELT_MEDIUMSOLID };
+//	int nPointTypes[] = { PEPT_PIXEL };
+//
+//	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+//	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+//	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+//
+//	// 9. Interaction & Rendering
+//	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+//	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+//
+//	// Cursor Prompt
+//	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+//	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+//
+//	// Zooming
+//	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+//	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+//	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+//	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
+//	float fZ = 2.00F;
+//	PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
+//
+//	// 10. Final Draw
+//	/*PEreinitialize(m_hPEl);
+//	PEresetimage(m_hPEl, 0, 0);
+//	::InvalidateRect(m_hPEl, NULL, FALSE);
+//	::UpdateWindow(m_hPEl);*/
+//}
+
+
+void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
+{
+	if (profile.empty()) return;
+
+	long nTotalCnt = (long)profile.size();
+
+	// --- 1. INITIALIZATION (Create only if missing) ---
+	if (!m_hPEl || !::IsWindow(m_hPEl))
+	{
+		// Calculate Window Position
+		RECT wndRect, itemRect;
+		this->GetWindowRect(&wndRect);
+		CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
+		if (pPanel) {
+			pPanel->GetWindowRect(&itemRect);
+			itemRect.left -= wndRect.left;
+			itemRect.top -= wndRect.top;
+			itemRect.right -= wndRect.left;
+			itemRect.bottom -= wndRect.top;
+		}
+		else {
+			return;
+		}
+
+		// Create the Control
+		m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+
+		// --- ONE-TIME CONFIGURATION ---
+		PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
+		PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+		PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+
+		// Dark Theme
+		DWORD darkGray = PERGB(255, 30, 30, 33);
+		PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+		PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+		PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+
+		// Grid & Fonts
+		PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+		PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+		PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+		PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+		PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+		PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+		PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+
+		// Colors
+		DWORD axisColor = PERGB(255, 160, 160, 160);
+		PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+		PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+		PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
+
+		// Interaction
+		PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+		PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+		PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+		PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+		PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+		PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+		PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+		PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+
+		// Styles
+		DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
+		int nLineTypes[] = { PELT_MEDIUMSOLID };
+		int nPointTypes[] = { PEPT_PIXEL };
+		PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+		PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+		PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+
+		// Titles
+		PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
+		PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
+		PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
+		PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
+		PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
 	}
+
+	// Update Titles (if needed)
+	PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
+	PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
+	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
+	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
+	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
+
+	// --- 2. DATA UPDATE (Run every frame) ---
+
+	double* pXData = new double[nTotalCnt];
+	float* pYData = new float[nTotalCnt];
+	float fMin = 1e9f, fMax = -1e9f;
+
+	for (long i = 0; i < nTotalCnt; i++) {
+		pYData[i] = profile[i];
+
+		// Map X to Degrees
+		double angle = (double)i / (double)nTotalCnt * 360.0;
+		pXData[i] = angle;
+
+		if (profile[i] < fMin) fMin = profile[i];
+		if (profile[i] > fMax) fMax = profile[i];
+
+		// Optimize: Only set labels if point count is low, otherwise it slows down real-time
+		if (nTotalCnt < 100) {
+			CString xAxisVal;
+			xAxisVal.Format(_T("%0.0f"), angle);
+			PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
+		}
+	}
+
+	PEnset(m_hPEl, PEP_nSUBSETS, 1);
+	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
+	PEvset(m_hPEl, PEP_faXDATAII, pXData, nTotalCnt);
+	PEvset(m_hPEl, PEP_faYDATA, pYData, nTotalCnt);
+
+	delete[] pXData;
+	delete[] pYData;
+
+	// --- 3. AUTO SCALING ---
+	if (fabs(fMax - fMin) < 0.0001) { fMin -= 1.0f; fMax += 1.0f; }
+	double range = fMax - fMin;
+	double yMin = fMin - (range * 0.1);
+	double yMax = fMax + (range * 0.1);
+
+	PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+	PEvset(m_hPEl, PEP_fMANUALMINY, &yMin, 1);
+	PEvset(m_hPEl, PEP_fMANUALMAXY, &yMax, 1);
+
+	// --- 4. EFFICIENT REDRAW ---
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+	::InvalidateRect(m_hPEl, NULL, FALSE);
+	::UpdateWindow(m_hPEl);
 }
