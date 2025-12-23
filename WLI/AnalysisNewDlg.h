@@ -192,10 +192,8 @@ public:
 	BOOL isInsidePlot = false;
 
 	// Helper methods
-	void CreateTemporaryLineProfileWindow();
 	void UpdateLineProfileGraph(int x1, int y1, int x2, int y2);
 	void DrawPreviewLineOn2D(int x1, int y1, int x2, int y2);
-	void UpdateLineProfileGraph_Recreate(int nX1, int nY1, int nX2, int nY2);
 	// 20251124 ------------------
 
 	//20251201 ============================
@@ -210,7 +208,6 @@ public:
 	BOOL m_isDrawingCurrentLine;  // TRUE while dragging
 	double m_currentLineStartX, m_currentLineStartY;  // Temp storage during drag
 
-	void StartLineDrawing();
 	void DrawLineAnnotation(double x1, double y1, double x2, double y2, int startIdx, int endIdx, DWORD color);
 	void DrawLineAnnotations();
 	void ClearLineAnnotations();
@@ -225,12 +222,18 @@ public:
 	BOOL m_bIsSelectingCircle;
 	POINT m_ptCircleCenter;       // Center in Screen Pixels
 	int   m_iCircleRadius;        // Radius in Screen Pixels
-
-	// Helper Functions
-	// Draw using Pixel inputs
-	void DrawPreviewCircleOn2D(POINT centerPx, int radiusPx);
-	// Profile using Pixel inputs
-	void CircleProfile(POINT centerPx, int radiusPx);
+	void DrawPreviewCircleOn2D(POINT centerPx, int radiusPx); // Draw using Pixel inputs
+	void CircleProfile(POINT centerPx, int radiusPx); // Profile using Pixel inputs
 	// 20251222
 	void ShowCircleProfile(std::vector<float>& profileData);
+
+protected:
+	// 20251223 / Fahim / Refactoring the line profile drawing methods
+	void InitializeProfileChart();
+	void UpdateProfileChart(const std::vector<double>& xData, const std::vector<float>& yData,
+		CString mainTitle, CString subTitle,
+		CString xAxisLabel, CString yAxisLabel);
+	void ResetProfileAnnotations(); // Clears any old annotations (lines, text) from previous tools
+public:
+
 };

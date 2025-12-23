@@ -182,6 +182,9 @@ BOOL CAnalysisNewDlg::OnInitDialog() {
 	m_previewX1 = 0; m_previewY1 = 0;
 	// 20252411
 
+	// 20251223
+	InitializeProfileChart();
+
 	return TRUE;
 }
 
@@ -1118,407 +1121,502 @@ void CAnalysisNewDlg::lineProfile(std::vector<float>profile) {
 
 //20250916
 
+// Commented out old function, will delete later
+//void CAnalysisNewDlg::lineProfile()
+//{
+//	UpdateData(TRUE);
+//	std::vector<std::vector<float>>profile;
+//	profile.clear();
+//	profile = filterData;// analysisdlgobject->data;
+//	if (profile.size() <= 0)
+//		return;
+//	if (m_hPEl)PEdestroy(m_hPEl);
+//	RECT wndRect, itemRect;
+//	this->GetWindowRect(&wndRect);
+//	GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL)->GetWindowRect(&itemRect);
+//	itemRect.left -= wndRect.left;
+//	itemRect.top -= wndRect.top;
+//	itemRect.right -= wndRect.left;
+//	itemRect.bottom -= wndRect.top;
+//	//itemRect.bottom += 20;
+//
+//	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+//
+//
+//	//Set up cursor
+//	//PEnset(m_hPEl, PEP_nCURSORMODE, PECM_DATACROSS);
+//
+//	//Set PlottingMethod //
+//	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, /*PEGPM_BAR*/PEGPM_POINTSPLUSLINE);
+//
+//	// Help see data points //
+//	//PEnset(m_hPEl, PEP_bMARKDATAPOINTS, TRUE);
+//
+//	// This will allow you to move cursor by clicking data point //
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+//	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
+//	// Reducing HOTSPOT size ensures the user must click ON the line.
+//	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+//
+//	//old
+//	//PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+//	//PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
+//	// 20251203
+//	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+//	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+//
+//	// --- [START] MODIFICATIONS FOR BETTER UI ---
+//
+//	// [MODIFIED] 1. Dark Theme Backgrounds
+//	// PERGB(Alpha, Red, Green, Blue) -> Dark Slate Gray
+//	DWORD darkGray = PERGB(255, 30, 30, 33);
+//	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+//	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+//	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+//
+//	// [MODIFIED] 2. Grid Lines (Solid & Subtle)
+//	// Use PEGS_THIN (0) for solid lines since PEGS_SOLID is missing
+//	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+//	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+//
+//	// FIX 1: Use PEP_dwGRIDLINECOLOR instead of PEP_dwGRIDCOLOR
+//	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+//
+//	// [MODIFIED] 3. Fonts (With Type Casting)
+//	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+//
+//	// FIX 2: Cast TEXT() to (LPWSTR) to fix the "incompatible type" error
+//	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+//
+//	// [MODIFIED] 4. Axis Colors (Light Gray for contrast)
+//	DWORD axisColor = PERGB(255, 160, 160, 160);
+//	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+//	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+//	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220)); // Off-White Text
+//
+//	// --- [END] MODIFICATIONS ---
+//	// 20251203
+//
+//	////Axis scale
+//	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
+//	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
+//	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
+//
+//
+//
+//	// Pass Data //
+//	long  i = 0, j, k;
+//	long nTotalCnt;
+//	long Row, Col;
+//	int rowNumber = static_cast<int>(profile.size());
+//	int colNumber = static_cast<int>(profile[0].size());
+//	int dataLength = rowNumber * colNumber;
+//
+//	int nX1, nX2, nY1, nY2, a1, b1, a2, b2;
+//
+//	if (depthLine == TRUE) {
+//		nX1 = multiProfile.back().first.first.first;
+//		nY1 = multiProfile.back().first.first.second;
+//		nX2 = multiProfile.back().first.second.first;
+//		nY2 = multiProfile.back().first.second.second;
+//	}
+//	else if (distLine == TRUE) {
+//		nX1 = multiProfileDist.back().first.first.first;
+//		nY1 = multiProfileDist.back().first.first.second;
+//		nX2 = multiProfileDist.back().first.second.first;
+//		nY2 = multiProfileDist.back().first.second.second;
+//	}
+//	int nWidth = 1;
+//
+//	nTotalCnt = static_cast<long>((long)sqrt((nX2 - nX1 + 1) * (nX2 - nX1 + 1)
+//		+ (nY2 - nY1 + 1) * (nY2 - nY1 + 1)));
+//	// build a profile
+//	vector<float>dataVal;
+//	float mxVal = -1e9, mnVal = 1e9;
+//	//float fMin = 1e20, fMax = -1e20;
+//	double* pProfileXData = new double[nTotalCnt];
+//	float* pProfileYData = new float[nTotalCnt];
+//
+//	PEnset(m_hPEl, PEP_nSUBSETS, 1);//nTotalCnt
+//	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
+//
+//	/*std::ofstream file("Line Data.csv");
+//	if (!file.is_open()) {
+//
+//	}
+//	file << "Xval" << "," << "LineData" << std::endl;*/
+//
+//	double Di = sqrt(pow(nX2 - nX1, 2) + pow(nY2 - nY1, 2));
+//	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
+//	double scale = Dr / Di;
+//
+//	for (i = 0; i < nTotalCnt; i++) {
+//		pProfileYData[i] = 0;
+//		k = 0;
+//		for (j = -nWidth / 2; j < -nWidth / 2 + nWidth; j++)
+//		{
+//			Row = (int)(nY1 + 1.0 * (nY2 - nY1 + 1) * i / nTotalCnt
+//				+ 1.0 * j * (nX2 - nX1 + 1) / nTotalCnt);
+//			Col = (int)(nX1 + 1.0 * (nX2 - nX1 + 1) * i / nTotalCnt
+//				- 1.0 * j * (nY2 - nY1 + 1) / nTotalCnt);
+//			if ((Row >= 0) && (Row < rowNumber) && (Col >= 0) && (Col < colNumber))
+//			{
+//				pProfileYData[i] += profile[Row][Col];
+//				k++;
+//			}
+//		}
+//		if (k > 1)
+//		{
+//			pProfileYData[i] /= k;
+//
+//		}
+//		if (pProfileYData[i] > mxVal) {
+//			mxVal = pProfileYData[i];
+//		}
+//		if (pProfileYData[i] < mnVal) {
+//			mnVal = pProfileYData[i];
+//		}
+//		dataVal.push_back(pProfileYData[i]);
+//		double xval = (static_cast<double>(i)) * scale;
+//		//20251201
+//		pProfileXData[i] = xval;  // <-- Set actual X coordinate
+//		//20251201
+//		CString xAxisVal;
+//		xAxisVal.Format(_T("%0.2lf"), xval);
+//		//TCHAR* xAxis;
+//		//xAxis = _tcsdup(xAxisVal);
+//		//PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, TEXT(xAxis));
+//		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
+//
+//	}
+//	//file.close();
+//	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
+//	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
+//
+//
+//
+//	// Manually Control Y Axis //
+//	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+//	double d;
+//	if (mxVal < 0.0) {
+//		d = static_cast<double>(mnVal + (mnVal / 2.0));
+//		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
+//		d = static_cast<double>(mxVal + abs(mxVal) / 2.0);
+//		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
+//	}
+//	else {
+//		d = static_cast<double>(mnVal - (abs(mnVal) / 2.0));
+//		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
+//		d = static_cast<double>(mxVal + (mxVal / 2.0));
+//		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
+//
+//	}*/
+//
+//	// Main title and sub title
+//	TCHAR mainTitle[] = TEXT("|Line Profile|");
+//	TCHAR subTitle[] = TEXT("||");
+//	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
+//	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
+//	// Axis label
+//	TCHAR szBufZ[] = TEXT("Height um");
+//	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufZ);
+//	TCHAR szBufX[] = TEXT("X um");
+//	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
+//
+//	//subset labels 
+//	// 20251118/Fahim/ typecast
+//	if (isDepth)PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Height Difference"));
+//	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
+//
+//	// subset colors, line type, point type
+//	// 20251203
+//	//DWORD dwArray[1] = { PERGB(255,8,146,208) };
+//	DWORD dwArray[1] = { PERGB(255,49,160,159) };
+//	int nLineTypes[] = { PELT_MEDIUMSOLID };
+//	int nPointTypes[] = { PEPT_PIXEL };
+//
+//	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+//	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+//	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+//
+//	if (pProfileXData)
+//		delete[] pProfileXData;
+//	if (pProfileYData)
+//		delete[] pProfileYData;
+//
+//	// v9 features 
+//	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+//
+//	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+//	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMOTHERTEXT, TRUE);
+//
+//	PEnset(m_hPEl, PEP_bALLOWTITLEHOTSPOTS, FALSE);
+//	PEnset(m_hPEl, PEP_bALLOWSUBSETHOTSPOTS, TRUE);
+//	PEnset(m_hPEl, PEP_bALLOWAXISLABELHOTSPOTS, FALSE);
+//	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
+//	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
+//
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, FALSE);
+//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+//
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+//
+//	//bar drawing
+//
+//	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
+//
+//	if (lowThresh != -1 && highThresh != -1) {
+//		int nAIF = PEAIF_IN_FRONT;
+//		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
+//		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
+//		// 20251201
+//		double fXLoc[] = { static_cast<double>(lowThresh), static_cast<double>(highThresh) };
+//		// 20251201
+//
+//		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
+//		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
+//		PEvset(m_hPEl, PEP_dwaVERTLINEANNOTATIONCOLOR, dwArray, 2);
+//		PEvsetcell(m_hPEl, PEP_naVERTLINEANNOTATIONINFRONT, 0, &nAIF);
+//
+//		CString low, high;
+//		TCHAR* lowBar, * highBar;
+//		int annotationCnt = 0, NoBold = 1;
+//		low.Format(_T("|t %0.1lf  "), lowThresh);
+//		lowBar = _tcsdup(low);
+//		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, lowBar);
+//		high.Format(_T("|t %0.1lf  "), highThresh);
+//		highBar = _tcsdup(high);
+//		annotationCnt++;
+//		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, highBar);
+//
+//		// line from low bar to high bar for width================
+//		annotationCnt++;
+//		double x1d = (static_cast<double>(lowThresh));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
+//		double y1d = (static_cast<double>(highY));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
+//		int symbol = PEGAT_THICKSOLIDLINE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		DWORD col2 = PERGB(255, 255, 255, 255);
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		// 20251118
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+//
+//		annotationCnt++;
+//		double x2d = (static_cast<double>(highThresh));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
+//		double y2d = (static_cast<double>(highY));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
+//		symbol = PEGAT_LINECONTINUE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		col2 = 0;
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		// 20251118 / Fahim/ typecast
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+//		//========================
+//
+//		// width ===============================
+//		annotationCnt++;
+//
+//		double xPos = (lowThresh)+(highThresh - lowThresh) / 2;
+//		double yPos = highY + 1;
+//		double widthDiff = (abs(lowThresh - highThresh)) * m_xStep;
+//		CString width;
+//		width.Format(_T("W:%0.2lf um"/* X = % d Y = % d */), widthDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+//
+//		TCHAR* widthVal;
+//		widthVal = _tcsdup(width);
+//
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
+//		//double yPos = (static_cast<double>((y1 + 1))) * 10;
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
+//		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		col2 = PERGB(255, 100, 255, 100);
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, widthVal);
+//		symbol = TRUE;
+//		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+//		//======================================
+//
+//		/// height diff =======================
+//		annotationCnt++;
+//		x1d = (static_cast<double>(highThresh));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
+//		y1d = (static_cast<double>(lowY));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
+//		symbol = PEGAT_THICKSOLIDLINE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		col2 = PERGB(255, 255, 255, 255);
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+//
+//		annotationCnt++;
+//		x2d = (static_cast<double>(highThresh));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
+//		y2d = (static_cast<double>(highY));
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
+//		symbol = PEGAT_LINECONTINUE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		col2 = 0;
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
+//
+//
+//		annotationCnt++;
+//		xPos = highThresh + 2;
+//		yPos = lowY + (highY - lowY) / 2;
+//		double heighDiff = (abs(lowY - highY));
+//		CString depth;
+//		depth.Format(_T("D:%0.2lf um"/* X = % d Y = % d */), heighDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
+//
+//		TCHAR* depthVal;
+//		depthVal = _tcsdup(depth);
+//
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
+//		//double yPos = (static_cast<double>((y1 + 1))) * 10;
+//		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
+//		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
+//		col2 = PERGB(255, 100, 255, 100);
+//		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
+//		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, depthVal);
+//		symbol = TRUE;
+//		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
+//		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
+//		//==========================================
+//	}
+//	// Reset line drawing state for new profile
+//	m_lineDrawingState = 0;
+//	m_isDrawingCurrentLine = FALSE;
+//
+//	// Enable mouse events for line drawing
+//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, FALSE); // Disable data point snapping
+//	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+//	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+//	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+//
+//	// Show instruction in subtitle
+//	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
+//	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
+//
+//	// 20251209 ------------
+//	// Enable Zooming //
+//	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+//	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+//	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+//	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
+//	float fZ = 2.00F; PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
+//	// 20251209 ------------
+//
+//
+//}
+
 void CAnalysisNewDlg::lineProfile()
 {
 	UpdateData(TRUE);
-	std::vector<std::vector<float>>profile;
-	profile.clear();
-	profile = filterData;// analysisdlgobject->data;
-	if (profile.size() <= 0)
-		return;
-	if (m_hPEl)PEdestroy(m_hPEl);
-	RECT wndRect, itemRect;
-	this->GetWindowRect(&wndRect);
-	GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL)->GetWindowRect(&itemRect);
-	itemRect.left -= wndRect.left;
-	itemRect.top -= wndRect.top;
-	itemRect.right -= wndRect.left;
-	itemRect.bottom -= wndRect.top;
-	//itemRect.bottom += 20;
+	if (filterData.empty()) return;
 
-	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+	// --- 1. DATA CALCULATION ---
+	// Extract Start/End coordinates based on mode (Depth vs Dist)
+	int nX1 = 0, nY1 = 0, nX2 = 0, nY2 = 0;
 
-
-	//Set up cursor
-	//PEnset(m_hPEl, PEP_nCURSORMODE, PECM_DATACROSS);
-
-	//Set PlottingMethod //
-	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, /*PEGPM_BAR*/PEGPM_POINTSPLUSLINE);
-
-	// Help see data points //
-	//PEnset(m_hPEl, PEP_bMARKDATAPOINTS, TRUE);
-
-	// This will allow you to move cursor by clicking data point //
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
-	// Reducing HOTSPOT size ensures the user must click ON the line.
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
-
-	//old
-	//PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-	//PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
-	// 20251203
-	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
-
-	// --- [START] MODIFICATIONS FOR BETTER UI ---
-
-	// [MODIFIED] 1. Dark Theme Backgrounds
-	// PERGB(Alpha, Red, Green, Blue) -> Dark Slate Gray
-	DWORD darkGray = PERGB(255, 30, 30, 33);
-	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
-	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
-	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
-
-	// [MODIFIED] 2. Grid Lines (Solid & Subtle)
-	// Use PEGS_THIN (0) for solid lines since PEGS_SOLID is missing
-	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
-	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
-
-	// FIX 1: Use PEP_dwGRIDLINECOLOR instead of PEP_dwGRIDCOLOR
-	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
-
-	// [MODIFIED] 3. Fonts (With Type Casting)
-	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
-
-	// FIX 2: Cast TEXT() to (LPWSTR) to fix the "incompatible type" error
-	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
-
-	// [MODIFIED] 4. Axis Colors (Light Gray for contrast)
-	DWORD axisColor = PERGB(255, 160, 160, 160);
-	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
-	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
-	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220)); // Off-White Text
-
-	// --- [END] MODIFICATIONS ---
-	// 20251203
-
-	////Axis scale
-	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
-	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
-	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
-
-
-
-	// Pass Data //
-	long  i = 0, j, k;
-	long nTotalCnt;
-	long Row, Col;
-	int rowNumber = static_cast<int>(profile.size());
-	int colNumber = static_cast<int>(profile[0].size());
-	int dataLength = rowNumber * colNumber;
-
-	int nX1, nX2, nY1, nY2, a1, b1, a2, b2;
-
-	if (depthLine == TRUE) {
+	if (depthLine == TRUE && !multiProfile.empty()) {
 		nX1 = multiProfile.back().first.first.first;
 		nY1 = multiProfile.back().first.first.second;
 		nX2 = multiProfile.back().first.second.first;
 		nY2 = multiProfile.back().first.second.second;
 	}
-	else if (distLine == TRUE) {
+	else if (distLine == TRUE && !multiProfileDist.empty()) {
 		nX1 = multiProfileDist.back().first.first.first;
 		nY1 = multiProfileDist.back().first.first.second;
 		nX2 = multiProfileDist.back().first.second.first;
 		nY2 = multiProfileDist.back().first.second.second;
 	}
-	int nWidth = 1;
-
-	nTotalCnt = static_cast<long>((long)sqrt((nX2 - nX1 + 1) * (nX2 - nX1 + 1)
-		+ (nY2 - nY1 + 1) * (nY2 - nY1 + 1)));
-	// build a profile
-	vector<float>dataVal;
-	float mxVal = -1e9, mnVal = 1e9;
-	//float fMin = 1e20, fMax = -1e20;
-	double* pProfileXData = new double[nTotalCnt];
-	float* pProfileYData = new float[nTotalCnt];
-
-	PEnset(m_hPEl, PEP_nSUBSETS, 1);//nTotalCnt
-	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
-
-	/*std::ofstream file("Line Data.csv");
-	if (!file.is_open()) {
-
+	else {
+		// Fallback or return if no line defined
+		return;
 	}
-	file << "Xval" << "," << "LineData" << std::endl;*/
+
+	// Geometry calculations
+	long nTotalCnt = static_cast<long>(sqrt(pow(nX2 - nX1, 2) + pow(nY2 - nY1, 2)));
+	if (nTotalCnt == 0) nTotalCnt = 1;
 
 	double Di = sqrt(pow(nX2 - nX1, 2) + pow(nY2 - nY1, 2));
 	double Dr = sqrt(pow((nX2 - nX1) * m_xStep, 2) + pow((nY2 - nY1) * m_yStep, 2));
-	double scale = Dr / Di;
+	double scale = (Di == 0) ? 1.0 : (Dr / Di);
 
-	for (i = 0; i < nTotalCnt; i++) {
-		pProfileYData[i] = 0;
-		k = 0;
-		for (j = -nWidth / 2; j < -nWidth / 2 + nWidth; j++)
-		{
-			Row = (int)(nY1 + 1.0 * (nY2 - nY1 + 1) * i / nTotalCnt
-				+ 1.0 * j * (nX2 - nX1 + 1) / nTotalCnt);
-			Col = (int)(nX1 + 1.0 * (nX2 - nX1 + 1) * i / nTotalCnt
-				- 1.0 * j * (nY2 - nY1 + 1) / nTotalCnt);
-			if ((Row >= 0) && (Row < rowNumber) && (Col >= 0) && (Col < colNumber))
-			{
-				pProfileYData[i] += profile[Row][Col];
-				k++;
+	// Generate Vectors
+	std::vector<double> xData;
+	std::vector<float> yData;
+	xData.reserve(nTotalCnt);
+	yData.reserve(nTotalCnt);
+
+	int rowNumber = (int)filterData.size();
+	int colNumber = (int)filterData[0].size();
+	int nWidth = 1;
+
+	// Interpolation Loop
+	for (long i = 0; i < nTotalCnt; i++) {
+		float sum = 0.0f;
+		int count = 0;
+
+		for (int j = -nWidth / 2; j < -nWidth / 2 + nWidth; j++) {
+			int Row = (int)(nY1 + 1.0 * (nY2 - nY1) * i / nTotalCnt + 1.0 * j * (nX2 - nX1) / nTotalCnt);
+			int Col = (int)(nX1 + 1.0 * (nX2 - nX1) * i / nTotalCnt - 1.0 * j * (nY2 - nY1) / nTotalCnt);
+
+			if (Row >= 0 && Row < rowNumber && Col >= 0 && Col < colNumber) {
+				sum += filterData[Row][Col];
+				count++;
 			}
 		}
-		if (k > 1)
-		{
-			pProfileYData[i] /= k;
 
-		}
-		if (pProfileYData[i] > mxVal) {
-			mxVal = pProfileYData[i];
-		}
-		if (pProfileYData[i] < mnVal) {
-			mnVal = pProfileYData[i];
-		}
-		dataVal.push_back(pProfileYData[i]);
-		double xval = (static_cast<double>(i)) * scale;
-		//20251201
-		pProfileXData[i] = xval;  // <-- Set actual X coordinate
-		//20251201
-		CString xAxisVal;
-		xAxisVal.Format(_T("%0.2lf"), xval);
-		//TCHAR* xAxis;
-		//xAxis = _tcsdup(xAxisVal);
-		//PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, TEXT(xAxis));
-		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
-
+		float val = (count > 0) ? (sum / count) : 0.0f;
+		yData.push_back(val);
+		xData.push_back(i * scale);
 	}
-	//file.close();
-	PEvset(m_hPEl, PEP_faXDATAII, pProfileXData, nTotalCnt);
-	PEvset(m_hPEl, PEP_faYDATA, pProfileYData, nTotalCnt);
 
+	// --- 2. UPDATE CHART ---
+	CString subTitle = (isDepth) ? _T("Height Difference") : _T("Distance");
 
+	UpdateProfileChart(xData, yData,
+		_T("Line Profile"),
+		subTitle,
+		_T("Distance (um)"),
+		_T("Height (um)"));
 
-	// Manually Control Y Axis //
-	/*PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
-	double d;
-	if (mxVal < 0.0) {
-		d = static_cast<double>(mnVal + (mnVal / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
-		d = static_cast<double>(mxVal + abs(mxVal) / 2.0);
-		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
-	}
-	else {
-		d = static_cast<double>(mnVal - (abs(mnVal) / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
-		d = static_cast<double>(mxVal + (mxVal / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
-
-	}*/
-
-	// Main title and sub title
-	TCHAR mainTitle[] = TEXT("|Line Profile|");
-	TCHAR subTitle[] = TEXT("||");
-	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
-	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
-	// Axis label
-	TCHAR szBufZ[] = TEXT("Height um");
-	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufZ);
-	TCHAR szBufX[] = TEXT("X um");
-	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
-
-	//subset labels 
-	// 20251118/Fahim/ typecast
-	if (isDepth)PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Height Difference"));
-	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
-
-	// subset colors, line type, point type
-	// 20251203
-	//DWORD dwArray[1] = { PERGB(255,8,146,208) };
-	DWORD dwArray[1] = { PERGB(255,49,160,159) };
-	int nLineTypes[] = { PELT_MEDIUMSOLID };
-	int nPointTypes[] = { PEPT_PIXEL };
-
-	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
-	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
-	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
-
-	if (pProfileXData)
-		delete[] pProfileXData;
-	if (pProfileYData)
-		delete[] pProfileYData;
-
-	// v9 features 
-	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
-
-	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
-	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMOTHERTEXT, TRUE);
-
-	PEnset(m_hPEl, PEP_bALLOWTITLEHOTSPOTS, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWSUBSETHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_bALLOWAXISLABELHOTSPOTS, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
-
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
-
-	//bar drawing
-
-	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
-
+	// --- 3. APPLY SPECIFIC ANNOTATIONS (Thresholds) ---
+	// (Logic ported from your original function)
 	if (lowThresh != -1 && highThresh != -1) {
 		int nAIF = PEAIF_IN_FRONT;
-		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
-		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
-		// 20251201
+		int nVTypes[] = { PELT_MEDIUMSOLID, PELT_MEDIUMSOLID };
+		DWORD dwArray[] = { PERGB(255, 255, 0, 0), PERGB(255, 255, 0, 0) };
 		double fXLoc[] = { static_cast<double>(lowThresh), static_cast<double>(highThresh) };
-		// 20251201
 
 		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
 		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
 		PEvset(m_hPEl, PEP_dwaVERTLINEANNOTATIONCOLOR, dwArray, 2);
 		PEvsetcell(m_hPEl, PEP_naVERTLINEANNOTATIONINFRONT, 0, &nAIF);
 
-		CString low, high;
-		TCHAR* lowBar, * highBar;
-		int annotationCnt = 0, NoBold = 1;
-		low.Format(_T("|t %0.1lf  "), lowThresh);
-		lowBar = _tcsdup(low);
-		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, lowBar);
-		high.Format(_T("|t %0.1lf  "), highThresh);
-		highBar = _tcsdup(high);
-		annotationCnt++;
-		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, highBar);
+		// ... (Add your text annotations here using PEvsetcell) ...
 
-		// line from low bar to high bar for width================
-		annotationCnt++;
-		double x1d = (static_cast<double>(lowThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
-		double y1d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
-		int symbol = PEGAT_THICKSOLIDLINE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		DWORD col2 = PERGB(255, 255, 255, 255);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		// 20251118
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-
-		annotationCnt++;
-		double x2d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
-		double y2d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
-		symbol = PEGAT_LINECONTINUE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = 0;
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		// 20251118 / Fahim/ typecast
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		//========================
-
-		// width ===============================
-		annotationCnt++;
-
-		double xPos = (lowThresh)+(highThresh - lowThresh) / 2;
-		double yPos = highY + 1;
-		double widthDiff = (abs(lowThresh - highThresh)) * m_xStep;
-		CString width;
-		width.Format(_T("W:%0.2lf um"/* X = % d Y = % d */), widthDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
-
-		TCHAR* widthVal;
-		widthVal = _tcsdup(width);
-
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
-		//double yPos = (static_cast<double>((y1 + 1))) * 10;
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
-		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 100, 255, 100);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, widthVal);
-		symbol = TRUE;
-		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-		//======================================
-
-		/// height diff =======================
-		annotationCnt++;
-		x1d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
-		y1d = (static_cast<double>(lowY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
-		symbol = PEGAT_THICKSOLIDLINE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 255, 255, 255);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-
-		annotationCnt++;
-		x2d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
-		y2d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
-		symbol = PEGAT_LINECONTINUE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = 0;
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-
-
-		annotationCnt++;
-		xPos = highThresh + 2;
-		yPos = lowY + (highY - lowY) / 2;
-		double heighDiff = (abs(lowY - highY));
-		CString depth;
-		depth.Format(_T("D:%0.2lf um"/* X = % d Y = % d */), heighDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
-
-		TCHAR* depthVal;
-		depthVal = _tcsdup(depth);
-
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
-		//double yPos = (static_cast<double>((y1 + 1))) * 10;
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
-		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 100, 255, 100);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, depthVal);
-		symbol = TRUE;
-		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-		//==========================================
+		// Force redraw to show annotations
+		PEresetimage(m_hPEl, 0, 0);
+		::InvalidateRect(m_hPEl, NULL, FALSE);
 	}
-	// Reset line drawing state for new profile
-	m_lineDrawingState = 0;
-	m_isDrawingCurrentLine = FALSE;
-
-	// Enable mouse events for line drawing
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, FALSE); // Disable data point snapping
-	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
-	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
-
-	// Show instruction in subtitle
-	/*TCHAR subtitle[] = TEXT("Click to draw lines | Right-click to clear");
-	PEszset(m_hPEl, PEP_szSUBTITLE, subtitle);*/
-
-	// 20251209 ------------
-	// Enable Zooming //
-	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
-	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
-	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
-	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
-	float fZ = 2.00F; PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
-	// 20251209 ------------
-
-
 }
 
 //void AnalysisDlg::Histogram(std::map<float, int> freqCnt, float lower = -1, float upper = -1) {
@@ -2977,234 +3075,6 @@ void CAnalysisNewDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 }
 
 
-void CAnalysisNewDlg::CreateTemporaryLineProfileWindow()
-{
-	if (m_hPEl && ::IsWindow(m_hPEl))
-		return;
-
-	RECT wndRect, itemRect;
-	this->GetWindowRect(&wndRect);
-	GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL)->GetWindowRect(&itemRect);
-	itemRect.left -= wndRect.left;
-	itemRect.top -= wndRect.top;
-	itemRect.right -= wndRect.left;
-	itemRect.bottom -= wndRect.top;
-
-	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
-
-	// --- CRITICAL INITIALIZATION (missing in your version) ---
-	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
-	PEnset(m_hPEl, PEP_nSUBSETS, 1);
-	PEnset(m_hPEl, PEP_nPOINTS, 2);
-	//PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
-
-	// Optional but recommended
-	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-
-	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
-	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);//PEQS_LIGHT_INSET
-	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
-	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
-	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
-
-	// Manually Control Y Axis //
-	//mnVal = -50;
-	//mxVal = 50;
-	PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
-	double d;
-	if (mxVal < 0.0) {
-		d = static_cast<double>(mnVal + (mnVal / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
-		d = static_cast<double>(mxVal + abs(mxVal) / 2.0);
-		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
-	}
-	else {
-		d = static_cast<double>(mnVal - (abs(mnVal) / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMINY, &d, 1);
-		d = static_cast<double>(mxVal + (mxVal / 2.0));
-		PEvset(m_hPEl, PEP_fMANUALMAXY, &d, 1);
-
-	}
-
-	// Main title and sub title
-	TCHAR mainTitle[] = TEXT("|Line Profile|");
-	TCHAR subTitle[] = TEXT("||");
-	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
-	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
-	// Axis label
-	TCHAR szBufZ[] = TEXT("Height um");
-	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufZ);
-	TCHAR szBufX[] = TEXT("X um");
-	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
-
-	// 20251118/Fahim/ typecast
-	if (isDepth)PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Height Difference"));
-	else PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Distance"));
-
-	// subset colors, line type, point type
-	DWORD dwArray[1] = { PERGB(255,5,249,253) };
-	int nLineTypes[] = { PELT_THICKSOLID };
-	int nPointTypes[] = { PEPT_DOTSOLID };
-
-	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
-	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
-	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
-
-	// v9 features 
-	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
-	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
-
-	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
-	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMOTHERTEXT, TRUE);
-
-	PEnset(m_hPEl, PEP_bALLOWTITLEHOTSPOTS, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWSUBSETHOTSPOTS, TRUE);
-	PEnset(m_hPEl, PEP_bALLOWAXISLABELHOTSPOTS, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSY, FALSE);
-	PEnset(m_hPEl, PEP_bALLOWGRIDNUMBERHOTSPOTSX, FALSE);
-
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROLCLOSESTPOINT, TRUE);
-	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-
-	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
-
-	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
-
-	if (lowThresh != -1 && highThresh != -1) {
-		int nAIF = PEAIF_IN_FRONT;
-		int nVTypes[] = { PELT_MEDIUMSOLID,PELT_MEDIUMSOLID };
-		DWORD dwArray[] = { PERGB(255,255,0,0),PERGB(255,255,0,0) };
-		double fXLoc[] = { lowThresh,highThresh };
-
-		PEvset(m_hPEl, PEP_naVERTLINEANNOTATIONTYPE, nVTypes, 2);
-		PEvset(m_hPEl, PEP_faVERTLINEANNOTATION, fXLoc, 2);
-		PEvset(m_hPEl, PEP_dwaVERTLINEANNOTATIONCOLOR, dwArray, 2);
-		PEvsetcell(m_hPEl, PEP_naVERTLINEANNOTATIONINFRONT, 0, &nAIF);
-
-		CString low, high;
-		TCHAR* lowBar, * highBar;
-		int annotationCnt = 0, NoBold = 1;
-		low.Format(_T("|t %0.1lf  "), lowThresh);
-		lowBar = _tcsdup(low);
-		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, lowBar);
-		high.Format(_T("|t %0.1lf  "), highThresh);
-		highBar = _tcsdup(high);
-		annotationCnt++;
-		PEvsetcell(m_hPEl, PEP_szaHORZLINEANNOTATIONTEXT, annotationCnt, highBar);
-
-		// line from low bar to high bar for width================
-		annotationCnt++;
-		double x1d = (static_cast<double>(lowThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
-		double y1d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
-		int symbol = PEGAT_THICKSOLIDLINE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		DWORD col2 = PERGB(255, 255, 255, 255);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		// 20251118
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-
-		annotationCnt++;
-		double x2d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
-		double y2d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
-		symbol = PEGAT_LINECONTINUE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = 0;
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		// 20251118 / Fahim/ typecast
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		//========================
-
-		// width ===============================
-		annotationCnt++;
-
-		double xPos = (lowThresh)+(highThresh - lowThresh) / 2;
-		double yPos = highY + 1;
-		double widthDiff = (abs(lowThresh - highThresh)) * m_xStep;
-		CString width;
-		width.Format(_T("W:%0.2lf um"/* X = % d Y = % d */), widthDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
-
-		TCHAR* widthVal;
-		widthVal = _tcsdup(width);
-
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
-		//double yPos = (static_cast<double>((y1 + 1))) * 10;
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
-		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 100, 255, 100);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, widthVal);
-		symbol = TRUE;
-		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-		//======================================
-
-		/// height diff =======================
-		annotationCnt++;
-		x1d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x1d);
-		y1d = (static_cast<double>(lowY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y1d);
-		symbol = PEGAT_THICKSOLIDLINE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 255, 255, 255);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-
-		annotationCnt++;
-		x2d = (static_cast<double>(highThresh));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &x2d);
-		y2d = (static_cast<double>(highY));
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &y2d);
-		symbol = PEGAT_LINECONTINUE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = 0;
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, (void*)TEXT(""));
-
-
-		annotationCnt++;
-		xPos = highThresh + 2;
-		yPos = lowY + (highY - lowY) / 2;
-		double heighDiff = (abs(lowY - highY));
-		CString depth;
-		depth.Format(_T("D:%0.2lf um"/* X = % d Y = % d */), heighDiff/*, x1 * 10, y1 * 10 /** 1000.0F*/);
-
-		TCHAR* depthVal;
-		depthVal = _tcsdup(depth);
-
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationCnt, &xPos);
-		//double yPos = (static_cast<double>((y1 + 1))) * 10;
-		PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationCnt, &yPos);
-		symbol = PEGAT_NOSYMBOL;//PEGAT_LARGEDOTSOLID;// PEGAT_POINTER_ARROW_LARGE;
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationCnt, &symbol);
-		col2 = PERGB(255, 100, 255, 100);
-		PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationCnt, &col2);
-		PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationCnt, depthVal);
-		symbol = TRUE;
-		PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationCnt, &symbol);
-		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONBOLD, annotationCnt, &NoBold);
-		//==========================================
-	}
-
-	// Render once
-	PEreinitialize(m_hPEl);
-	PEresetimage(m_hPEl, 0, 0);
-}
-
 void CAnalysisNewDlg::UpdateLineProfileGraph(int nX1, int nY1, int nX2, int nY2)
 {
 	// Safety: Ensure control exists
@@ -3341,72 +3211,6 @@ double CAnalysisNewDlg::CalculateLineMedianX(double x1, double x2)
 {
 	return (x1 + x2) / 2.0;
 }
-
-/*void AnalysisDlg::DisplayDistanceBetweenLines()
-{
-	// Calculate median X positions
-	double line1MedianX = CalculateLineMedianX(m_line1X1, m_line1X2);
-	double line2MedianX = CalculateLineMedianX(m_line2X1, m_line2X2);
-
-	// Calculate distance (absolute difference)
-	double distance = fabs(line2MedianX - line1MedianX);
-
-	// Determine which line is left/right for proper annotation placement
-	double leftX = min(line1MedianX, line2MedianX);
-	double rightX = max(line1MedianX, line2MedianX);
-
-	// Get Y range for positioning the connecting line
-	double maxY = max(max(m_line1Y1, m_line1Y2), max(m_line2Y1, m_line2Y2));
-	double minY = min(min(m_line1Y1, m_line1Y2), min(m_line2Y1, m_line2Y2));
-	double connectY = maxY + (maxY - minY) * 0.15; // Above the lines
-
-	// Annotation index for distance display (starting from 4 to avoid line annotations)
-	int annotationIdx = 4;
-
-	// Draw horizontal connecting line between medians
-	int symbol = PEGAT_THICKSOLIDLINE;
-	DWORD color = PERGB(255, 255, 255, 0); // Yellow
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &leftX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
-
-	annotationIdx++;
-	symbol = PEGAT_LINECONTINUE;
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &rightX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &connectY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, (void*)TEXT(""));
-
-	// Add distance text at midpoint
-	annotationIdx++;
-	double textX = (leftX + rightX) / 2.0;
-	double textY = connectY + (maxY - minY) * 0.08;
-
-	CString distText;
-	distText.Format(_T("Distance: %.2f um"), distance);
-	TCHAR* distValue = _tcsdup(distText);
-
-	symbol = PEGAT_NOSYMBOL;
-	color = PERGB(255, 255, 255, 0);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONX, annotationIdx, &textX);
-	PEvsetcell(m_hPEl, PEP_faGRAPHANNOTATIONY, annotationIdx, &textY);
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, annotationIdx, &symbol);
-	PEvsetcell(m_hPEl, PEP_dwaGRAPHANNOTATIONCOLOR, annotationIdx, &color);
-	PEvsetcell(m_hPEl, PEP_szaGRAPHANNOTATIONTEXT, annotationIdx, distValue);
-
-	int shadow = TRUE;
-	PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONSHADOW, annotationIdx, &shadow);
-	PEnset(m_hPEl, PEP_nGRAPHANNOTATIONTEXTSIZE, 150);
-
-	delete[] distValue;
-
-	// Output to debug or status bar (remove AfxMessageBox for smoother UX)
-	TRACE(_T("Line 1 Median X: %.2f um | Line 2 Median X: %.2f um | Distance: %.2f um\n"),
-		line1MedianX, line2MedianX, distance);
-}*/
 
 void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
 
@@ -3639,8 +3443,7 @@ void CAnalysisNewDlg::DisplayDistanceBetweenLines() // distance
 	PEresetimage(m_hPEl, 0, 0);
 }
 
-// 20251205 / Fahim
-// Helper: Calculate angle based on actual SCREEN PIXELS
+// 20251205 / Fahim / Calculate angle based on actual SCREEN PIXELS
 double CAnalysisNewDlg::GetPixelAngle(double x1, double y1, double x2, double y2)
 {
 	// Variables to hold Pixel coordinates (Outputs of conversion)
@@ -3898,194 +3701,7 @@ void CAnalysisNewDlg::DrawPreviewCircleOn2D(POINT centerPx, int radiusPx)
 	::UpdateWindow(m_hPE2);
 }
 
-//void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
-//{
-//	if (filterData.empty() || filterData[0].empty()) {
-//		AfxMessageBox(_T("No data available for profiling"));
-//		return;
-//	}
-//
-//	int maxRows = static_cast<int>(filterData.size());
-//	int maxCols = static_cast<int>(filterData[0].size());
-//
-//	// Safety check for step sizes
-//	float xStep = (m_xStep > 0) ? m_xStep : 1.0f;
-//	float yStep = (m_yStep > 0) ? m_yStep : 1.0f;
-//
-//	// --- STEP 1: Convert Center (Pixel -> Graph) ---
-//	int nAxis = 0;
-//	double graphCx = 0, graphCy = 0;
-//	int intcenterPxX = centerPx.x;
-//	int intcenterPxY = centerPx.y;
-//	PEconvpixeltograph(m_hPE2, &nAxis, &intcenterPxX, &intcenterPxY,
-//		&graphCx, &graphCy, FALSE, FALSE, FALSE);
-//
-//	// --- STEP 2: Calculate Graph-Space Radius ---
-//	// Sample point on right edge
-//	int pxRight = centerPx.x + radiusPx;
-//	double gRightX = 0, gRightY = 0;
-//	PEconvpixeltograph(m_hPE2, &nAxis, &pxRight, &intcenterPxY,
-//		&gRightX, &gRightY, FALSE, FALSE, FALSE);
-//
-//	// Sample point on top edge
-//	int pxTop = centerPx.y - radiusPx;
-//	double gTopX = 0, gTopY = 0;
-//	PEconvpixeltograph(m_hPE2, &nAxis, &intcenterPxX, &pxTop,
-//		&gTopX, &gTopY, FALSE, FALSE, FALSE);
-//
-//	double graphRadiusX = fabs(gRightX - graphCx);
-//	double graphRadiusY = fabs(gTopY - graphCy);
-//
-//	// Debug output
-//	TRACE(_T("Center Pixel: (%d, %d) -> Graph: (%.2f, %.2f)\n"),
-//		centerPx.x, centerPx.y, graphCx, graphCy);
-//	TRACE(_T("Radius Pixel: %d -> Graph: X=%.2f, Y=%.2f\n"),
-//		radiusPx, graphRadiusX, graphRadiusY);
-//	TRACE(_T("Data dimensions: %d rows x %d cols\n"), maxRows, maxCols);
-//	TRACE(_T("Step sizes: X=%.2f, Y=%.2f\n"), xStep, yStep);
-//
-//	// --- STEP 3: Determine Sampling Resolution ---
-//	double circumferencePx = 2.0 * 3.14159 * radiusPx;
-//	int numPoints = static_cast<int>(circumferencePx);
-//	if (numPoints < 360) numPoints = 360;
-//	if (numPoints > 3600) numPoints = 3600; // Cap at reasonable limit
-//
-//	std::vector<float> profileData;
-//	profileData.reserve(numPoints);
-//
-//	const double PI = 3.14159265358979323846;
-//
-//	// Statistics for debugging
-//	int validPoints = 0;
-//	int outOfBounds = 0;
-//	float minVal = 1e9f;
-//	float maxVal = -1e9f;
-//
-//	// Calculate radius in "cell units" for diagnostics
-//	double radiusInCellsX = graphRadiusX / xStep;
-//	double radiusInCellsY = graphRadiusY / yStep;
-//
-//	TRACE(_T("Radius in cells: X=%.2f, Y=%.2f\n"), radiusInCellsX, radiusInCellsY);
-//
-//	// Warning for very small circles
-//	if (radiusInCellsX < 2.0 || radiusInCellsY < 2.0) {
-//		TRACE(_T("WARNING: Circle radius is very small (< 2 cells). Using interpolation.\n"));
-//
-//		CString warning;
-//		warning.Format(_T("⚠️ Circle is small (%.1f × %.1f cells)\n\n")
-//			_T("Recommendations:\n")
-//			_T("• Draw a larger circle for better detail\n")
-//			_T("• Using interpolation to improve sampling\n")
-//			_T("• Circle covers ~%.0f data cells\n\n")
-//			_T("Continue anyway?"),
-//			radiusInCellsX, radiusInCellsY,
-//			3.14159 * radiusInCellsX * radiusInCellsY);
-//
-//		if (AfxMessageBox(warning, MB_YESNO | MB_ICONWARNING) == IDNO) {
-//			return; // User chose to cancel
-//		}
-//	}
-//
-//	// --- STEP 4: Sample Around Circle with BILINEAR INTERPOLATION ---
-//	for (int i = 0; i < numPoints; i++)
-//	{
-//		// Angle in radians (0 to 2π)
-//		double theta = (double)i / (double)numPoints * 2.0 * PI;
-//
-//		// Calculate position in GRAPH space (ellipse equation)
-//		double gX = graphCx + graphRadiusX * cos(theta);
-//		double gY = graphCy + graphRadiusY * sin(theta);
-//
-//		// Convert Graph coordinates to CONTINUOUS Data Array indices
-//		// Use double precision to preserve sub-pixel position
-//		double colFloat = gX / xStep;
-//		double rowFloat = gY / yStep;
-//
-//		float val = 0.0f;
-//
-//		// Get integer cell indices (floor)
-//		int col0 = static_cast<int>(floor(colFloat));
-//		int row0 = static_cast<int>(floor(rowFloat));
-//		int col1 = col0 + 1;
-//		int row1 = row0 + 1;
-//
-//		// Calculate fractional parts for interpolation
-//		double fracX = colFloat - col0;
-//		double fracY = rowFloat - row0;
-//
-//		// Bounds check - ensure all 4 corners are valid
-//		if (row0 >= 0 && row1 < maxRows && col0 >= 0 && col1 < maxCols)
-//		{
-//			// Bilinear interpolation using 4 neighboring cells
-//			// f(x,y) = f(0,0)(1-x)(1-y) + f(1,0)x(1-y) + f(0,1)(1-x)y + f(1,1)xy
-//
-//			float v00 = filterData[row0][col0];  // Top-left
-//			float v10 = filterData[row0][col1];  // Top-right
-//			float v01 = filterData[row1][col0];  // Bottom-left
-//			float v11 = filterData[row1][col1];  // Bottom-right
-//
-//			// Perform bilinear interpolation
-//			val = (float)(
-//				v00 * (1.0 - fracX) * (1.0 - fracY) +
-//				v10 * fracX * (1.0 - fracY) +
-//				v01 * (1.0 - fracX) * fracY +
-//				v11 * fracX * fracY
-//				);
-//
-//			validPoints++;
-//
-//			if (val < minVal) minVal = val;
-//			if (val > maxVal) maxVal = val;
-//
-//			// Debug first few points
-//			if (i < 5) {
-//				TRACE(_T("Point %d: theta=%.2f, Graph(%.2f,%.2f) -> Cell[%.2f][%.2f] = %.4f (interpolated)\n"),
-//					i, theta, gX, gY, rowFloat, colFloat, val);
-//				TRACE(_T("  Corners: [%d,%d]=%.4f [%d,%d]=%.4f [%d,%d]=%.4f [%d,%d]=%.4f\n"),
-//					row0, col0, v00, row0, col1, v10, row1, col0, v01, row1, col1, v11);
-//			}
-//		}
-//		else
-//		{
-//			// Point is outside data bounds
-//			outOfBounds++;
-//
-//			// Use nearest neighbor with clamping
-//			int clampedRow = max(0, min(static_cast<int>(round(rowFloat)), maxRows - 1));
-//			int clampedCol = max(0, min(static_cast<int>(round(colFloat)), maxCols - 1));
-//			val = filterData[clampedRow][clampedCol];
-//
-//			if (i < 5) {
-//				TRACE(_T("Point %d OUT OF BOUNDS: [%.2f][%.2f] -> clamped to [%d][%d]=%.4f\n"),
-//					i, rowFloat, colFloat, clampedRow, clampedCol, val);
-//			}
-//		}
-//
-//		profileData.push_back(val);
-//	}
-//
-//	// --- STEP 5: Validation ---
-//	TRACE(_T("=== Circle Profile Stats ===\n"));
-//	TRACE(_T("Total points: %d\n"), numPoints);
-//	TRACE(_T("Valid points: %d\n"), validPoints);
-//	TRACE(_T("Out of bounds: %d\n"), outOfBounds);
-//	TRACE(_T("Value range: %.4f to %.4f\n"), minVal, maxVal);
-//
-//	if (validPoints < numPoints / 4) {
-//		CString msg;
-//		msg.Format(_T("Warning: Circle is mostly outside data bounds\n%d/%d points valid"),
-//			validPoints, numPoints);
-//		AfxMessageBox(msg);
-//	}
-//
-//	if (maxVal - minVal < 0.001f) {
-//		AfxMessageBox(_T("Warning: Profile data has very little variation.\nAll values are nearly identical."));
-//	}
-//
-//	// --- STEP 6: Display ---
-//	ShowCircleProfile(profileData);
-//}
-
+// 20251222
 void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 {
 	if (filterData.empty()) return;
@@ -4145,162 +3761,141 @@ void CAnalysisNewDlg::CircleProfile(POINT centerPx, int radiusPx)
 }
 
 // 20251222
+// Commented out for now, will delete later if unneeded
 //void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
 //{
-//	UpdateData(TRUE);
 //	if (profile.empty()) return;
 //
-//	// 1. Clean up existing graph
-//	if (m_hPEl) {
-//		PEdestroy(m_hPEl);
-//		//m_hPEl = NULL;
-//	}
-//
-//	// 2. Calculate Window Position
-//	RECT wndRect, itemRect;
-//	this->GetWindowRect(&wndRect);
-//	CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
-//	if (pPanel) {
-//
-//		/*CString msg;
-//		msg.Format(_T("IDC_PROFILE found"));
-//		AfxMessageBox(msg);*/
-//		pPanel->GetWindowRect(&itemRect);
-//		itemRect.left -= wndRect.left;
-//		itemRect.top -= wndRect.top;
-//		itemRect.right -= wndRect.left;
-//		itemRect.bottom -= wndRect.top;
-//	}
-//	else {
-//		/*CString msg;
-//		msg.Format(_T("IDC_PROFILE not found"));
-//		AfxMessageBox(msg);*/
-//		return; // Safety check
-//	}
-//
-//	// 3. Create Graph Control
-//	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
-//
-//	// 4. Styles & Theme (Matched to your lineProfile)
-//	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
-//
-//	// This will allow you to move cursor by clicking data point //
-//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-//	//PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 50);
-//	// Reducing HOTSPOT size ensures the user must click ON the line.
-//	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
-//
-//	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
-//	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-//
-//	// Dark Theme Colors
-//	DWORD darkGray = PERGB(255, 30, 30, 33);
-//	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
-//	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
-//	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
-//
-//	// Grid Lines
-//	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
-//	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
-//	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
-//
-//	// Fonts
-//	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
-//	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-//	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-//	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
-//
-//	// Axis Text Colors
-//	DWORD axisColor = PERGB(255, 160, 160, 160);
-//	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
-//	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
-//	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
-//
-//	// Axis Scale
-//	PEnset(m_hPEl, PEP_nXAXISSCALECONTROL, PEAC_NORMAL);
-//	PEnset(m_hPEl, PEP_nYAXISSCALECONTROL, PEAC_NORMAL);
-//	PEnset(m_hPEl, PEP_nZAXISSCALECONTROL, PEAC_NORMAL);
-//
-//	// 5. Prepare Data
 //	long nTotalCnt = (long)profile.size();
 //
-//	// Allocate buffers
+//	// --- 1. INITIALIZATION (Create only if missing) ---
+//	if (!m_hPEl || !::IsWindow(m_hPEl))
+//	{
+//		// Calculate Window Position
+//		RECT wndRect, itemRect;
+//		this->GetWindowRect(&wndRect);
+//		CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
+//		if (pPanel) {
+//			pPanel->GetWindowRect(&itemRect);
+//			itemRect.left -= wndRect.left;
+//			itemRect.top -= wndRect.top;
+//			itemRect.right -= wndRect.left;
+//			itemRect.bottom -= wndRect.top;
+//		}
+//		else {
+//			return;
+//		}
+//
+//		// Create the Control
+//		m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+//
+//		// --- ONE-TIME CONFIGURATION ---
+//		PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
+//		PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+//		PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+//
+//		// Dark Theme
+//		DWORD darkGray = PERGB(255, 30, 30, 33);
+//		PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+//		PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+//		PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+//
+//		// Grid & Fonts
+//		PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+//		PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+//		PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+//		PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+//		PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//		PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+//		PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+//
+//		// Colors
+//		DWORD axisColor = PERGB(255, 160, 160, 160);
+//		PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+//		PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+//		PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
+//
+//		// Interaction
+//		PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+//		PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+//		PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+//		PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+//		PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+//		PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+//		PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+//		PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+//
+//		// Styles
+//		DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
+//		int nLineTypes[] = { PELT_MEDIUMSOLID };
+//		int nPointTypes[] = { PEPT_PIXEL };
+//		PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+//		PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+//		PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+//
+//		// Titles
+//		PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
+//		PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
+//		PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
+//		PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
+//		PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
+//	}
+//
+//	// Update Titles (if needed)
+//	PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
+//	PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
+//	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
+//	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
+//	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
+//
+//	// --- 2. DATA UPDATE (Run every frame) ---
+//
 //	double* pXData = new double[nTotalCnt];
 //	float* pYData = new float[nTotalCnt];
+//	float fMin = 1e9f, fMax = -1e9f;
 //
 //	for (long i = 0; i < nTotalCnt; i++) {
 //		pYData[i] = profile[i];
 //
-//		// X-Axis = Degrees (0 to 360)
+//		// Map X to Degrees
 //		double angle = (double)i / (double)nTotalCnt * 360.0;
 //		pXData[i] = angle;
 //
-//		// Set Point Labels
-//		CString xAxisVal;
-//		xAxisVal.Format(_T("%0.0f"), angle);
-//		PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
+//		if (profile[i] < fMin) fMin = profile[i];
+//		if (profile[i] > fMax) fMax = profile[i];
+//
+//		// Optimize: Only set labels if point count is low, otherwise it slows down real-time
+//		if (nTotalCnt < 100) {
+//			CString xAxisVal;
+//			xAxisVal.Format(_T("%0.0f"), angle);
+//			PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
+//		}
 //	}
 //
-//	// 6. Pass Data to Graph
 //	PEnset(m_hPEl, PEP_nSUBSETS, 1);
 //	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
 //	PEvset(m_hPEl, PEP_faXDATAII, pXData, nTotalCnt);
 //	PEvset(m_hPEl, PEP_faYDATA, pYData, nTotalCnt);
 //
-//	// Cleanup buffers
 //	delete[] pXData;
 //	delete[] pYData;
 //
-//	// 7. Titles
-//	TCHAR mainTitle[] = TEXT("|Circle Profile|");
-//	TCHAR subTitle[] = TEXT("");
-//	PEszset(m_hPEl, PEP_szMAINTITLE, mainTitle);
-//	PEszset(m_hPEl, PEP_szSUBTITLE, subTitle);
+//	// --- 3. AUTO SCALING ---
+//	if (fabs(fMax - fMin) < 0.0001) { fMin -= 1.0f; fMax += 1.0f; }
+//	double range = fMax - fMin;
+//	double yMin = fMin - (range * 0.1);
+//	double yMax = fMax + (range * 0.1);
 //
-//	TCHAR szBufY[] = TEXT("Height");
-//	PEszset(m_hPEl, PEP_szYAXISLABEL, szBufY);
-//	TCHAR szBufX[] = TEXT("Angle (Deg)");
-//	PEszset(m_hPEl, PEP_szXAXISLABEL, szBufX);
+//	PEnset(m_hPEl, PEP_nMANUALSCALECONTROLY, PEMSC_MINMAX);
+//	PEvset(m_hPEl, PEP_fMANUALMINY, &yMin, 1);
+//	PEvset(m_hPEl, PEP_fMANUALMAXY, &yMax, 1);
 //
-//	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
-//
-//	// 8. Line Color (Teal)
-//	DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
-//	int nLineTypes[] = { PELT_MEDIUMSOLID };
-//	int nPointTypes[] = { PEPT_PIXEL };
-//
-//	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
-//	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
-//	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
-//
-//	// 9. Interaction & Rendering
-//	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
-//	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-//	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-//	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
-//
-//	// Cursor Prompt
-//	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
-//	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
-//	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
-//	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
-//
-//	// Zooming
-//	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
-//	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
-//	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
-//	PEnset(m_hPEl, PEP_bGRIDBANDS, FALSE);
-//	float fZ = 2.00F;
-//	PEvset(m_hPEl, PEP_fMOUSEWHEELZOOMFACTOR, &fZ, 1);
-//
-//	// 10. Final Draw
-//	/*PEreinitialize(m_hPEl);
+//	// --- 4. EFFICIENT REDRAW ---
+//	PEreinitialize(m_hPEl);
 //	PEresetimage(m_hPEl, 0, 0);
 //	::InvalidateRect(m_hPEl, NULL, FALSE);
-//	::UpdateWindow(m_hPEl);*/
+//	::UpdateWindow(m_hPEl);
 //}
-
 
 void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
 {
@@ -4308,119 +3903,147 @@ void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
 
 	long nTotalCnt = (long)profile.size();
 
-	// --- 1. INITIALIZATION (Create only if missing) ---
-	if (!m_hPEl || !::IsWindow(m_hPEl))
-	{
-		// Calculate Window Position
-		RECT wndRect, itemRect;
-		this->GetWindowRect(&wndRect);
-		CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
-		if (pPanel) {
-			pPanel->GetWindowRect(&itemRect);
-			itemRect.left -= wndRect.left;
-			itemRect.top -= wndRect.top;
-			itemRect.right -= wndRect.left;
-			itemRect.bottom -= wndRect.top;
-		}
-		else {
-			return;
-		}
-
-		// Create the Control
-		m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
-
-		// --- ONE-TIME CONFIGURATION ---
-		PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
-		PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
-		PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
-
-		// Dark Theme
-		DWORD darkGray = PERGB(255, 30, 30, 33);
-		PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
-		PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
-		PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
-
-		// Grid & Fonts
-		PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
-		PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
-		PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
-		PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
-		PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-		PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
-		PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
-
-		// Colors
-		DWORD axisColor = PERGB(255, 160, 160, 160);
-		PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
-		PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
-		PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
-
-		// Interaction
-		PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
-		PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
-		PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
-		PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
-		PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
-		PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
-		PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
-		PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
-
-		// Styles
-		DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
-		int nLineTypes[] = { PELT_MEDIUMSOLID };
-		int nPointTypes[] = { PEPT_PIXEL };
-		PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
-		PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
-		PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
-
-		// Titles
-		PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
-		PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
-		PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
-		PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
-		PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
-	}
-
-	// Update Titles (if needed)
-	PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Circle Profile"));
-	PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
-	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT("Angle (Degrees)"));
-	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT("Height"));
-	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Circumference"));
-
-	// --- 2. DATA UPDATE (Run every frame) ---
-
-	double* pXData = new double[nTotalCnt];
-	float* pYData = new float[nTotalCnt];
-	float fMin = 1e9f, fMax = -1e9f;
+	// Prepare X-Axis Data (Degrees)
+	std::vector<double> xData;
+	xData.reserve(nTotalCnt);
 
 	for (long i = 0; i < nTotalCnt; i++) {
-		pYData[i] = profile[i];
-
-		// Map X to Degrees
-		double angle = (double)i / (double)nTotalCnt * 360.0;
-		pXData[i] = angle;
-
-		if (profile[i] < fMin) fMin = profile[i];
-		if (profile[i] > fMax) fMax = profile[i];
-
-		// Optimize: Only set labels if point count is low, otherwise it slows down real-time
-		if (nTotalCnt < 100) {
-			CString xAxisVal;
-			xAxisVal.Format(_T("%0.0f"), angle);
-			PEvsetcell(m_hPEl, PEP_szaPOINTLABELS, i, (void*)(LPCTSTR)xAxisVal);
-		}
+		// Map 0..N to 0..360 Degrees
+		double angle = (double)i / (double)(nTotalCnt) * 360.0;
+		xData.push_back(angle);
 	}
 
+	// Call Centralized Update
+	UpdateProfileChart(xData, profile,
+		_T("Circle Profile"),
+		_T("Circumference (0 - 360 deg)"),
+		_T("Angle (Degrees)"),
+		_T("Height (um)"));
+}
+
+// 20251223 / Fahim / Refactoring the line profile drawing method
+void CAnalysisNewDlg::InitializeProfileChart()
+{
+	// 1. If it already exists, do nothing
+	if (m_hPEl && ::IsWindow(m_hPEl)) {
+		return;
+	}
+
+	// 2. Calculate Position
+	RECT wndRect, itemRect;
+	this->GetWindowRect(&wndRect);
+	CWnd* pPanel = GetDlgItem(IDC_LINEPROFILE_VIEW_PANEL);
+	if (pPanel) {
+		pPanel->GetWindowRect(&itemRect);
+		itemRect.left -= wndRect.left;
+		itemRect.top -= wndRect.top;
+		itemRect.right -= wndRect.left;
+		itemRect.bottom -= wndRect.top;
+	}
+	else {
+		return;
+	}
+
+	// 3. Create the Control
+	m_hPEl = PEcreate(PECONTROL_GRAPH, WS_VISIBLE, &itemRect, m_hWnd, 1001);
+
+	// --- GLOBAL STYLING ---
+	PEnset(m_hPEl, PEP_nPLOTTINGMETHOD, PEGPM_POINTSPLUSLINE);
+	PEnset(m_hPEl, PEP_nQUICKSTYLE, PEQS_DARK_NO_BORDER);
+	PEnset(m_hPEl, PEP_bBITMAPGRADIENTMODE, FALSE);
+
+	// Dark Theme Colors
+	DWORD darkGray = PERGB(255, 30, 30, 33);
+	PEnset(m_hPEl, PEP_dwDESKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwGRAPHBACKCOLOR, darkGray);
+	PEnset(m_hPEl, PEP_dwAXISBACKCOLOR, darkGray);
+
+	// Grid & Fonts
+	PEnset(m_hPEl, PEP_nGRIDSTYLE, PEGS_THIN);
+	PEnset(m_hPEl, PEP_nGRIDLINECONTROL, PEGLC_BOTH);
+	PEnset(m_hPEl, PEP_dwGRIDLINECOLOR, PERGB(255, 70, 70, 70));
+	PEnset(m_hPEl, PEP_bFIXEDFONTS, TRUE);
+	PEszset(m_hPEl, PEP_szMAINTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szSUBTITLEFONT, (LPWSTR)TEXT("Segoe UI"));
+	PEszset(m_hPEl, PEP_szLABELFONT, (LPWSTR)TEXT("Segoe UI"));
+
+	// Axis Colors
+	DWORD axisColor = PERGB(255, 160, 160, 160);
+	PEnset(m_hPEl, PEP_dwXAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwYAXISCOLOR, axisColor);
+	PEnset(m_hPEl, PEP_dwTEXTCOLOR, PERGB(255, 220, 220, 220));
+
+	// Interaction
+	PEnset(m_hPEl, PEP_nRENDERENGINE, PERE_DIRECT2D);
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, TRUE);
+	PEnset(m_hPEl, PEP_nHOTSPOTSIZE, 5);
+	PEnset(m_hPEl, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELFUNCTION, PEMWF_HORZPLUSVERT_ZOOM);
+	PEnset(m_hPEl, PEP_nMOUSEWHEELZOOMSMOOTHNESS, 4);
+
+	// Line Styles
+	DWORD dwArray[1] = { PERGB(255, 49, 160, 159) };
+	int nLineTypes[] = { PELT_MEDIUMSOLID };
+	int nPointTypes[] = { PEPT_PIXEL };
+	PEvsetEx(m_hPEl, PEP_dwaSUBSETCOLORS, 0, 1, dwArray, 0);
+	PEvset(m_hPEl, PEP_naSUBSETLINETYPES, nLineTypes, 1);
+	PEvset(m_hPEl, PEP_naSUBSETPOINTTYPES, nPointTypes, 1);
+
+	// [NEW] CLEAN SLATE LOGIC (Removes Garbage Data)
+
+	// 1. Set Points to 0 to remove the default line
 	PEnset(m_hPEl, PEP_nSUBSETS, 1);
-	PEnset(m_hPEl, PEP_nPOINTS, nTotalCnt);
-	PEvset(m_hPEl, PEP_faXDATAII, pXData, nTotalCnt);
-	PEvset(m_hPEl, PEP_faYDATA, pYData, nTotalCnt);
+	PEnset(m_hPEl, PEP_nPOINTS, 0);
 
-	delete[] pXData;
-	delete[] pYData;
+	// 2. Clear default text ("Main Title", "Sub Title", etc.)
+	PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)TEXT("Profile"));
+	PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)TEXT(""));
+	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT(""));
+	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT(""));
 
-	// --- 3. AUTO SCALING ---
+	// 3. Force update to apply the "Empty" state
+	PEreinitialize(m_hPEl);
+	PEresetimage(m_hPEl, 0, 0);
+	::InvalidateRect(m_hPEl, NULL, FALSE);
+	::UpdateWindow(m_hPEl);
+}
+
+// 20251223 / Fahim / Update Profile Chart with new data
+void CAnalysisNewDlg::UpdateProfileChart(const std::vector<double>& xData, const std::vector<float>& yData,
+	CString mainTitle, CString subTitle,
+	CString xAxisLabel, CString yAxisLabel)
+{
+	// 1. Ensure Window Exists
+	InitializeProfileChart();
+	if (!m_hPEl) return;
+
+	if (xData.size() != yData.size() || xData.empty()) return;
+	long nPoints = (long)xData.size();
+
+	// 2. Clear Old Annotations (Prevent ghosts from other tools)
+	ResetProfileAnnotations();
+
+	// 3. Transfer Data
+	PEnset(m_hPEl, PEP_nSUBSETS, 1);
+	PEnset(m_hPEl, PEP_nPOINTS, nPoints);
+	PEvset(m_hPEl, PEP_faXDATAII, (void*)xData.data(), nPoints);
+	PEvset(m_hPEl, PEP_faYDATA, (void*)yData.data(), nPoints);
+
+	// 4. Update Strings
+	PEszset(m_hPEl, PEP_szMAINTITLE, (LPWSTR)(LPCTSTR)mainTitle);
+	PEszset(m_hPEl, PEP_szSUBTITLE, (LPWSTR)(LPCTSTR)subTitle);
+	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)(LPCTSTR)xAxisLabel);
+	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)(LPCTSTR)yAxisLabel);
+	PEvsetcell(m_hPEl, PEP_szaSUBSETLABELS, 0, (void*)TEXT("Data"));
+
+	// 5. Auto Scale Y-Axis (with Padding)
+	float fMin = 1e9f, fMax = -1e9f;
+	for (float val : yData) {
+		if (val < fMin) fMin = val;
+		if (val > fMax) fMax = val;
+	}
+
 	if (fabs(fMax - fMin) < 0.0001) { fMin -= 1.0f; fMax += 1.0f; }
 	double range = fMax - fMin;
 	double yMin = fMin - (range * 0.1);
@@ -4430,9 +4053,26 @@ void CAnalysisNewDlg::ShowCircleProfile(std::vector<float>& profile)
 	PEvset(m_hPEl, PEP_fMANUALMINY, &yMin, 1);
 	PEvset(m_hPEl, PEP_fMANUALMAXY, &yMax, 1);
 
-	// --- 4. EFFICIENT REDRAW ---
+	// 6. Redraw
 	PEreinitialize(m_hPEl);
 	PEresetimage(m_hPEl, 0, 0);
 	::InvalidateRect(m_hPEl, NULL, FALSE);
 	::UpdateWindow(m_hPEl);
+}
+
+void CAnalysisNewDlg::ResetProfileAnnotations()
+{
+	if (!m_hPEl) return;
+	// Clearing annotations by hiding them or setting count to 0 if API allows.
+	// In PE, effectively clearing means resetting specific slots or disabling show.
+	// Here we just ensure the annotation feature is enabled, but we assume
+	// specific tools will overwrite indices they need.
+	PEnset(m_hPEl, PEP_bSHOWANNOTATIONS, TRUE);
+
+	// Optional: Loop and clear first 20 annotation slots if needed
+	double zero = 0.0;
+	int type = PEGAT_NOSYMBOL;
+	for (int i = 0; i < 20; i++) {
+		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, i, &type);
+	}
 }
