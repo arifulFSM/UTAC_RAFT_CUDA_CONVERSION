@@ -234,6 +234,13 @@ protected:
 		CString mainTitle, CString subTitle,
 		CString xAxisLabel, CString yAxisLabel);
 	void ResetProfileAnnotations(); // Clears any old annotations (lines, text) from previous tools
+	void DeselectActiveTool();
 public:
+	// 20251223 / Fahim / Horizontal Line Tool
+	void DrawPreviewHorizontalLine(double yGraph);
+	void HorizontalProfile(double yGraph);
+	// 20251223 / Vertical Line Tool
+	void DrawPreviewVerticalLine(double xGraph);
+	void VerticalProfile(double xGraph);
 
 };

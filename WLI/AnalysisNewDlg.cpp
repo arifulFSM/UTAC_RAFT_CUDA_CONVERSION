@@ -240,98 +240,146 @@ const COLORREF CLR_NORMAL_BACK = RGB(255, 255, 255); // Standard Grey/White
 const COLORREF CLR_NORMAL_HOVER = RGB(220, 220, 220); // Slightly darker when hovering
 const COLORREF CLR_SELECTED = RGB(173, 216, 230); // Light Blue for Active Tool
 
+//BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
+//{
+//	// 1. NON-CLICKABLE LOGIC:
+//	// If clicking the button that is ALREADY selected, ignore it.
+//	if (nID == m_nSelectedToolID)
+//		return TRUE;
+//
+//	// 2. RESET THE OLD BUTTON (Deselect)
+//	// We cast GetDlgItem to your custom class to access your custom functions
+//	if (m_nSelectedToolID != 0)
+//	{
+//		CIconButton* pOldBtn = (CIconButton*)GetDlgItem(m_nSelectedToolID);
+//		if (pOldBtn)
+//		{
+//			// Restore normal background
+//			pOldBtn->SetBackgroundColor(CLR_NORMAL_BACK);
+//			// Restore normal hover effect
+//			pOldBtn->SetHoverColor(CLR_NORMAL_HOVER);
+//
+//			
+//		}
+//	}
+//
+//	// 3. SETUP THE NEW BUTTON (Select)
+//	CIconButton* pNewBtn = (CIconButton*)GetDlgItem(nID);
+//	if (pNewBtn)
+//	{
+//		// Set the "Selected" background
+//		pNewBtn->SetBackgroundColor(CLR_SELECTED);
+//
+//		// DISABLE HOVER:
+//		// Set hover color same as background so it looks like hover is disabled
+//		pNewBtn->SetHoverColor(CLR_SELECTED);
+//		//AfxMessageBox(_T("Tool Selected"));
+//	}
+//
+//	// 4. Update the tracking variable
+//	m_nSelectedToolID = nID;
+//
+//	// RESET STATES
+//	m_bIsSelectingLine = FALSE;
+//	m_lineDrawingState = 0;
+//
+//	// 20251218 / Reset Circle State
+//	m_bIsSelectingCircle = FALSE;
+//
+//
+//	// 5. Handle Tool Logic
+//	switch (nID)
+//	{
+//	case IDC_BUTTON_2_POINTS:
+//		//AfxMessageBox(_T("button 1 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_HORIZONTAL:
+//		//AfxMessageBox(_T("button 2 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_VERTICAL:
+//		//AfxMessageBox(_T("button 3 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_LINE:
+//		//AfxMessageBox(_T("button 4 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_PARALLEL:
+//		//AfxMessageBox(_T("button 5 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_PERPENDICULAR:
+//		//AfxMessageBox(_T("button 6 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_BOX:
+//		//AfxMessageBox(_T("button 7 clicked"));
+//		break;
+//
+//	case IDC_BUTTON_CIRCLE:
+//		//AfxMessageBox(_T("button 8 clicked"));
+//		break;
+//
+//	default:
+//		// Optional: Handle if an unknown ID gets here
+//		break;
+//	}
+//
+//
+//	// 5. Handle Tool Logic
+//	// switch(nID) { ... }
+//
+//	return TRUE; // Stop further processing
+//}
+
+//20251223
 BOOL CAnalysisNewDlg::OnToolButtonClicked(UINT nID)
 {
-	// 1. NON-CLICKABLE LOGIC:
-	// If clicking the button that is ALREADY selected, ignore it.
-	if (nID == m_nSelectedToolID)
-		return TRUE;
+	if (nID == m_nSelectedToolID) return TRUE;
 
-	// 2. RESET THE OLD BUTTON (Deselect)
-	// We cast GetDlgItem to your custom class to access your custom functions
-	if (m_nSelectedToolID != 0)
-	{
-		CIconButton* pOldBtn = (CIconButton*)GetDlgItem(m_nSelectedToolID);
-		if (pOldBtn)
-		{
-			// Restore normal background
-			pOldBtn->SetBackgroundColor(CLR_NORMAL_BACK);
-			// Restore normal hover effect
-			pOldBtn->SetHoverColor(CLR_NORMAL_HOVER);
+	// 1. Deselect whatever was active previously
+	DeselectActiveTool();
 
-			
-		}
-	}
-
-	// 3. SETUP THE NEW BUTTON (Select)
+	// 2. Select the NEW button
 	CIconButton* pNewBtn = (CIconButton*)GetDlgItem(nID);
 	if (pNewBtn)
 	{
-		// Set the "Selected" background
 		pNewBtn->SetBackgroundColor(CLR_SELECTED);
-
-		// DISABLE HOVER:
-		// Set hover color same as background so it looks like hover is disabled
 		pNewBtn->SetHoverColor(CLR_SELECTED);
-		//AfxMessageBox(_T("Tool Selected"));
 	}
 
-	// 4. Update the tracking variable
+	// 3. Set new ID
 	m_nSelectedToolID = nID;
 
-	// RESET STATES
-	m_bIsSelectingLine = FALSE;
-	m_lineDrawingState = 0;
+	return TRUE;
+}
 
-	// 20251218 / Reset Circle State
-	m_bIsSelectingCircle = FALSE;
-
-
-	// 5. Handle Tool Logic
-	switch (nID)
+// 20251223
+void CAnalysisNewDlg::DeselectActiveTool()
+{
+	// 1. Reset Visuals of the currently active button
+	if (m_nSelectedToolID != 0)
 	{
-	case IDC_BUTTON_2_POINTS:
-		//AfxMessageBox(_T("button 1 clicked"));
-		break;
-
-	case IDC_BUTTON_HORIZONTAL:
-		//AfxMessageBox(_T("button 2 clicked"));
-		break;
-
-	case IDC_BUTTON_VERTICAL:
-		//AfxMessageBox(_T("button 3 clicked"));
-		break;
-
-	case IDC_BUTTON_LINE:
-		//AfxMessageBox(_T("button 4 clicked"));
-		break;
-
-	case IDC_BUTTON_PARALLEL:
-		//AfxMessageBox(_T("button 5 clicked"));
-		break;
-
-	case IDC_BUTTON_PERPENDICULAR:
-		//AfxMessageBox(_T("button 6 clicked"));
-		break;
-
-	case IDC_BUTTON_BOX:
-		//AfxMessageBox(_T("button 7 clicked"));
-		break;
-
-	case IDC_BUTTON_CIRCLE:
-		//AfxMessageBox(_T("button 8 clicked"));
-		break;
-
-	default:
-		// Optional: Handle if an unknown ID gets here
-		break;
+		CIconButton* pBtn = (CIconButton*)GetDlgItem(m_nSelectedToolID);
+		if (pBtn)
+		{
+			// Restore standard colors (defined at top of your CPP)
+			pBtn->SetBackgroundColor(CLR_NORMAL_BACK);
+			pBtn->SetHoverColor(CLR_NORMAL_HOVER);
+			pBtn->Invalidate(); // Force redraw
+		}
 	}
 
+	// 2. Clear Active ID
+	m_nSelectedToolID = 0;
 
-	// 5. Handle Tool Logic
-	// switch(nID) { ... }
-
-	return TRUE; // Stop further processing
+	// 3. Reset All Drawing States
+	m_bIsSelectingLine = FALSE;
+	m_lineDrawingState = 0;
+	m_bIsSelectingCircle = FALSE;
+	// Add other flags here if you have more tools
 }
 
 void CAnalysisNewDlg::OnStnClickedProfileCardPanel()
@@ -566,6 +614,8 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 					// Generate Profile
 					CircleProfile(m_ptCircleCenter, m_iCircleRadius);
+
+					DeselectActiveTool();
 				}
 				return TRUE;
 			}
@@ -739,6 +789,8 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 					// 20251209 ------
 					DrawPreviewLineOn2D(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
 					UpdateLineProfileGraph(m_previewX1, m_previewY1, m_previewX2, m_previewY2);
+
+					DeselectActiveTool();
 				}
 
 				return TRUE; // Event handled
@@ -747,6 +799,119 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 			// Allow other events to propagate
 			return CResizableDialog::OnCommand(wParam, lParam);
 		}
+
+		// 20251223 / HORIZONTAL LINE TOOL 
+		if (m_nSelectedToolID == IDC_BUTTON_HORIZONTAL)
+		{
+			// 1. Convert Pixel Y -> Graph Y
+			// We only care about the Y-coordinate for a horizontal line.
+			int nAxis = 0;
+			double graphX = 0, graphY = 0;
+			// Using FALSE for bViceVersa based on your configuration
+			int intptcurrentX = ptCurrent.x;
+			int intptcurrentY = ptCurrent.y;
+			PEconvpixeltograph(m_hPE2, &nAxis, &intptcurrentX, &intptcurrentY, &graphX, &graphY, FALSE, FALSE, FALSE);
+
+			// 2. MOUSE MOVE: Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Update Tooltip
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("Y=%.0f, Z=%.4f"), dY, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// THROTTLE LOGIC 
+				static DWORD lastUpdateTime = 0;
+				DWORD currentTime = GetTickCount();
+
+				// Update every 30ms (approx 33 FPS) to prevent UI lag
+				if (currentTime - lastUpdateTime > 30)
+				{
+					lastUpdateTime = currentTime;
+
+					// A. Update Visual Line on 2D Plot
+					DrawPreviewHorizontalLine(graphY);
+
+					// B. Update Profile Chart (Real-Time)
+					HorizontalProfile(graphY);
+
+				}
+
+				return TRUE;
+			}
+
+			// 3. LEFT CLICK: Capture and Profile
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				// Draw the final line (freezes visual feedback at this location)
+				DrawPreviewHorizontalLine(graphY);
+
+				// Generate and Show the Profile
+				HorizontalProfile(graphY);
+
+				DeselectActiveTool();
+
+				return TRUE;
+			}
+		}
+
+		// 20251223 / VERTICAL LINE TOOL 
+		if (m_nSelectedToolID == IDC_BUTTON_VERTICAL)
+		{
+			// 1. Convert Pixel X -> Graph X
+			int nAxis = 0;
+			double graphX = 0, graphY = 0;
+			// Using FALSE based on your specific configuration
+			int intptcurrentX = ptCurrent.x;
+			int intptcurrentY = ptCurrent.y;
+			PEconvpixeltograph(m_hPE2, &nAxis, &intptcurrentX, &intptcurrentY, &graphX, &graphY, FALSE, FALSE, FALSE);
+
+			// 2. MOUSE MOVE: Real-Time Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Display Tooltip
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("X=%.0f, Z=%.4f"), dX, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// --- THROTTLE LOGIC ---
+				static DWORD lastUpdateTime = 0;
+				DWORD currentTime = GetTickCount();
+
+				if (currentTime - lastUpdateTime > 30)
+				{
+					lastUpdateTime = currentTime;
+
+					// A. Update Visual Line on 2D Plot
+					DrawPreviewVerticalLine(graphX);
+
+					// B. Update Profile Chart (Real-Time)
+					VerticalProfile(graphX);
+				}
+				return TRUE;
+			}
+
+			// 3. LEFT CLICK: Freeze and Deselect
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				// Final Draw
+				DrawPreviewVerticalLine(graphX);
+				VerticalProfile(graphX);
+
+				// Finalize
+				DeselectActiveTool();
+				return TRUE;
+			}
+		}
+
 
 	}
 	// 20252411 ------------------------
@@ -2660,7 +2825,7 @@ void CAnalysisNewDlg::showCharts() {
 void CAnalysisNewDlg::loadData() {
 	readData();
 	if (filterData.size() > 0) {
-		if (m_hPEl)PEdestroy(m_hPEl);
+		//if (m_hPEl)PEdestroy(m_hPEl);
 		if (m_hPE2)PEdestroy(m_hPE2);
 		if (m_hPE3)PEdestroy(m_hPE3);
 		if (filterData.size() > 1)
@@ -2742,7 +2907,7 @@ void CAnalysisNewDlg::OnBnClickedDrawChart()
 {
 	readData();
 	if (data.size() > 0) {
-		if (m_hPEl)PEdestroy(m_hPEl);
+		//if (m_hPEl)PEdestroy(m_hPEl);
 		if (m_hPE2)PEdestroy(m_hPE2);
 		if (m_hPE3)PEdestroy(m_hPE3);
 		if (data.size() > 1)
@@ -4002,6 +4167,18 @@ void CAnalysisNewDlg::InitializeProfileChart()
 	PEszset(m_hPEl, PEP_szXAXISLABEL, (LPWSTR)TEXT(""));
 	PEszset(m_hPEl, PEP_szYAXISLABEL, (LPWSTR)TEXT(""));
 
+	// Reset line drawing state for new profile
+	m_lineDrawingState = 0;
+	m_isDrawingCurrentLine = FALSE;
+
+	// Enable mouse events for line drawing
+	PEnset(m_hPEl, PEP_bMOUSECURSORCONTROL, TRUE);
+	PEnset(m_hPEl, PEP_bALLOWDATAHOTSPOTS, FALSE); // Disable data point snapping
+	PEnset(m_hPEl, PEP_bTRACKINGCUSTOMDATATEXT, TRUE);
+	PEnset(m_hPEl, PEP_bCURSORPROMPTTRACKING, TRUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTSTYLE, PECPS_YVALUE);
+	PEnset(m_hPEl, PEP_nCURSORPROMPTLOCATION, PECPL_TRACKING_TOOLTIP);
+
 	// 3. Force update to apply the "Empty" state
 	PEreinitialize(m_hPEl);
 	PEresetimage(m_hPEl, 0, 0);
@@ -4075,4 +4252,167 @@ void CAnalysisNewDlg::ResetProfileAnnotations()
 	for (int i = 0; i < 20; i++) {
 		PEvsetcell(m_hPEl, PEP_naGRAPHANNOTATIONTYPE, i, &type);
 	}
+}
+
+// 20251223
+void CAnalysisNewDlg::DrawPreviewHorizontalLine(double yGraph)
+{
+	if (filterData.empty()) return;
+
+	// Use Indices 700 & 701 for Horizontal Line (Avoiding conflict with Circle/Line tools)
+	const int HORZ_IDX_1 = 700;
+	const int HORZ_IDX_2 = 701;
+
+	// 1. Determine X-Axis Limits (Data Width)
+	// The line should span the entire dataset, not just the screen.
+	double minX = 0.0;
+	// Max X = (Columns - 1) * StepSize
+	double maxX = (filterData[0].size() - 1) * m_xStep;
+
+	// 2. Define Style
+	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol2 = PEGAT_LINECONTINUE;
+	DWORD color = PERGB(255, 255, 0, 0); // Red
+
+	// 3. Set Start Point (Left Edge)
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, HORZ_IDX_1, &minX);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, HORZ_IDX_1, &yGraph);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, HORZ_IDX_1, &symbol1);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, HORZ_IDX_1, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, HORZ_IDX_1, (void*)TEXT(""));
+
+	// 4. Set End Point (Right Edge)
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, HORZ_IDX_2, &maxX);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, HORZ_IDX_2, &yGraph);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, HORZ_IDX_2, &symbol2);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, HORZ_IDX_2, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, HORZ_IDX_2, (void*)TEXT(""));
+
+	// 5. Redraw
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+// 20251223
+void CAnalysisNewDlg::HorizontalProfile(double yGraph)
+{
+	if (filterData.empty()) return;
+
+	int maxRows = static_cast<int>(filterData.size());
+	int maxCols = static_cast<int>(filterData[0].size());
+
+	// 1. Calculate Row Index
+	// Row = Y / Y_Step
+	// Add 0.5 for rounding to nearest integer row
+	int rowIndex = static_cast<int>((yGraph / m_yStep) + 0.5);
+
+	// 2. Bounds Check
+	if (rowIndex < 0) rowIndex = 0;
+	if (rowIndex >= maxRows) rowIndex = maxRows - 1;
+
+	// 3. Extract Data
+	std::vector<double> xData;
+	std::vector<float> yData;
+	xData.reserve(maxCols);
+	yData.reserve(maxCols);
+
+	for (int col = 0; col < maxCols; col++) {
+		// X Value = Column Index * Step Size
+		xData.push_back(col * m_xStep);
+		// Y Value = Z Height from data
+		yData.push_back(filterData[rowIndex][col]);
+	}
+
+	// 4. Format Titles
+	CString subTitle;
+	subTitle.Format(_T(""));
+
+	// 5. Update Chart (Using the refactored function)
+	UpdateProfileChart(xData, yData,
+		_T("Horizontal Profile"),
+		subTitle,
+		_T("X Position (um)"),
+		_T("Height (um)"));
+}
+
+// 20251223
+void CAnalysisNewDlg::DrawPreviewVerticalLine(double xGraph)
+{
+	if (filterData.empty()) return;
+
+	// Use Indices 800 & 801 for Vertical Line 
+	const int VERT_IDX_1 = 800;
+	const int VERT_IDX_2 = 801;
+
+	// 1. Determine Y-Axis Limits (Data Height)
+	double minY = 0.0;
+	// Max Y = (Rows - 1) * StepSize
+	double maxY = (filterData.size() - 1) * m_yStep;
+
+	// 2. Define Style
+	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol2 = PEGAT_LINECONTINUE;
+	DWORD color = PERGB(255, 255, 0, 0); // Red
+
+	// 3. Set Start Point (Bottom Edge)
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, VERT_IDX_1, &xGraph);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, VERT_IDX_1, &minY);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, VERT_IDX_1, &symbol1);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, VERT_IDX_1, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, VERT_IDX_1, (void*)TEXT(""));
+
+	// 4. Set End Point (Top Edge)
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, VERT_IDX_2, &xGraph);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, VERT_IDX_2, &maxY);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, VERT_IDX_2, &symbol2);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, VERT_IDX_2, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, VERT_IDX_2, (void*)TEXT(""));
+
+	// 5. Redraw
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+
+// 20251223
+void CAnalysisNewDlg::VerticalProfile(double xGraph)
+{
+	if (filterData.empty()) return;
+
+	int maxRows = static_cast<int>(filterData.size());
+	int maxCols = static_cast<int>(filterData[0].size());
+
+	// 1. Calculate Column Index
+	// Col = X / X_Step
+	int colIndex = static_cast<int>((xGraph / m_xStep) + 0.5);
+
+	// 2. Bounds Check
+	if (colIndex < 0) colIndex = 0;
+	if (colIndex >= maxCols) colIndex = maxCols - 1;
+
+	// 3. Extract Data (Iterate Rows)
+	std::vector<double> xData; // This will hold the Y-position along the cut
+	std::vector<float> yData;  // This holds the Z-Height
+	xData.reserve(maxRows);
+	yData.reserve(maxRows);
+
+	for (int row = 0; row < maxRows; row++) {
+		// X Value in Profile = Row Index * Y Step (Distance along Y-axis)
+		xData.push_back(row * m_yStep);
+		// Y Value in Profile = Z Height
+		yData.push_back(filterData[row][colIndex]);
+	}
+
+	// 4. Format Titles
+	CString subTitle;
+	subTitle.Format(_T(""));
+
+	// 5. Update Chart
+	UpdateProfileChart(xData, yData,
+		_T("Vertical Profile"),
+		subTitle,
+		_T("Y Position (um)"),
+		_T("Height (um)"));
 }
