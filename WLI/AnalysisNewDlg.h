@@ -246,11 +246,16 @@ public:
 	BOOL m_bIsSelectingExtendedLine;
 	double m_dExtendedLineStartX;
 	double m_dExtendedLineStartY;
-	// Calculates the start/end points of a line passing through (x1,y1)-(x2,y2) 
-	// extended to the data boundaries.
+	// Calculates the start/end points of a line passing through (x1,y1)-(x2,y2)  // extended to the data boundaries.
 	void CalculateExtendedEndpoints(double x1, double y1, double x2, double y2,
 		double& outX1, double& outY1,
 		double& outX2, double& outY2);
 	void DrawPreviewExtendedLine(double x1, double y1, double x2, double y2);
 	void ExtendedLineProfile(double x1, double y1, double x2, double y2);
+	// 20251224 / Fahim / Parallel Line Tool 
+	int    m_nParallelState; // 0=Idle, 1=Drawing Ref Line, 2=Positioning Parallel Line
+	double m_dParaRefX1, m_dParaRefY1; // Reference Start
+	double m_dParaRefX2, m_dParaRefY2; // Reference End
+	void DrawPreviewParallelTool(double currX, double currY);  // Draws both Reference and Parallel lines depending on state
+	void ParallelToolProfile(double currX, double currY);  // Generates profile for either Reference or Parallel line
 };
