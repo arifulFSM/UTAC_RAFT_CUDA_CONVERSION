@@ -242,5 +242,15 @@ public:
 	// 20251223 / Vertical Line Tool
 	void DrawPreviewVerticalLine(double xGraph);
 	void VerticalProfile(double xGraph);
-
+	// 20251224 / Fahim / Extended Line Tool 
+	BOOL m_bIsSelectingExtendedLine;
+	double m_dExtendedLineStartX;
+	double m_dExtendedLineStartY;
+	// Calculates the start/end points of a line passing through (x1,y1)-(x2,y2) 
+	// extended to the data boundaries.
+	void CalculateExtendedEndpoints(double x1, double y1, double x2, double y2,
+		double& outX1, double& outY1,
+		double& outX2, double& outY2);
+	void DrawPreviewExtendedLine(double x1, double y1, double x2, double y2);
+	void ExtendedLineProfile(double x1, double y1, double x2, double y2);
 };

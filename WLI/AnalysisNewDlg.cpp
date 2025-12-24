@@ -76,6 +76,11 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	m_bIsSelectingCircle = FALSE;
 	m_ptCircleCenter = { 0, 0 };
 	m_iCircleRadius = 0;
+	// 20251224
+	m_bIsSelectingExtendedLine = FALSE;
+	m_dExtendedLineStartX = 0;
+	m_dExtendedLineStartY = 0;
+
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
 	CString inifile = CString(DosUtil.GetLocalCfgFile().c_str());
@@ -379,6 +384,7 @@ void CAnalysisNewDlg::DeselectActiveTool()
 	m_bIsSelectingLine = FALSE;
 	m_lineDrawingState = 0;
 	m_bIsSelectingCircle = FALSE;
+	m_bIsSelectingExtendedLine = FALSE;
 	// Add other flags here if you have more tools
 }
 
@@ -908,6 +914,80 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 
 				// Finalize
 				DeselectActiveTool();
+				return TRUE;
+			}
+		}
+
+		// 20251224 / Fahim / EXTENDED LINE TOOL
+		if (m_nSelectedToolID == IDC_BUTTON_LINE)
+		{
+			// 1. Get Current Graph Coordinates
+			int nAxis = 0;
+			double graphX = 0, graphY = 0;
+			// Using FALSE (Pixel->Graph)
+			int intptcurrentX = ptCurrent.x;
+			int intptcurrentY = ptCurrent.y;
+			PEconvpixeltograph(m_hPE2, &nAxis, &intptcurrentX, &intptcurrentY, &graphX, &graphY, FALSE, FALSE, FALSE);
+
+			// 2. MOUSE MOVE: Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Tooltip
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("X=%.0f, Y=%.0f, Z=%.4f"), dX, dY, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// --- THROTTLE LOGIC ---
+				if (m_bIsSelectingExtendedLine)
+				{
+					static DWORD lastUpdateTime = 0;
+					DWORD currentTime = GetTickCount();
+
+					if (currentTime - lastUpdateTime > 30)
+					{
+						lastUpdateTime = currentTime;
+
+						// Draw Preview (Extend from Start -> Current)
+						DrawPreviewExtendedLine(m_dExtendedLineStartX, m_dExtendedLineStartY, graphX, graphY);
+
+						// Real-time Profile
+						ExtendedLineProfile(m_dExtendedLineStartX, m_dExtendedLineStartY, graphX, graphY);
+					}
+				}
+				return TRUE;
+			}
+
+			// 3. LEFT CLICK UP
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				if (!m_bIsSelectingExtendedLine)
+				{
+					// --- 1st CLICK: Set Start Point ---
+					m_bIsSelectingExtendedLine = TRUE;
+					m_dExtendedLineStartX = graphX;
+					m_dExtendedLineStartY = graphY;
+
+					// Disable Zooming
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
+				}
+				else
+				{
+					// --- 2nd CLICK: Finalize ---
+
+					// Final Draw
+					DrawPreviewExtendedLine(m_dExtendedLineStartX, m_dExtendedLineStartY, graphX, graphY);
+					ExtendedLineProfile(m_dExtendedLineStartX, m_dExtendedLineStartY, graphX, graphY);
+
+					// Re-enable Zooming
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					// Deselect Tool
+					DeselectActiveTool();
+				}
 				return TRUE;
 			}
 		}
@@ -4414,5 +4494,169 @@ void CAnalysisNewDlg::VerticalProfile(double xGraph)
 		_T("Vertical Profile"),
 		subTitle,
 		_T("Y Position (um)"),
+		_T("Height (um)"));
+}
+
+// 20251224
+void CAnalysisNewDlg::CalculateExtendedEndpoints(double x1, double y1, double x2, double y2,
+	double& outX1, double& outY1,
+	double& outX2, double& outY2)
+{
+	if (filterData.empty()) return;
+
+	// 1. Determine Data Boundaries
+	double minX = 0.0;
+	double minY = 0.0;
+	double maxX = (filterData[0].size() - 1) * m_xStep;
+	double maxY = (filterData.size() - 1) * m_yStep;
+
+	// Handle identical points (prevent divide by zero)
+	if (fabs(x2 - x1) < 1e-6 && fabs(y2 - y1) < 1e-6) {
+		outX1 = x1; outY1 = y1; outX2 = x2; outY2 = y2;
+		return;
+	}
+
+	std::vector<std::pair<double, double>> intersections;
+
+	// 2. Vertical Line Case
+	if (fabs(x2 - x1) < 1e-6) {
+		intersections.push_back({ x1, minY });
+		intersections.push_back({ x1, maxY });
+	}
+	// 3. Horizontal Line Case
+	else if (fabs(y2 - y1) < 1e-6) {
+		intersections.push_back({ minX, y1 });
+		intersections.push_back({ maxX, y1 });
+	}
+	// 4. Slanted Line Case
+	else {
+		double m = (y2 - y1) / (x2 - x1);
+		double c = y1 - m * x1;
+
+		// Intersection with Left (x=minX) -> y = m*minX + c
+		double yAtMinX = m * minX + c;
+		if (yAtMinX >= minY && yAtMinX <= maxY) intersections.push_back({ minX, yAtMinX });
+
+		// Intersection with Right (x=maxX) -> y = m*maxX + c
+		double yAtMaxX = m * maxX + c;
+		if (yAtMaxX >= minY && yAtMaxX <= maxY) intersections.push_back({ maxX, yAtMaxX });
+
+		// Intersection with Bottom (y=minY) -> x = (minY - c) / m
+		double xAtMinY = (minY - c) / m;
+		if (xAtMinY > minX && xAtMinY < maxX) intersections.push_back({ xAtMinY, minY });
+
+		// Intersection with Top (y=maxY) -> x = (maxY - c) / m
+		double xAtMaxY = (maxY - c) / m;
+		if (xAtMaxY > minX && xAtMaxY < maxX) intersections.push_back({ xAtMaxY, maxY });
+	}
+
+	// 5. Filter and Sort Results
+	// We expect exactly 2 distinct intersection points for a line passing through the rect.
+	if (intersections.size() >= 2) {
+		// Sort by X, then Y to ensure consistent direction (Left->Right or Bottom->Top)
+		std::sort(intersections.begin(), intersections.end());
+
+		outX1 = intersections.front().first;
+		outY1 = intersections.front().second;
+		outX2 = intersections.back().first;
+		outY2 = intersections.back().second;
+	}
+	else {
+		// Fallback (Should rarely happen if points are valid)
+		outX1 = x1; outY1 = y1;
+		outX2 = x2; outY2 = y2;
+	}
+}
+
+// 20251224
+void CAnalysisNewDlg::DrawPreviewExtendedLine(double x1, double y1, double x2, double y2)
+{
+	const int LINE_IDX_1 = 900;
+	const int LINE_IDX_2 = 901;
+
+	// 1. Calculate Extended Endpoints
+	double ex1, ey1, ex2, ey2;
+	CalculateExtendedEndpoints(x1, y1, x2, y2, ex1, ey1, ex2, ey2);
+
+	// 2. Define Style
+	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol2 = PEGAT_LINECONTINUE;
+	DWORD color = PERGB(255, 255, 0, 0); // Red
+
+	// 3. Set Start
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, LINE_IDX_1, &ex1);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, LINE_IDX_1, &ey1);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, LINE_IDX_1, &symbol1);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, LINE_IDX_1, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, LINE_IDX_1, (void*)TEXT(""));
+
+	// 4. Set End
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, LINE_IDX_2, &ex2);
+	PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, LINE_IDX_2, &ey2);
+	PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, LINE_IDX_2, &symbol2);
+	PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, LINE_IDX_2, &color);
+	PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, LINE_IDX_2, (void*)TEXT(""));
+
+	// 5. Redraw
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+// 20251224
+void CAnalysisNewDlg::ExtendedLineProfile(double x1, double y1, double x2, double y2)
+{
+	if (filterData.empty()) return;
+
+	// 1. Calculate Extended Endpoints
+	double ex1, ey1, ex2, ey2;
+	CalculateExtendedEndpoints(x1, y1, x2, y2, ex1, ey1, ex2, ey2);
+
+	// 2. Calculate Distance and Steps
+	double diffX = ex2 - ex1;
+	double diffY = ey2 - ey1;
+
+	// Data indices distance (approximate pixels)
+	double distInIndices = sqrt(pow(diffX / m_xStep, 2) + pow(diffY / m_yStep, 2));
+	long nTotalCnt = static_cast<long>(distInIndices);
+	if (nTotalCnt < 20) nTotalCnt = 20; // Minimum points
+
+	// 3. Extract Data
+	std::vector<double> xData;
+	std::vector<float> yData;
+	xData.reserve(nTotalCnt);
+	yData.reserve(nTotalCnt);
+
+	int maxRows = static_cast<int>(filterData.size());
+	int maxCols = static_cast<int>(filterData[0].size());
+
+	// Physical distance for X-axis
+	double totalPhysicalDist = sqrt(pow(diffX, 2) + pow(diffY, 2));
+
+	for (long i = 0; i < nTotalCnt; i++) {
+		double t = (double)i / (double)(nTotalCnt - 1);
+
+		// Interpolated Graph Coordinates
+		double curX = ex1 + (diffX * t);
+		double curY = ey1 + (diffY * t);
+
+		// Convert to Indices
+		int col = static_cast<int>(curX / m_xStep);
+		int row = static_cast<int>(curY / m_yStep);
+
+		float val = 0.0f;
+		if (row >= 0 && row < maxRows && col >= 0 && col < maxCols) {
+			val = filterData[row][col];
+		}
+
+		yData.push_back(val);
+		xData.push_back(t * totalPhysicalDist);
+	}
+
+	// 4. Update Chart
+	UpdateProfileChart(xData, yData,
+		_T("Extended Line Profile"),
+		_T("Full Cross-Section"),
+		_T("Distance (um)"),
 		_T("Height (um)"));
 }
