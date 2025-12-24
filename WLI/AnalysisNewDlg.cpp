@@ -83,6 +83,9 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	m_nParallelState = 0;
 	m_dParaRefX1 = 0; m_dParaRefY1 = 0;
 	m_dParaRefX2 = 0; m_dParaRefY2 = 0;
+	m_nPerpendicularState = 0;
+	m_dPerpRefX1 = 0; m_dPerpRefY1 = 0;
+	m_dPerpRefX2 = 0; m_dPerpRefY2 = 0;
 
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
@@ -390,6 +393,7 @@ void CAnalysisNewDlg::DeselectActiveTool()
 	// 20251224
 	m_bIsSelectingExtendedLine = FALSE;
 	m_nParallelState = 0;
+	m_nPerpendicularState = 0;
 	// Add other flags here if you have more tools
 }
 
@@ -1068,6 +1072,88 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 					// Final Draw
 					DrawPreviewParallelTool(graphX, graphY);
 					ParallelToolProfile(graphX, graphY);
+
+					// Re-enable Zooming
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
+
+					// Deselect Tool
+					DeselectActiveTool();
+				}
+				return TRUE;
+			}
+		}
+
+		// 20251224 / PERPENDICULAR LINE TOOL 
+		if (m_nSelectedToolID == IDC_BUTTON_PERPENDICULAR)
+		{
+			// 1. Get Current Graph Coordinates
+			int nAxis = 0;
+			double graphX = 0, graphY = 0;
+			int intptcurrentX = ptCurrent.x;
+			int intptcurrentY = ptCurrent.y;
+			PEconvpixeltograph(m_hPE2, &nAxis, &intptcurrentX, &intptcurrentY, &graphX, &graphY, FALSE, FALSE, FALSE);
+
+			// 2. MOUSE MOVE: Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Display Tooltip
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("X=%.0f, Y=%.0f, Z=%.4f"), dX, dY, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// --- THROTTLE LOGIC ---
+				if (m_nPerpendicularState > 0)
+				{
+					static DWORD lastUpdateTime = 0;
+					DWORD currentTime = GetTickCount();
+
+					if (currentTime - lastUpdateTime > 30)
+					{
+						lastUpdateTime = currentTime;
+
+						// Visual Preview
+						DrawPreviewPerpendicularTool(graphX, graphY);
+
+						// Profile Update
+						PerpendicularToolProfile(graphX, graphY);
+					}
+				}
+				return TRUE;
+			}
+
+			// 3. LEFT CLICK UP
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				if (m_nPerpendicularState == 0)
+				{
+					// --- CLICK 1: Set Reference Start ---
+					m_nPerpendicularState = 1;
+					m_dPerpRefX1 = graphX;
+					m_dPerpRefY1 = graphY;
+
+					// Disable Zooming
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE);
+				}
+				else if (m_nPerpendicularState == 1)
+				{
+					// --- CLICK 2: Set Reference End ---
+					m_nPerpendicularState = 2;
+					m_dPerpRefX2 = graphX;
+					m_dPerpRefY2 = graphY;
+
+					// Reference line is now fixed. User moves mouse to position the perpendicular one.
+				}
+				else if (m_nPerpendicularState == 2)
+				{
+					// --- CLICK 3: Finalize Perpendicular Line ---
+
+					// Final Draw
+					DrawPreviewPerpendicularTool(graphX, graphY);
+					PerpendicularToolProfile(graphX, graphY);
 
 					// Re-enable Zooming
 					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
@@ -3375,7 +3461,7 @@ void CAnalysisNewDlg::DrawPreviewLineOn2D(int x1, int y1, int x2, int y2)
 	double dX2 = x2 * m_xStep;
 	double dY2 = y2 * m_yStep;
 
-	int symbol = PEGAT_THICKSOLIDLINE;
+	int symbol = PEGAT_MEDIUMSOLIDLINE;
 	DWORD color = PERGB(255, 49, 160, 159); // Same as line profile
 
 	// Segment 1: Start Point
@@ -4437,7 +4523,7 @@ void CAnalysisNewDlg::DrawPreviewHorizontalLine(double yGraph)
 	double maxX = (filterData[0].size() - 1) * m_xStep;
 
 	// 2. Define Style
-	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol1 = PEGAT_MEDIUMSOLIDLINE;
 	int symbol2 = PEGAT_LINECONTINUE;
 	DWORD color = PERGB(255, 255, 0, 0); // Red
 
@@ -4518,7 +4604,7 @@ void CAnalysisNewDlg::DrawPreviewVerticalLine(double xGraph)
 	double maxY = (filterData.size() - 1) * m_yStep;
 
 	// 2. Define Style
-	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol1 = PEGAT_MEDIUMSOLIDLINE;
 	int symbol2 = PEGAT_LINECONTINUE;
 	DWORD color = PERGB(255, 255, 0, 0); // Red
 
@@ -4666,7 +4752,7 @@ void CAnalysisNewDlg::DrawPreviewExtendedLine(double x1, double y1, double x2, d
 	CalculateExtendedEndpoints(x1, y1, x2, y2, ex1, ey1, ex2, ey2);
 
 	// 2. Define Style
-	int symbol1 = PEGAT_THICKSOLIDLINE;
+	int symbol1 = PEGAT_MEDIUMSOLIDLINE;
 	int symbol2 = PEGAT_LINECONTINUE;
 	DWORD color = PERGB(255, 255, 0, 0); // Red
 
@@ -4801,7 +4887,7 @@ void CAnalysisNewDlg::DrawPreviewParallelTool(double currX, double currY)
 		double px1, py1, px2, py2;
 		CalculateExtendedEndpoints(currX, currY, p2x, p2y, px1, py1, px2, py2);
 
-		int symPara = PEGAT_THICKSOLIDLINE;
+		int symPara = PEGAT_MEDIUMSOLIDLINE;
 		int symCont = PEGAT_LINECONTINUE;
 		DWORD colPara = PERGB(255, 49, 160, 159); // Teal (Active)
 
@@ -4847,6 +4933,114 @@ void CAnalysisNewDlg::ParallelToolProfile(double currX, double currY)
 
 		// 2. Profile the Parallel Line
 		// This will calculate extended endpoints, extract data, and update chart
+		ExtendedLineProfile(currX, currY, p2x, p2y);
+	}
+}
+
+// 20251224
+void CAnalysisNewDlg::DrawPreviewPerpendicularTool(double currX, double currY)
+{
+	// Indices (Unique range)
+	const int REF_IDX_1 = 1100;
+	const int REF_IDX_2 = 1101;
+	const int PERP_IDX_1 = 1102;
+	const int PERP_IDX_2 = 1103;
+
+	// --- DRAW REFERENCE LINE (State 1 & 2) ---
+	if (m_nPerpendicularState >= 1)
+	{
+		double refEndX = (m_nPerpendicularState == 2) ? m_dPerpRefX2 : currX;
+		double refEndY = (m_nPerpendicularState == 2) ? m_dPerpRefY2 : currY;
+
+		// Calculate Extended Reference
+		double ex1, ey1, ex2, ey2;
+		CalculateExtendedEndpoints(m_dPerpRefX1, m_dPerpRefY1, refEndX, refEndY, ex1, ey1, ex2, ey2);
+
+		int symRef = PEGAT_THINSOLIDLINE;
+		int symCont = PEGAT_LINECONTINUE;
+		DWORD colRef = PERGB(255, 200, 50, 50); // Dim Red
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, REF_IDX_1, &ex1);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, REF_IDX_1, &ey1);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, REF_IDX_1, &symRef);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, REF_IDX_1, &colRef);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, REF_IDX_1, (void*)TEXT(""));
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, REF_IDX_2, &ex2);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, REF_IDX_2, &ey2);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, REF_IDX_2, &symCont);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, REF_IDX_2, &colRef);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, REF_IDX_2, (void*)TEXT(""));
+	}
+
+	// --- DRAW PERPENDICULAR LINE (State 2 Only) ---
+	if (m_nPerpendicularState == 2)
+	{
+		// 1. Calculate Reference Vector
+		double dx = m_dPerpRefX2 - m_dPerpRefX1;
+		double dy = m_dPerpRefY2 - m_dPerpRefY1;
+
+		// 2. Calculate Perpendicular Vector
+		// Rotate 90 degrees: (x, y) -> (-y, x)
+		double perpDx = -dy;
+		double perpDy = dx;
+
+		// 3. Define Perpendicular Line Passing through Mouse
+		// Point 1: Mouse (currX, currY)
+		// Point 2: Mouse + Perpendicular Vector
+		double p2x = currX + perpDx;
+		double p2y = currY + perpDy;
+
+		// 4. Extend to Boundaries
+		double px1, py1, px2, py2;
+		CalculateExtendedEndpoints(currX, currY, p2x, p2y, px1, py1, px2, py2);
+
+		int symPara = PEGAT_MEDIUMSOLIDLINE;
+		int symCont = PEGAT_LINECONTINUE;
+		DWORD colPara = PERGB(255, 49, 160, 159); // Teal (Active)
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PERP_IDX_1, &px1);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, PERP_IDX_1, &py1);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, PERP_IDX_1, &symPara);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, PERP_IDX_1, &colPara);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, PERP_IDX_1, (void*)TEXT(""));
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, PERP_IDX_2, &px2);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, PERP_IDX_2, &py2);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, PERP_IDX_2, &symCont);
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, PERP_IDX_2, &colPara);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, PERP_IDX_2, (void*)TEXT(""));
+	}
+
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+// 20251224
+void CAnalysisNewDlg::PerpendicularToolProfile(double currX, double currY)
+{
+	if (filterData.empty()) return;
+
+	// STATE 1: Profiling the Reference Line
+	if (m_nPerpendicularState == 1)
+	{
+		ExtendedLineProfile(m_dPerpRefX1, m_dPerpRefY1, currX, currY);
+	}
+	// STATE 2: Profiling the Perpendicular Line
+	else if (m_nPerpendicularState == 2)
+	{
+		// 1. Calculate Perpendicular Vector
+		double dx = m_dPerpRefX2 - m_dPerpRefX1;
+		double dy = m_dPerpRefY2 - m_dPerpRefY1;
+		double perpDx = -dy;
+		double perpDy = dx;
+
+		// 2. Define 2nd point on the perpendicular line
+		double p2x = currX + perpDx;
+		double p2y = currY + perpDy;
+
+		// 3. Profile
 		ExtendedLineProfile(currX, currY, p2x, p2y);
 	}
 }

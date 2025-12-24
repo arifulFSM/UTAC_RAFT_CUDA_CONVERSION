@@ -258,4 +258,10 @@ public:
 	double m_dParaRefX2, m_dParaRefY2; // Reference End
 	void DrawPreviewParallelTool(double currX, double currY);  // Draws both Reference and Parallel lines depending on state
 	void ParallelToolProfile(double currX, double currY);  // Generates profile for either Reference or Parallel line
+	// 20251224 / Fahim / Perpendicular Line Tool 
+	int    m_nPerpendicularState; // 0=Idle, 1=Drawing Ref Line, 2=Positioning Perp Line
+	double m_dPerpRefX1, m_dPerpRefY1; // Reference Start
+	double m_dPerpRefX2, m_dPerpRefY2; // Reference End
+	void DrawPreviewPerpendicularTool(double currX, double currY);
+	void PerpendicularToolProfile(double currX, double currY);
 };
