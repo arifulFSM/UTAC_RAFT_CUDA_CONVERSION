@@ -86,6 +86,11 @@ CAnalysisNewDlg::CAnalysisNewDlg(CWnd* pParent /*=nullptr*/)
 	m_nPerpendicularState = 0;
 	m_dPerpRefX1 = 0; m_dPerpRefY1 = 0;
 	m_dPerpRefX2 = 0; m_dPerpRefY2 = 0;
+	// 20251226
+	m_nBoxState = 0;
+	m_ptBoxP1 = { 0, 0 };
+	m_ptBoxP2 = { 0, 0 };
+	m_ptBoxP3 = { 0, 0 };
 
 	//CString inifile;
 	//DosUtil.GetLocalSysFile(inifile);
@@ -394,6 +399,8 @@ void CAnalysisNewDlg::DeselectActiveTool()
 	m_bIsSelectingExtendedLine = FALSE;
 	m_nParallelState = 0;
 	m_nPerpendicularState = 0;
+	// 20251226
+	m_nBoxState = 0;
 	// Add other flags here if you have more tools
 }
 
@@ -1159,6 +1166,77 @@ BOOL CAnalysisNewDlg::OnCommand(WPARAM wParam, LPARAM lParam) {
 					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
 
 					// Deselect Tool
+					DeselectActiveTool();
+				}
+				return TRUE;
+			}
+		}
+
+		// 20251226
+		// --- BOX (QUADRILATERAL) TOOL ---
+		if (m_nSelectedToolID == IDC_BUTTON_BOX)
+		{
+			// 1. MOUSE MOVE: Preview
+			if (wNotifyCode == PEWN_MOUSEMOVE || wNotifyCode == PEWN_CUSTOMTRACKINGDATATEXT)
+			{
+				// Tooltip
+				double dX, dY, dZ;
+				PEvget(m_hPE2, PEP_fCURSORVALUEX, &dX);
+				PEvget(m_hPE2, PEP_fCURSORVALUEY, &dY);
+				PEvget(m_hPE2, PEP_fCURSORVALUEZ, &dZ);
+				TCHAR buffer[128];
+				_stprintf_s(buffer, TEXT("X=%.0f, Y=%.0f, Z=%.4f"), dX, dY, dZ);
+				PEszset(m_hPE2, PEP_szTRACKINGTEXT, buffer);
+
+				// --- THROTTLE LOGIC ---
+				// Show preview if we have at least one point
+				if (m_nBoxState > 0)
+				{
+					static DWORD lastUpdateTime = 0;
+					DWORD currentTime = GetTickCount();
+
+					if (currentTime - lastUpdateTime > 30)
+					{
+						lastUpdateTime = currentTime;
+
+						// Visual Preview (Connects P1...Current...P1)
+						DrawPreviewBox(ptCurrent);
+
+						// Real-time Profile
+						BoxProfile(ptCurrent);
+					}
+				}
+				return TRUE;
+			}
+
+			// 2. LEFT CLICK UP
+			if (wNotifyCode == PEWN_LBUTTONUP)
+			{
+				if (m_nBoxState == 0) {
+					// --- CLICK 1: Set P1 ---
+					m_nBoxState = 1;
+					m_ptBoxP1 = ptCurrent;
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_NONE); // Lock Zoom
+				}
+				else if (m_nBoxState == 1) {
+					// --- CLICK 2: Set P2 ---
+					m_nBoxState = 2;
+					m_ptBoxP2 = ptCurrent;
+				}
+				else if (m_nBoxState == 2) {
+					// --- CLICK 3: Set P3 ---
+					m_nBoxState = 3;
+					m_ptBoxP3 = ptCurrent;
+				}
+				else if (m_nBoxState == 3) {
+					// --- CLICK 4: Set P4 (Finalize) ---
+
+					// Final Draw using the click point as P4
+					DrawPreviewBox(ptCurrent);
+					BoxProfile(ptCurrent);
+
+					// Restore Zoom and Reset
+					PEnset(m_hPE2, PEP_nALLOWZOOMING, PEAZ_HORZANDVERT);
 					DeselectActiveTool();
 				}
 				return TRUE;
@@ -5043,4 +5121,173 @@ void CAnalysisNewDlg::PerpendicularToolProfile(double currX, double currY)
 		// 3. Profile
 		ExtendedLineProfile(currX, currY, p2x, p2y);
 	}
+}
+
+
+// 20251226
+void CAnalysisNewDlg::DrawPreviewBox(POINT currPx)
+{
+	// Use Indices 1200+
+	const int BOX_IDX_BASE = 1200;
+
+	// Define Points Vector for the Loop
+	std::vector<POINT> points;
+	points.push_back(m_ptBoxP1); // Always have P1
+
+	if (m_nBoxState >= 2) points.push_back(m_ptBoxP2);
+	if (m_nBoxState >= 3) points.push_back(m_ptBoxP3);
+
+	// Add current mouse/P4
+	points.push_back(currPx);
+
+	// Close the loop back to P1 for visual completeness
+	points.push_back(m_ptBoxP1);
+
+	// Draw Segments
+	int nAxis = 0;
+	int symbolStart = PEGAT_THICKSOLIDLINE;
+	int symbolCont = PEGAT_LINECONTINUE;
+	DWORD color = PERGB(255, 49, 160, 159); // Teal
+
+	for (size_t i = 0; i < points.size() - 1; i++)
+	{
+		POINT pA = points[i];
+		POINT pB = points[i + 1];
+
+		int intpax = pA.x;
+		int intpay = pA.y;
+		int intpbx = pB.x;
+		int intpby = pB.y;
+
+		// Convert Pixels -> Graph Units (using FALSE as requested)
+		double gAx, gAy, gBx, gBy;
+		PEconvpixeltograph(m_hPE2, &nAxis, &intpax, &intpay, &gAx, &gAy, FALSE, FALSE, FALSE);
+		PEconvpixeltograph(m_hPE2, &nAxis, &intpbx, &intpby, &gBx, &gBy, FALSE, FALSE, FALSE);
+
+		int idx = BOX_IDX_BASE + (int)i * 2;
+
+		// Start of segment
+		// Note: For contiguous lines, we could optimize indices, but explicit segments are safer for updates
+		int sym = (i == 0) ? symbolStart : symbolCont; // Actually PE handles segments individually mostly
+		// To draw continuous shape, we just draw lines A->B
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, idx, &gAx);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, idx, &gAy);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, idx, &symbolStart); // Start a new line segment
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, idx, &color);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, idx, (void*)TEXT(""));
+
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONX, idx + 1, &gBx);
+		PEvsetcell(m_hPE2, PEP_faGRAPHANNOTATIONY, idx + 1, &gBy);
+		PEvsetcell(m_hPE2, PEP_naGRAPHANNOTATIONTYPE, idx + 1, &symbolCont); // Continue to B
+		PEvsetcell(m_hPE2, PEP_dwaGRAPHANNOTATIONCOLOR, idx + 1, &color);
+		PEvsetcell(m_hPE2, PEP_szaGRAPHANNOTATIONTEXT, idx + 1, (void*)TEXT(""));
+	}
+
+	PEresetimage(m_hPE2, 0, 0);
+	::InvalidateRect(m_hPE2, NULL, FALSE);
+	::UpdateWindow(m_hPE2);
+}
+
+// 20251226
+void CAnalysisNewDlg::BoxProfile(POINT currPx)
+{
+	if (filterData.empty()) return;
+
+	// Define vertices
+	std::vector<POINT> vertices;
+	vertices.push_back(m_ptBoxP1);
+	if (m_nBoxState >= 2) vertices.push_back(m_ptBoxP2);
+	if (m_nBoxState >= 3) vertices.push_back(m_ptBoxP3);
+	vertices.push_back(currPx); // Current mouse is the latest corner
+	vertices.push_back(m_ptBoxP1); // Close loop
+
+	std::vector<double> xData; // Distance
+	std::vector<float> yData;  // Height
+
+	double currentDist = 0.0;
+	int nAxis = 0;
+	int maxRows = static_cast<int>(filterData.size());
+	int maxCols = static_cast<int>(filterData[0].size());
+
+	// Iterate through segments
+	for (size_t i = 0; i < vertices.size() - 1; i++)
+	{
+		POINT pStart = vertices[i];
+		POINT pEnd = vertices[i + 1];
+
+		// 1. Calculate Pixel Distance for Resolution
+		double dxPx = (double)(pEnd.x - pStart.x);
+		double dyPx = (double)(pEnd.y - pStart.y);
+		int nSteps = (int)sqrt(dxPx * dxPx + dyPx * dyPx);
+		if (nSteps < 5) nSteps = 5;
+
+		// 2. Interpolate
+		for (int j = 0; j < nSteps; j++)
+		{
+			double t = (double)j / (double)nSteps;
+
+			// Current Pixel
+			int curPxX = pStart.x + (int)(dxPx * t);
+			int curPxY = pStart.y + (int)(dyPx * t);
+
+			// Convert to Graph Units
+			double gX, gY;
+			PEconvpixeltograph(m_hPE2, &nAxis, &curPxX, &curPxY, &gX, &gY, FALSE, FALSE, FALSE);
+
+			// Convert to Data Indices
+			int col = static_cast<int>(gX / m_xStep);
+			int row = static_cast<int>(gY / m_yStep);
+
+			float val = 0.0f;
+			if (row >= 0 && row < maxRows && col >= 0 && col < maxCols) {
+				val = filterData[row][col];
+			}
+
+			// Calculate Physical Distance for X-Axis
+			// We calculate distance increment based on physical step size
+			// Note: This is an approximation based on the previous point. 
+			// Better: Calculate total physical distance from P1.
+
+			yData.push_back(val);
+			xData.push_back(currentDist);
+
+			// Increment Distance (Physical)
+			// Calculate physical dist of this micro-step
+			// Or simpler: Map 't' to the physical length of this segment
+		}
+
+		// Add Segment Physical Length to Total Distance
+		double startGx, startGy, endGx, endGy;
+		int intpstartx = pStart.x;
+		int intpstarty = pStart.y;
+		int intpendx = pEnd.x;
+		int intpendy = pEnd.y;
+
+		PEconvpixeltograph(m_hPE2, &nAxis, &intpstartx, &intpstarty, &startGx, &startGy, FALSE, FALSE, FALSE);
+		PEconvpixeltograph(m_hPE2, &nAxis, &intpendx, &intpendy, &endGx, &endGy, FALSE, FALSE, FALSE);
+
+		double segmentLen = sqrt(pow(endGx - startGx, 2) + pow(endGy - startGy, 2));
+
+		// Correct the X-axis values for the points we just added
+		size_t addedCount = xData.size() - ((i == 0) ? 0 : xData.size() - nSteps); // Rough logic fix needed below
+
+		// Let's fix the X-Axis fill logic:
+		// We know the previous total distance.
+		// We linearly interpolate X values for the points we just added in this segment.
+		size_t startIndex = xData.size() - nSteps;
+		for (int k = 0; k < nSteps; k++) {
+			double t = (double)k / (double)nSteps;
+			xData[startIndex + k] += (t * segmentLen); // Add segment progress
+		}
+
+		currentDist += segmentLen;
+	}
+
+	// Call Central Update
+	UpdateProfileChart(xData, yData,
+		_T("Box Profile"),
+		_T("Perimeter P1 -> P2 -> P3 -> P4 -> P1"),
+		_T("Perimeter Distance (um)"),
+		_T("Height (um)"));
 }

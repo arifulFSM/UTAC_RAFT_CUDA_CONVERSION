@@ -264,4 +264,11 @@ public:
 	double m_dPerpRefX2, m_dPerpRefY2; // Reference End
 	void DrawPreviewPerpendicularTool(double currX, double currY);
 	void PerpendicularToolProfile(double currX, double currY);
+	// 20251226 / Fahim / Box (Quad) Tool Variables
+	int m_nBoxState; // 0=Idle, 1=P1 set, 2=P2 set, 3=P3 set
+	POINT m_ptBoxP1;
+	POINT m_ptBoxP2;
+	POINT m_ptBoxP3;
+	void DrawPreviewBox(POINT currPx);
+	void BoxProfile(POINT currPx);
 };
